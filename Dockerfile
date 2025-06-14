@@ -1,17 +1,14 @@
-# Use an official OpenJDK runtime as a parent image
-FROM eclipse-temurin:17-jdk
+FROM eclipse-temurin:17-jdk-alpine
 
-# Set the working directory in the container
 WORKDIR /app
 
-# Copy the Maven wrapper and project files
-COPY . /app
+COPY .mvn/ .mvn
+COPY mvnw .
+COPY pom.xml .
+RUN ./mvnw dependency:go-offline
 
-# Grant execute permissions to mvnw
-RUN chmod +x mvnw
-
-# Package the app
+COPY src ./src
 RUN ./mvnw clean package -DskipTests
 
-# Run the app
+EXPOSE 8080
 CMD ["java", "-jar", "target/portfolio-spring-0.0.1-SNAPSHOT.jar"]
