@@ -72,6 +72,7 @@ public class ExperienceControllerTest {
         Mockito.doNothing().when(experienceService).deleteExperience(1L);
 
         mockMvc.perform(delete("/api/experience/1"))
-                .andExpect(status().isOk());
+                .andExpect(status().is(204));
+        ;
     }
 }

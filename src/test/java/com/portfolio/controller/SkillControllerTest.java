@@ -68,6 +68,6 @@ class SkillControllerTest {
         Mockito.doNothing().when(skillService).deleteSkill(1L);
 
         mockMvc.perform(delete("/api/skill/1"))
-                .andExpect(status().isOk());
+                .andExpect(status().is(204));
     }
 }

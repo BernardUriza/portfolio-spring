@@ -70,6 +70,7 @@ class ProjectControllerTest {
         Mockito.doNothing().when(projectService).deleteProject(1L);
 
         mockMvc.perform(delete("/api/project/1"))
-                .andExpect(status().isOk());
+                .andExpect(status().is(204));
+        ;
     }
 }

@@ -68,6 +68,7 @@ class ContactControllerTest {
         Mockito.doNothing().when(contactService).deleteContact(1L);
 
         mockMvc.perform(delete("/api/contact/1"))
-                .andExpect(status().isOk());
+                .andExpect(status().is(204));
+        ;
     }
 }
