@@ -1,6 +1,8 @@
 package com.portfolio.dto;
 
 public class ExperienceDTO {
+    public ExperienceDTO() {
+    }
     private Long id;
     private String title;
     private String company;

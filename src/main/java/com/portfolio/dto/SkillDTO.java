@@ -6,6 +6,12 @@ import jakarta.validation.constraints.Size;
 
 @Data
 public class SkillDTO {
+    public SkillDTO() {    }
+    public SkillDTO(Long id, String name, String description) {
+        this.id = id;
+        this.name = name;
+        this.description = description;
+    }
     private Long id;
 
     @NotBlank(message = "El nombre es obligatorio")

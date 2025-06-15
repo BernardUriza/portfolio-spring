@@ -7,6 +7,15 @@ import jakarta.validation.constraints.Size;
 
 @Data
 public class ProjectDTO {
+    public ProjectDTO() {}
+    public ProjectDTO(Long id, String title, String description, String link, String createdDate) {
+        this.id = id;
+        this.title = title;
+        this.description = description;
+        this.link = link;
+        this.createdDate = createdDate;
+    }
+
     private Long id;
 
     @NotBlank(message = "El título es obligatorio")
