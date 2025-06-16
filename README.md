@@ -213,9 +213,3 @@ Content-Type: application/json
 
 Este proyecto se distribuye bajo la licencia MIT.
 
-```
-
----
-
-✅ Si quieres **que lo genere como archivo descargable (README.md)** o **que lo formatee con badges, tabla de contenidos, o diagrama de arquitectura**, solo dímelo y lo creo al instante 🔨🤖🔧. ¿Te gustaría eso? 🚀
-```
