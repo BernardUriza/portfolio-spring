@@ -69,7 +69,6 @@
 	</dependencies>
 
 	<build>
-		<finalName>portfolio-spring</finalName>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
