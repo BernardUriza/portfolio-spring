@@ -16,7 +16,6 @@ import java.util.stream.Collectors;
 public class ProjectService {
 
     private final ProjectRepository projectRepository;
-
     private final DateTimeFormatter dateFormatter = DateTimeFormatter.ISO_DATE;
 
     public List<ProjectDTO> getAllProjects() {
@@ -41,6 +40,7 @@ public class ProjectService {
         project.setTitle(dto.getTitle());
         project.setDescription(dto.getDescription());
         project.setLink(dto.getLink());
+        project.setGithubRepo(dto.getGithubRepo()); // Add githubRepo here
         project.setCreatedDate(LocalDate.parse(dto.getCreatedDate(), dateFormatter));
         project = projectRepository.save(project);
         return toDto(project);
@@ -52,6 +52,7 @@ public class ProjectService {
                 .title(dto.getTitle())
                 .description(dto.getDescription())
                 .link(dto.getLink())
+                .githubRepo(dto.getGithubRepo()) // Add githubRepo here
                 .createdDate(LocalDate.parse(dto.getCreatedDate(), dateFormatter))
                 .build();
     }
@@ -62,6 +63,7 @@ public class ProjectService {
         dto.setTitle(project.getTitle());
         dto.setDescription(project.getDescription());
         dto.setLink(project.getLink());
+        dto.setGithubRepo(project.getGithubRepo()); // Add githubRepo here
         dto.setCreatedDate(project.getCreatedDate().format(dateFormatter));
         return dto;
     }
