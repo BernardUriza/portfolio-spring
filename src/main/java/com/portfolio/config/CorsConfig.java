@@ -13,7 +13,7 @@ public class CorsConfig {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
-                        .allowedOrigins("http://localhost:4200", "https://portfolio-frontend-e0bee.web.app")
+                        .allowedOrigins("http://localhost:4200", "https://portfolio-frontend-e0bee.web.app", "https://bernarduriza.com")
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("*");
             }

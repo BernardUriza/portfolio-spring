@@ -23,6 +23,9 @@ public class Project {
     private String title;
 
     @Column(length = 500)
+    private String githubRepo;
+
+    @Column(length = 500)
     private String description;
 
     private String link;

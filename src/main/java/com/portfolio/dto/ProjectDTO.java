@@ -8,11 +8,13 @@ import jakarta.validation.constraints.Size;
 @Data
 public class ProjectDTO {
     public ProjectDTO() {}
-    public ProjectDTO(Long id, String title, String description, String link, String createdDate) {
+
+    public ProjectDTO(Long id, String title, String description, String link, String githubRepo, String createdDate) {
         this.id = id;
         this.title = title;
         this.description = description;
         this.link = link;
+        this.githubRepo = githubRepo;
         this.createdDate = createdDate;
     }
 
@@ -28,6 +30,9 @@ public class ProjectDTO {
     @Size(max = 255, message = "El link no puede superar 255 caracteres")
     private String link;
 
+    @Size(max = 255, message = "El repo no puede superar 255 caracteres")
+    private String githubRepo; // Ejemplo: BernardUriza/sparkfoxFull
+
     @NotBlank(message = "La fecha de creación es obligatoria")
-    private String createdDate; // Formato esperado: yyyy-MM-dd
+    private String createdDate; // yyyy-MM-dd
 }
