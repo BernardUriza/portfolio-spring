@@ -54,7 +54,7 @@ class ProjectControllerTest {
 
     @Test
     void testUpdateProject() throws Exception {
-        ProjectDTO dto = new ProjectDTO(1L, "Project Y", "New Desc", "http://link.com", LocalDate.now().toString());
+        ProjectDTO dto = new ProjectDTO(1L, "Project Y", "New Desc", "http://link.com","sparkfox", LocalDate.now().toString());
 
         Mockito.when(projectService.updateProject(eq(1L), any())).thenReturn(dto);
 
