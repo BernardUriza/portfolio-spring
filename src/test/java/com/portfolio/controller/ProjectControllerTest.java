@@ -40,8 +40,8 @@ class ProjectControllerTest {
 
     @Test
     void testCreateProject() throws Exception {
-        ProjectDTO dto = new ProjectDTO(null, "Project X", "Description", "http://link.com", LocalDate.now().toString());
-        ProjectDTO saved = new ProjectDTO(1L, "Project X", "Description", "http://link.com", LocalDate.now().toString());
+        ProjectDTO dto = new ProjectDTO(null, "Project X", "Description", "http://link.com", "", LocalDate.now().toString());
+        ProjectDTO saved = new ProjectDTO(1L, "Project X", "Description", "http://link.com","", LocalDate.now().toString());
 
         Mockito.when(projectService.createProject(any())).thenReturn(saved);
 
