@@ -31,7 +31,7 @@ class SkillControllerTest {
     void testGetAllSkills() throws Exception {
         Mockito.when(skillService.getAllSkills()).thenReturn(java.util.Collections.emptyList());
 
-        mockMvc.perform(get("/api/skill"))
+        mockMvc.perform(get("/api/skills"))
                 .andExpect(status().isOk())
                 .andExpect(content().json("[]"));
     }
@@ -43,7 +43,7 @@ class SkillControllerTest {
 
         Mockito.when(skillService.createSkill(any())).thenReturn(saved);
 
-        mockMvc.perform(post("/api/skill")
+        mockMvc.perform(post("/api/skills")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isOk())
@@ -56,7 +56,7 @@ class SkillControllerTest {
 
         Mockito.when(skillService.updateSkill(eq(1L), any())).thenReturn(dto);
 
-        mockMvc.perform(put("/api/skill/1")
+        mockMvc.perform(put("/api/skills/1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isOk())
@@ -67,7 +67,7 @@ class SkillControllerTest {
     void testDeleteSkill() throws Exception {
         Mockito.doNothing().when(skillService).deleteSkill(1L);
 
-        mockMvc.perform(delete("/api/skill/1"))
+        mockMvc.perform(delete("/api/skills/1"))
                 .andExpect(status().is(204));
     }
 }

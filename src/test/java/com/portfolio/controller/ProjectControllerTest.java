@@ -33,19 +33,19 @@ class ProjectControllerTest {
     void testGetAllProjects() throws Exception {
         Mockito.when(projectService.getAllProjects()).thenReturn(java.util.Collections.emptyList());
 
-        mockMvc.perform(get("/api/project"))
+        mockMvc.perform(get("/api/projects"))
                 .andExpect(status().isOk())
                 .andExpect(content().json("[]"));
     }
 
     @Test
     void testCreateProject() throws Exception {
-        ProjectDTO dto = new ProjectDTO(null, "Project X", "Description", "http://link.com", "", LocalDate.now().toString());
-        ProjectDTO saved = new ProjectDTO(1L, "Project X", "Description", "http://link.com","", LocalDate.now().toString());
+        ProjectDTO dto = new ProjectDTO(null, "Project X", "Description", "http://link.com", "sparkfox", LocalDate.now().toString());
+        ProjectDTO saved = new ProjectDTO(1L, "Project X", "Description", "http://link.com","sparkfox", LocalDate.now().toString());
 
         Mockito.when(projectService.createProject(any())).thenReturn(saved);
 
-        mockMvc.perform(post("/api/project")
+        mockMvc.perform(post("/api/projects")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isOk())
@@ -58,7 +58,7 @@ class ProjectControllerTest {
 
         Mockito.when(projectService.updateProject(eq(1L), any())).thenReturn(dto);
 
-        mockMvc.perform(put("/api/project/1")
+        mockMvc.perform(put("/api/projects/1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isOk())
@@ -69,7 +69,7 @@ class ProjectControllerTest {
     void testDeleteProject() throws Exception {
         Mockito.doNothing().when(projectService).deleteProject(1L);
 
-        mockMvc.perform(delete("/api/project/1"))
+        mockMvc.perform(delete("/api/projects/1"))
                 .andExpect(status().is(204));
         ;
     }
