@@ -1,38 +1,38 @@
 package com.portfolio.dto;
 
-import lombok.Data;
+import lombok.Value;
+import lombok.Builder;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.NotNull;
 
-@Data
+@Value
+@Builder
 public class ProjectDTO {
-    public ProjectDTO() {}
+    Long id;
 
-    public ProjectDTO(Long id, String title, String description, String link, String githubRepo, String createdDate) {
-        this.id = id;
-        this.title = title;
-        this.description = description;
-        this.link = link;
-        this.githubRepo = githubRepo;
-        this.createdDate = createdDate;
-    }
+    @NotBlank(message = "Title is required")
+    @Size(max = 100, message = "Title must not exceed 100 characters")
+    String title;
 
-    private Long id;
+    @NotBlank(message = "Description is required")
+    @Size(max = 500, message = "Description must not exceed 500 characters")
+    String description;
 
-    @NotBlank(message = "El título es obligatorio")
-    @Size(max = 100, message = "El título no puede superar 100 caracteres")
-    private String title;
+    @Size(max = 255, message = "Link must not exceed 255 characters")
+    @Pattern(regexp = "^(https?|ftp)://.*$", message = "Link must be a valid URL")
+    String link;
 
-    @Size(max = 500, message = "La descripción no puede superar 500 caracteres")
-    private String description;
+    @Size(max = 255, message = "Repo must not exceed 255 characters")
+    @Pattern(regexp = "^[\\w-]+/[\\w-]+$", message = "Repo must be in the format user/repo")
+    String githubRepo;
 
-    @Size(max = 255, message = "El link no puede superar 255 caracteres")
-    private String link;
+    @NotNull(message = "Created date is required")
+    java.time.LocalDate createdDate;
 
-    @Size(max = 255, message = "El repo no puede superar 255 caracteres")
-    private String githubRepo; // Ejemplo: BernardUriza/sparkfoxFull
-
-    @NotBlank(message = "La fecha de creación es obligatoria")
-    private String createdDate; // yyyy-MM-dd
+    @NotBlank(message = "Stack is required")
+    @Size(max = 100, message = "Stack must not exceed 100 characters")
+    String stack;
 }

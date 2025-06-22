@@ -40,8 +40,23 @@ class ProjectControllerTest {
 
     @Test
     void testCreateProject() throws Exception {
-        ProjectDTO dto = new ProjectDTO(null, "Project X", "Description", "http://link.com", "sparkfox", LocalDate.now().toString());
-        ProjectDTO saved = new ProjectDTO(1L, "Project X", "Description", "http://link.com","sparkfox", LocalDate.now().toString());
+        ProjectDTO dto = ProjectDTO.builder()
+                .title("Project X")
+                .description("Description")
+                .link("http://link.com")
+                .githubRepo("user/sparkfox")
+                .createdDate(LocalDate.now())
+                .stack("Angular, Spring Boot")
+                .build();
+        ProjectDTO saved = ProjectDTO.builder()
+                .id(1L)
+                .title("Project X")
+                .description("Description")
+                .link("http://link.com")
+                .githubRepo("user/sparkfox")
+                .createdDate(LocalDate.now())
+                .stack("Angular, Spring Boot")
+                .build();
 
         Mockito.when(projectService.createProject(any())).thenReturn(saved);
 
@@ -49,12 +64,22 @@ class ProjectControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(1L));
+                .andExpect(jsonPath("$.id").value(1L))
+                .andExpect(jsonPath("$.stack").value("Angular, Spring Boot"));
     }
+
 
     @Test
     void testUpdateProject() throws Exception {
-        ProjectDTO dto = new ProjectDTO(1L, "Project Y", "New Desc", "http://link.com","sparkfox", LocalDate.now().toString());
+        ProjectDTO dto = ProjectDTO.builder()
+                .id(1L)
+                .title("Project Y")
+                .description("New Desc")
+                .link("http://link.com")
+                .githubRepo("user/sparkfox")
+                .createdDate(LocalDate.now())
+                .stack("Angular, Spring Boot")
+                .build();
 
         Mockito.when(projectService.updateProject(eq(1L), any())).thenReturn(dto);
 
@@ -62,9 +87,9 @@ class ProjectControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.title").value("Project Y"));
+                .andExpect(jsonPath("$.title").value("Project Y"))
+                .andExpect(jsonPath("$.stack").value("Angular, Spring Boot"));
     }
-
     @Test
     void testDeleteProject() throws Exception {
         Mockito.doNothing().when(projectService).deleteProject(1L);
