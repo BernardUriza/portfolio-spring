@@ -96,6 +96,5 @@ class ProjectControllerTest {
 
         mockMvc.perform(delete("/api/projects/1"))
                 .andExpect(status().is(204));
-        ;
     }
 }
