@@ -40,8 +40,8 @@ public class ProjectService {
         project.setTitle(dto.getTitle());
         project.setDescription(dto.getDescription());
         project.setLink(dto.getLink());
-        project.setGithubRepo(dto.getGithubRepo()); // Add githubRepo here
-        project.setCreatedDate(LocalDate.parse(dto.getCreatedDate(), dateFormatter));
+        project.setGithubRepo(dto.getGithubRepo());
+        project.setCreatedDate(dto.getCreatedDate());
         project = projectRepository.save(project);
         return toDto(project);
     }
@@ -53,18 +53,19 @@ public class ProjectService {
                 .description(dto.getDescription())
                 .link(dto.getLink())
                 .githubRepo(dto.getGithubRepo()) // Add githubRepo here
-                .createdDate(LocalDate.parse(dto.getCreatedDate(), dateFormatter))
+                .createdDate(dto.getCreatedDate())
                 .build();
     }
 
     private ProjectDTO toDto(Project project) {
-        ProjectDTO dto = new ProjectDTO();
-        dto.setId(project.getId());
-        dto.setTitle(project.getTitle());
-        dto.setDescription(project.getDescription());
-        dto.setLink(project.getLink());
-        dto.setGithubRepo(project.getGithubRepo()); // Add githubRepo here
-        dto.setCreatedDate(project.getCreatedDate().format(dateFormatter));
-        return dto;
+        return ProjectDTO.builder()
+                .id(project.getId())
+                .title(project.getTitle())
+                .description(project.getDescription())
+                .link(project.getLink())
+                .githubRepo(project.getGithubRepo())
+                .createdDate(project.getCreatedDate())
+                .stack(project.getStack())
+                .build();
     }
 }
