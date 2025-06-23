@@ -52,8 +52,9 @@ public class ProjectService {
                 .title(dto.getTitle())
                 .description(dto.getDescription())
                 .link(dto.getLink())
-                .githubRepo(dto.getGithubRepo()) // Add githubRepo here
+                .githubRepo(dto.getGithubRepo())
                 .createdDate(dto.getCreatedDate())
+                .stack(dto.getStack())
                 .build();
     }
 
