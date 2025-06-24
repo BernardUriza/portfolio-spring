@@ -1,10 +1,11 @@
 package com.portfolio.controller;
 
+import com.portfolio.dto.StackRequest;
 import com.portfolio.service.AIService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/ai")
@@ -18,8 +19,9 @@ public class AIController {
     }
 
     @PostMapping("/message")
-    public ResponseEntity<String> getMessage(@RequestBody Map<String, String> body) {
-        String stack = body.get("stack");
+    public ResponseEntity<String> getMessage(@RequestBody StackRequest body) {
+        List<String> stackList = body.getStack();
+        String stack = String.join(", ", stackList);
         String msg = aiService.generateDynamicMessage(stack);
         return ResponseEntity.ok(msg);
     }
