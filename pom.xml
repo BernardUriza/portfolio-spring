@@ -53,11 +53,18 @@
 			<scope>provided</scope>
 		</dependency>
 
-		<dependency>
-			<groupId>org.postgresql</groupId>
-			<artifactId>postgresql</artifactId>
-			<version>42.7.3</version>
-		</dependency>
+                <dependency>
+                        <groupId>org.postgresql</groupId>
+                        <artifactId>postgresql</artifactId>
+                        <version>42.7.3</version>
+                </dependency>
+
+                <!-- OpenAI Java client -->
+                <dependency>
+                        <groupId>com.theokanning.openai-gpt3-java</groupId>
+                        <artifactId>service</artifactId>
+                        <version>0.18.2</version>
+                </dependency>
 
 		<!-- Swagger / OpenAPI -->
 		<dependency>
