@@ -5,6 +5,7 @@ import lombok.Data;
 import java.util.List;
 
 @Data
-public class StackRequest {
+public class AIMessageRequest {
     private List<String> stack;
+    private String prompt;
 }

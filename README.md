@@ -134,6 +134,22 @@ Actualmente, el proyecto se encuentra desplegado en OnRender:
 
 ---
 
+### 🤖 **AI**
+
+| Método | Endpoint | Descripción |
+| ------ | -------- | ----------- |
+| `POST` | `/api/ai/message` | Generar respuesta a partir de un stack o un texto libre |
+| `POST` | `/api/ai/trace` | Registrar una acción del usuario |
+| `GET` | `/api/projects/{id}/ai-message` | Resumen dinámico del proyecto |
+
+Las respuestas devuelven un JSON con la forma:
+
+```json
+{ "message": "texto" }
+```
+
+---
+
 ## ⚙ **Arquitectura y flujo lógico**
 
 La aplicación sigue un diseño de **capas**:

@@ -1,6 +1,7 @@
 package com.portfolio.controller;
 
 import com.portfolio.dto.ProjectDTO;
+import com.portfolio.dto.MessageResponse;
 import com.portfolio.service.ProjectService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -46,7 +47,8 @@ public class ProjectController {
 
     @GetMapping("/{id}/ai-message")
     @Operation(summary = "Generar mensaje dinámico para un proyecto")
-    public ResponseEntity<String> getDynamicMessage(@PathVariable Long id) {
-        return ResponseEntity.ok(projectService.generateDynamicMessage(id));
+    public ResponseEntity<MessageResponse> getDynamicMessage(@PathVariable Long id) {
+        String msg = projectService.generateSummaryMessage(id);
+        return ResponseEntity.ok(new MessageResponse(msg));
     }
 }

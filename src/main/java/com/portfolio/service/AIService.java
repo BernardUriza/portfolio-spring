@@ -17,12 +17,34 @@ public class AIService {
 
     public String generateDynamicMessage(String stack) {
         String prompt = buildOptimizedPrompt(stack);
+        return sendPrompt(prompt, 600);
+    }
+
+    public String generateMessageFromStack(List<String> stackList) {
+        String stack = String.join(", ", stackList);
+        return generateDynamicMessage(stack);
+    }
+
+    public String generateFromPrompt(String prompt) {
+        return sendPrompt(prompt, 200);
+    }
+
+    public String generateProjectSummary(String title, String description, String stack) {
+        String prompt = "Summarize the following project for a portfolio user. " +
+                "Title: " + title + ". Description: " + description +
+                ". Tech stack: " + stack + ". " +
+                "Limit to 500 characters.";
+        String response = sendPrompt(prompt, 300);
+        return response.length() > 500 ? response.substring(0, 500) : response;
+    }
+
+    private String sendPrompt(String prompt, int maxTokens) {
         ChatMessage userMessage = new ChatMessage("user", prompt);
 
         ChatCompletionRequest request = ChatCompletionRequest.builder()
                 .model("gpt-3.5-turbo")
                 .messages(List.of(userMessage))
-                .maxTokens(600)
+                .maxTokens(maxTokens)
                 .build();
 
         ChatCompletionResult result = openAiService.createChatCompletion(request);
