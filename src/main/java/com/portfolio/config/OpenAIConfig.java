@@ -10,9 +10,9 @@ public class OpenAIConfig {
 
     @Bean
     public OpenAiService openAiService() {
-        String key = System.getenv("OPENAI_API_KEY"); // PRIMERO VARIABLES DE ENTORNO
+        String key = System.getenv("OPENAI_API_KEY");
         if (key == null || key.isEmpty()) {
-            Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load(); // SOLO SI NO ENCUENTRA VARIABLE DE ENTORNO
+            Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
             key = dotenv.get("OPENAI_API_KEY");
         }
         if (key == null || key.isEmpty()) {
