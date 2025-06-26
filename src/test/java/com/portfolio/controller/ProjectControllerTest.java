@@ -100,10 +100,10 @@ class ProjectControllerTest {
 
     @Test
     void testGetDynamicMessage() throws Exception {
-        Mockito.when(projectService.generateDynamicMessage(1L)).thenReturn("Hi");
+        Mockito.when(projectService.generateSummaryMessage(1L)).thenReturn("Hi");
 
         mockMvc.perform(get("/api/projects/1/ai-message"))
                 .andExpect(status().isOk())
-                .andExpect(content().string("Hi"));
+                .andExpect(content().json("{\"message\":\"Hi\"}"));
     }
 }

@@ -58,6 +58,12 @@ public class ProjectService {
         return aiService.generateDynamicMessage(project.getStack());
     }
 
+    public String generateSummaryMessage(Long id) {
+        Project project = projectRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Project not found with id: " + id));
+        return aiService.generateProjectSummary(project.getTitle(), project.getDescription(), project.getStack());
+    }
+
     private Project toEntity(ProjectDTO dto) {
         return Project.builder()
                 .id(dto.getId())

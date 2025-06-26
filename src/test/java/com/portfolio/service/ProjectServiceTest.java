@@ -31,4 +31,21 @@ class ProjectServiceTest {
 
         assertThat(msg).isEqualTo("Hi");
     }
+
+    @Test
+    void generateSummaryIncludesProjectData() {
+        Project project = Project.builder()
+                .id(2L)
+                .title("Demo")
+                .description("Desc")
+                .stack("Java")
+                .build();
+        when(projectRepository.findById(2L)).thenReturn(Optional.of(project));
+        when(aiService.generateProjectSummary("Demo", "Desc", "Java")).thenReturn("Summary");
+
+        ProjectService service = new ProjectService(projectRepository, aiService);
+        String msg = service.generateSummaryMessage(2L);
+
+        assertThat(msg).isEqualTo("Summary");
+    }
 }
