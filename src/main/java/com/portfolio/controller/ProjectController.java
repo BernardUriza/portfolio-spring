@@ -43,4 +43,10 @@ public class ProjectController {
     public ResponseEntity<ProjectDTO> updateProject(@PathVariable Long id, @Valid @RequestBody ProjectDTO dto) {
         return ResponseEntity.ok(projectService.updateProject(id, dto));
     }
+
+    @GetMapping("/{id}/ai-message")
+    @Operation(summary = "Generar mensaje dinámico para un proyecto")
+    public ResponseEntity<String> getDynamicMessage(@PathVariable Long id) {
+        return ResponseEntity.ok(projectService.generateDynamicMessage(id));
+    }
 }

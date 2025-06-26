@@ -97,4 +97,13 @@ class ProjectControllerTest {
         mockMvc.perform(delete("/api/projects/1"))
                 .andExpect(status().is(204));
     }
+
+    @Test
+    void testGetDynamicMessage() throws Exception {
+        Mockito.when(projectService.generateDynamicMessage(1L)).thenReturn("Hi");
+
+        mockMvc.perform(get("/api/projects/1/ai-message"))
+                .andExpect(status().isOk())
+                .andExpect(content().string("Hi"));
+    }
 }

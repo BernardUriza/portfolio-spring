@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.ArgumentCaptor;
 
 import java.util.List;
 
@@ -31,11 +32,16 @@ class AIServiceTest {
         ChatCompletionResult result = new ChatCompletionResult();
         result.setChoices(List.of(choice));
 
-        when(openAiService.createChatCompletion(any(ChatCompletionRequest.class))).thenReturn(result);
+        ArgumentCaptor<ChatCompletionRequest> captor = ArgumentCaptor.forClass(ChatCompletionRequest.class);
+        when(openAiService.createChatCompletion(captor.capture())).thenReturn(result);
 
         AIService service = new AIService(openAiService);
-        String response = service.generateDynamicMessage("Java");
+        String response = service.generateDynamicMessage("Java, Spring");
 
         assertThat(response).isEqualTo("Hello!");
+        ChatCompletionRequest sent = captor.getValue();
+        assertThat(sent.getMessages().get(0).getContent())
+                .contains("uses Java, Spring")
+                .contains("Primary technology: Java");
     }
 }

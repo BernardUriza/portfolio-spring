@@ -6,7 +6,6 @@ import com.portfolio.repository.ProjectRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -16,6 +15,7 @@ import java.util.stream.Collectors;
 public class ProjectService {
 
     private final ProjectRepository projectRepository;
+    private final AIService aiService;
     private final DateTimeFormatter dateFormatter = DateTimeFormatter.ISO_DATE;
 
     public List<ProjectDTO> getAllProjects() {
@@ -44,6 +44,18 @@ public class ProjectService {
         project.setCreatedDate(dto.getCreatedDate());
         project = projectRepository.save(project);
         return toDto(project);
+    }
+
+    public ProjectDTO getProject(Long id) {
+        Project project = projectRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Project not found with id: " + id));
+        return toDto(project);
+    }
+
+    public String generateDynamicMessage(Long id) {
+        Project project = projectRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Project not found with id: " + id));
+        return aiService.generateDynamicMessage(project.getStack());
     }
 
     private Project toEntity(ProjectDTO dto) {
