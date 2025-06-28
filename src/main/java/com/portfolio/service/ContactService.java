@@ -6,6 +6,7 @@ import com.portfolio.repository.ContactRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -14,6 +15,7 @@ import java.util.stream.Collectors;
 public class ContactService {
 
     private final ContactRepository contactRepository;
+    private final MailService mailService;
 
     public List<ContactDTO> getAllContacts() {
         return contactRepository.findAll()
@@ -26,6 +28,10 @@ public class ContactService {
         Contact contact = toEntity(dto);
         contact = contactRepository.save(contact);
         return toDto(contact);
+    }
+
+    public void sendContactEmail(ContactDTO dto) {
+        mailService.sendContactEmail(dto);
     }
 
     public ContactDTO updateContact(Long id, ContactDTO dto) {

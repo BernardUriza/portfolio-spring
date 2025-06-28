@@ -31,6 +31,13 @@ public class ContactController {
         return ResponseEntity.ok(contactService.createContact(dto));
     }
 
+    @PostMapping("/send")
+    @Operation(summary = "Enviar un mensaje de contacto por email")
+    public ResponseEntity<Void> sendContactEmail(@Valid @RequestBody ContactDTO dto) {
+        contactService.sendContactEmail(dto);
+        return ResponseEntity.ok().build();
+    }
+
     @PutMapping("/{id}")
     @Operation(summary = "Actualizar un contacto por ID")
     public ResponseEntity<ContactDTO> updateContact(@PathVariable Long id, @Valid @RequestBody ContactDTO dto) {
