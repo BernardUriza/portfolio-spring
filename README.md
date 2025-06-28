@@ -148,6 +148,14 @@ Las respuestas devuelven un JSON con la forma:
 { "message": "texto" }
 ```
 
+### 💬 **Chat**
+
+| Método | Endpoint | Descripción |
+| ------ | -------- | ----------- |
+| `POST` | `/api/chat/context` | Registrar contexto de navegación |
+| `GET`  | `/api/chat/agent/{type}` | Obtener información de un agente |
+| `POST` | `/api/chat/message` | Enviar mensaje contextual al asistente |
+
 ---
 
 ## ⚙ **Arquitectura y flujo lógico**
