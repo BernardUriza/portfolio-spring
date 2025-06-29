@@ -71,4 +71,15 @@ class ContactControllerTest {
                 .andExpect(status().is(204));
         ;
     }
+
+    @Test
+    void testSendContactEmail() throws Exception {
+        ContactDTO dto = new ContactDTO(null, "Ana", "ana@example.com", "Hola");
+        Mockito.doNothing().when(contactService).sendContactEmail(any());
+
+        mockMvc.perform(post("/api/contact/send")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isOk());
+    }
 }

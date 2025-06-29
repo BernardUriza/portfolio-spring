@@ -39,6 +39,17 @@ El servicio estará disponible en:
 👉 [http://localhost:8080/h2-console](http://localhost:8080/h2-console)
 JDBC URL: `jdbc:h2:mem:testdb`
 
+4️⃣ Configura el envío de emails editando `src/main/resources/application.properties`:
+
+```properties
+spring.mail.host=localhost
+spring.mail.port=1025
+spring.mail.username=
+spring.mail.password=
+app.mail.to=destinatario@example.com
+app.mail.from=remitente@example.com
+```
+
 ---
 
 ## 🌐 **Despliegue en producción**
@@ -120,6 +131,7 @@ Actualmente, el proyecto se encuentra desplegado en OnRender:
 | -------- | -------------------- | ------------------------------------- |
 | `GET`    | `/api/contacts`      | Listar todos los mensajes de contacto |
 | `POST`   | `/api/contacts`      | Enviar un mensaje de contacto         |
+| `POST`   | `/api/contact/send`  | Enviar un correo sin guardar          |
 | `DELETE` | `/api/contacts/{id}` | Eliminar un mensaje                   |
 
 #### JSON ejemplo:
@@ -131,6 +143,9 @@ Actualmente, el proyecto se encuentra desplegado en OnRender:
   "message": "I would like to hire you"
 }
 ```
+
+Usa `/api/contact/send` para enviar un correo con estos datos. Configura
+`app.mail.to` y opcionalmente `app.mail.from` en `application.properties`.
 
 ---
 
