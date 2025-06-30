@@ -3,6 +3,7 @@ package com.portfolio.service;
 import com.portfolio.dto.ProjectDTO;
 import com.portfolio.exception.ResourceNotFoundException;
 import com.portfolio.model.Project;
+import com.portfolio.mapper.ProjectMapper;
 import com.portfolio.repository.ProjectRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -17,18 +18,19 @@ public class ProjectService {
 
     private final ProjectRepository projectRepository;
     private final AIService aiService;
+    private final ProjectMapper projectMapper;
     private final DateTimeFormatter dateFormatter = DateTimeFormatter.ISO_DATE;
 
     public List<ProjectDTO> getAllProjects() {
         return projectRepository.findAll().stream()
-                .map(this::toDto)
+                .map(projectMapper::toDto)
                 .collect(Collectors.toList());
     }
 
     public ProjectDTO createProject(ProjectDTO dto) {
-        Project project = toEntity(dto);
+        Project project = projectMapper.toEntity(dto);
         project = projectRepository.save(project);
-        return toDto(project);
+        return projectMapper.toDto(project);
     }
 
     public void deleteProject(Long id) {
@@ -44,13 +46,13 @@ public class ProjectService {
         project.setGithubRepo(dto.getGithubRepo());
         project.setCreatedDate(dto.getCreatedDate());
         project = projectRepository.save(project);
-        return toDto(project);
+        return projectMapper.toDto(project);
     }
 
     public ProjectDTO getProject(Long id) {
         Project project = projectRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Project not found with id: " + id));
-        return toDto(project);
+                .orElseThrow(() -> new RuntimeException("Project not found with id: " + id));
+        return projectMapper.toDto(project);
     }
 
     public String generateDynamicMessage(Long id) {
@@ -65,27 +67,4 @@ public class ProjectService {
         return aiService.generateProjectSummary(project.getTitle(), project.getDescription(), project.getStack());
     }
 
-    private Project toEntity(ProjectDTO dto) {
-        return Project.builder()
-                .id(dto.getId())
-                .title(dto.getTitle())
-                .description(dto.getDescription())
-                .link(dto.getLink())
-                .githubRepo(dto.getGithubRepo())
-                .createdDate(dto.getCreatedDate())
-                .stack(dto.getStack())
-                .build();
-    }
-
-    private ProjectDTO toDto(Project project) {
-        return ProjectDTO.builder()
-                .id(project.getId())
-                .title(project.getTitle())
-                .description(project.getDescription())
-                .link(project.getLink())
-                .githubRepo(project.getGithubRepo())
-                .createdDate(project.getCreatedDate())
-                .stack(project.getStack())
-                .build();
-    }
 }
