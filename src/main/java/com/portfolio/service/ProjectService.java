@@ -1,6 +1,7 @@
 package com.portfolio.service;
 
 import com.portfolio.dto.ProjectDTO;
+import com.portfolio.exception.ResourceNotFoundException;
 import com.portfolio.model.Project;
 import com.portfolio.mapper.ProjectMapper;
 import com.portfolio.repository.ProjectRepository;
@@ -38,7 +39,7 @@ public class ProjectService {
 
     public ProjectDTO updateProject(Long id, ProjectDTO dto) {
         Project project = projectRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Project not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Project not found with id: " + id));
         project.setTitle(dto.getTitle());
         project.setDescription(dto.getDescription());
         project.setLink(dto.getLink());
@@ -56,13 +57,13 @@ public class ProjectService {
 
     public String generateDynamicMessage(Long id) {
         Project project = projectRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Project not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Project not found with id: " + id));
         return aiService.generateDynamicMessage(project.getStack());
     }
 
     public String generateSummaryMessage(Long id) {
         Project project = projectRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Project not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Project not found with id: " + id));
         return aiService.generateProjectSummary(project.getTitle(), project.getDescription(), project.getStack());
     }
 

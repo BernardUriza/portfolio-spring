@@ -4,6 +4,7 @@ import com.portfolio.dto.ContactDTO;
 import com.portfolio.model.Contact;
 import com.portfolio.mapper.ContactMapper;
 import com.portfolio.repository.ContactRepository;
+import com.portfolio.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -38,7 +39,7 @@ public class ContactService {
 
     public ContactDTO updateContact(Long id, ContactDTO dto) {
         Contact contact = contactRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Contacto no encontrado con id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Contacto no encontrado con id: " + id));
         contact.setName(dto.getName());
         contact.setEmail(dto.getEmail());
         contact.setMessage(dto.getMessage());
