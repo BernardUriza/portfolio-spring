@@ -1,6 +1,7 @@
 package com.portfolio.service;
 
 import com.portfolio.dto.SkillDTO;
+import com.portfolio.exception.ResourceNotFoundException;
 import com.portfolio.model.Skill;
 import com.portfolio.repository.SkillRepository;
 import lombok.RequiredArgsConstructor;
@@ -34,7 +35,7 @@ public class SkillService {
 
     public SkillDTO updateSkill(Long id, SkillDTO dto) {
         Skill skill = skillRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Skill no encontrada con id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Skill no encontrada con id: " + id));
         skill.setName(dto.getName());
         skill.setDescription(dto.getDescription());
         skill = skillRepository.save(skill);
