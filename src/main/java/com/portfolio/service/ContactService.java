@@ -7,6 +7,7 @@ import com.portfolio.repository.ContactRepository;
 import com.portfolio.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 
 import java.util.List;
@@ -27,6 +28,7 @@ public class ContactService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional
     public ContactDTO createContact(ContactDTO dto) {
         Contact contact = contactMapper.toEntity(dto);
         contact = contactRepository.save(contact);
@@ -37,6 +39,7 @@ public class ContactService {
         mailService.sendContactEmail(dto);
     }
 
+    @Transactional
     public ContactDTO updateContact(Long id, ContactDTO dto) {
         Contact contact = contactRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Contacto no encontrado con id: " + id));
@@ -47,6 +50,7 @@ public class ContactService {
         return contactMapper.toDto(contact);
     }
 
+    @Transactional
     public void deleteContact(Long id) {
         contactRepository.deleteById(id);
     }

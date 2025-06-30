@@ -7,6 +7,7 @@ import com.portfolio.mapper.ProjectMapper;
 import com.portfolio.repository.ProjectRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -27,16 +28,19 @@ public class ProjectService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional
     public ProjectDTO createProject(ProjectDTO dto) {
         Project project = projectMapper.toEntity(dto);
         project = projectRepository.save(project);
         return projectMapper.toDto(project);
     }
 
+    @Transactional
     public void deleteProject(Long id) {
         projectRepository.deleteById(id);
     }
 
+    @Transactional
     public ProjectDTO updateProject(Long id, ProjectDTO dto) {
         Project project = projectRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Project not found with id: " + id));
