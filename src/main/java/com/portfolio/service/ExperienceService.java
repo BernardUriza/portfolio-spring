@@ -7,6 +7,9 @@ import com.portfolio.repository.ExperienceRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class ExperienceService {
@@ -24,12 +27,14 @@ public class ExperienceService {
                 .map(experienceMapper::toDto);
     }
 
+    @Transactional
     public ExperienceDTO createExperience(ExperienceDTO dto) {
         Experience experience = experienceMapper.toEntity(dto);
         experience = experienceRepository.save(experience);
         return experienceMapper.toDto(experience);
     }
 
+    @Transactional
     public ExperienceDTO updateExperience(Long id, ExperienceDTO dto) {
         Experience experience = experienceRepository.findById(id).orElseThrow();
         experience.setTitle(dto.getTitle());
@@ -39,6 +44,7 @@ public class ExperienceService {
         return experienceMapper.toDto(updated);
     }
 
+    @Transactional
     public void deleteExperience(Long id) {
         experienceRepository.deleteById(id);
     }
