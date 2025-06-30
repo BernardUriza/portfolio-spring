@@ -6,12 +6,12 @@ import com.portfolio.model.Project;
 import com.portfolio.mapper.ProjectMapper;
 import com.portfolio.repository.ProjectRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -22,10 +22,9 @@ public class ProjectService {
     private final ProjectMapper projectMapper;
     private final DateTimeFormatter dateFormatter = DateTimeFormatter.ISO_DATE;
 
-    public List<ProjectDTO> getAllProjects() {
-        return projectRepository.findAll().stream()
-                .map(projectMapper::toDto)
-                .collect(Collectors.toList());
+    public Page<ProjectDTO> getAllProjects(Pageable pageable) {
+        return projectRepository.findAll(pageable)
+                .map(projectMapper::toDto);
     }
 
     @Transactional

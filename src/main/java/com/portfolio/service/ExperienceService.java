@@ -4,6 +4,8 @@ import com.portfolio.dto.ExperienceDTO;
 import com.portfolio.model.Experience;
 import com.portfolio.mapper.ExperienceMapper;
 import com.portfolio.repository.ExperienceRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
@@ -20,11 +22,9 @@ public class ExperienceService {
         this.experienceMapper = experienceMapper;
     }
 
-    public List<ExperienceDTO> getAllExperiences() {
-        return experienceRepository.findAll()
-                .stream()
-                .map(experienceMapper::toDto)
-                .collect(Collectors.toList());
+    public Page<ExperienceDTO> getAllExperiences(Pageable pageable) {
+        return experienceRepository.findAll(pageable)
+                .map(experienceMapper::toDto);
     }
 
     @Transactional
