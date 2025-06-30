@@ -2,6 +2,7 @@ package com.portfolio.service;
 
 import com.portfolio.dto.ContactDTO;
 import com.portfolio.model.Contact;
+import com.portfolio.mapper.ContactMapper;
 import com.portfolio.repository.ContactRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -16,18 +17,19 @@ public class ContactService {
 
     private final ContactRepository contactRepository;
     private final MailService mailService;
+    private final ContactMapper contactMapper;
 
     public List<ContactDTO> getAllContacts() {
         return contactRepository.findAll()
                 .stream()
-                .map(this::toDto)
+                .map(contactMapper::toDto)
                 .collect(Collectors.toList());
     }
 
     public ContactDTO createContact(ContactDTO dto) {
-        Contact contact = toEntity(dto);
+        Contact contact = contactMapper.toEntity(dto);
         contact = contactRepository.save(contact);
-        return toDto(contact);
+        return contactMapper.toDto(contact);
     }
 
     public void sendContactEmail(ContactDTO dto) {
@@ -41,28 +43,11 @@ public class ContactService {
         contact.setEmail(dto.getEmail());
         contact.setMessage(dto.getMessage());
         contact = contactRepository.save(contact);
-        return toDto(contact);
+        return contactMapper.toDto(contact);
     }
 
     public void deleteContact(Long id) {
         contactRepository.deleteById(id);
     }
 
-    private Contact toEntity(ContactDTO dto) {
-        return Contact.builder()
-                .id(dto.getId())
-                .name(dto.getName())
-                .email(dto.getEmail())
-                .message(dto.getMessage())
-                .build();
-    }
-
-    private ContactDTO toDto(Contact contact) {
-        ContactDTO dto = new ContactDTO();
-        dto.setId(contact.getId());
-        dto.setName(contact.getName());
-        dto.setEmail(contact.getEmail());
-        dto.setMessage(contact.getMessage());
-        return dto;
-    }
 }
