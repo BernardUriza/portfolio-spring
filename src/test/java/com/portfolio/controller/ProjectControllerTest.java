@@ -10,6 +10,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.data.domain.Page;
 
 import java.time.LocalDate;
 
@@ -31,11 +32,13 @@ class ProjectControllerTest {
 
     @Test
     void testGetAllProjects() throws Exception {
-        Mockito.when(projectService.getAllProjects()).thenReturn(java.util.Collections.emptyList());
+        Mockito.when(projectService.getAllProjects(any())).thenReturn(Page.empty());
 
-        mockMvc.perform(get("/api/projects"))
+        mockMvc.perform(get("/api/projects")
+                        .param("page", "0")
+                        .param("size", "20"))
                 .andExpect(status().isOk())
-                .andExpect(content().json("[]"));
+                .andExpect(jsonPath("$.content").isArray());
     }
 
     @Test

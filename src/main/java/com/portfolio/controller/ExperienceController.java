@@ -7,9 +7,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/experience")
@@ -21,8 +21,8 @@ public class ExperienceController {
 
     @GetMapping
     @Operation(summary = "Listar todas las experiencias")
-    public ResponseEntity<List<ExperienceDTO>> getAllExperiences() {
-        return ResponseEntity.ok(experienceService.getAllExperiences());
+    public ResponseEntity<Page<ExperienceDTO>> getAllExperiences(Pageable pageable) {
+        return ResponseEntity.ok(experienceService.getAllExperiences(pageable));
     }
 
     @PostMapping

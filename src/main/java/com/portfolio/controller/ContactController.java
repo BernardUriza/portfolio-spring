@@ -7,9 +7,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/contact")
@@ -21,8 +21,8 @@ public class ContactController {
 
     @GetMapping
     @Operation(summary = "Listar todos los contactos")
-    public ResponseEntity<List<ContactDTO>> getAllContacts() {
-        return ResponseEntity.ok(contactService.getAllContacts());
+    public ResponseEntity<Page<ContactDTO>> getAllContacts(Pageable pageable) {
+        return ResponseEntity.ok(contactService.getAllContacts(pageable));
     }
 
     @PostMapping

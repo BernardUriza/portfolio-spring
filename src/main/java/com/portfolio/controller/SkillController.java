@@ -7,9 +7,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/skills")
@@ -21,8 +21,8 @@ public class SkillController {
 
     @GetMapping
     @Operation(summary = "Listar todas las habilidades")
-    public ResponseEntity<List<SkillDTO>> getAllSkills() {
-        return ResponseEntity.ok(skillService.getAllSkills());
+    public ResponseEntity<Page<SkillDTO>> getAllSkills(Pageable pageable) {
+        return ResponseEntity.ok(skillService.getAllSkills(pageable));
     }
 
     @PostMapping

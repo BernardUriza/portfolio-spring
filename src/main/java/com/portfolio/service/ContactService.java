@@ -6,11 +6,9 @@ import com.portfolio.mapper.ContactMapper;
 import com.portfolio.repository.ContactRepository;
 import com.portfolio.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -20,11 +18,9 @@ public class ContactService {
     private final MailService mailService;
     private final ContactMapper contactMapper;
 
-    public List<ContactDTO> getAllContacts() {
-        return contactRepository.findAll()
-                .stream()
-                .map(contactMapper::toDto)
-                .collect(Collectors.toList());
+    public Page<ContactDTO> getAllContacts(Pageable pageable) {
+        return contactRepository.findAll(pageable)
+                .map(contactMapper::toDto);
     }
 
     public ContactDTO createContact(ContactDTO dto) {

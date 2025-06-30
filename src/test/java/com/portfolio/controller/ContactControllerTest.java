@@ -10,6 +10,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.data.domain.Page;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -29,11 +30,13 @@ class ContactControllerTest {
 
     @Test
     void testGetAllContacts() throws Exception {
-        Mockito.when(contactService.getAllContacts()).thenReturn(java.util.Collections.emptyList());
+        Mockito.when(contactService.getAllContacts(any())).thenReturn(Page.empty());
 
-        mockMvc.perform(get("/api/contact"))
+        mockMvc.perform(get("/api/contact")
+                        .param("page", "0")
+                        .param("size", "20"))
                 .andExpect(status().isOk())
-                .andExpect(content().json("[]"));
+                .andExpect(jsonPath("$.content").isArray());
     }
 
     @Test

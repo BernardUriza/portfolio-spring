@@ -10,8 +10,8 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.data.domain.Page;
 
-import java.util.Collections;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -32,11 +32,13 @@ public class ExperienceControllerTest {
 
     @Test
     public void testGetAllExperiences() throws Exception {
-        Mockito.when(experienceService.getAllExperiences()).thenReturn(Collections.emptyList());
+        Mockito.when(experienceService.getAllExperiences(any())).thenReturn(Page.empty());
 
-        mockMvc.perform(get("/api/experience"))
+        mockMvc.perform(get("/api/experience")
+                        .param("page", "0")
+                        .param("size", "20"))
                 .andExpect(status().isOk())
-                .andExpect(content().json("[]"));
+                .andExpect(jsonPath("$.content").isArray());
     }
 
     @Test

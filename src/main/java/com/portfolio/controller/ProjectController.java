@@ -7,10 +7,11 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/projects")
@@ -22,8 +23,8 @@ public class ProjectController {
 
     @GetMapping
     @Operation(summary = "Listar todos los proyectos")
-    public ResponseEntity<List<ProjectDTO>> getAllProjects() {
-        return ResponseEntity.ok(projectService.getAllProjects());
+    public ResponseEntity<Page<ProjectDTO>> getAllProjects(Pageable pageable) {
+        return ResponseEntity.ok(projectService.getAllProjects(pageable));
     }
 
     @PostMapping
