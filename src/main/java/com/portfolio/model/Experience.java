@@ -11,6 +11,8 @@ public class Experience {
 
     private String title;
     private String company;
+    
+    @Column(length = 500)
     private String description;
 
     public Experience() {
