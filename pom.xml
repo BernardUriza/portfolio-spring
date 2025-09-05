@@ -85,6 +85,20 @@
 				<version>0.18.2</version>
 		</dependency>
 
+		<!-- Anthropic Claude SDK -->
+		<dependency>
+			<groupId>com.anthropic</groupId>
+			<artifactId>anthropic-java</artifactId>
+			<version>0.1.0</version>
+		</dependency>
+
+		<!-- HTTP client for Claude API -->
+		<dependency>
+			<groupId>com.squareup.okhttp3</groupId>
+			<artifactId>okhttp</artifactId>
+			<version>4.12.0</version>
+		</dependency>
+
 		<dependency>
 			<groupId>io.github.cdimascio</groupId>
 			<artifactId>dotenv-java</artifactId>

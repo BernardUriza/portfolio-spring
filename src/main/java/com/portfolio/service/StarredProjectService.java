@@ -22,6 +22,7 @@ public class StarredProjectService {
     
     private final StarredProjectRepository repository;
     private final GitHubApiService gitHubApiService;
+    private final SemanticTransformationService semanticTransformationService;
     
     @Scheduled(fixedRate = 300000) // 5 minutes = 300000 milliseconds
     @Transactional
@@ -38,6 +39,7 @@ public class StarredProjectService {
             
             int updated = 0;
             int created = 0;
+            int semanticallyProcessed = 0;
             
             for (GitHubRepositoryDto gitHubRepo : gitHubRepos) {
                 try {
@@ -45,17 +47,54 @@ public class StarredProjectService {
                             .orElse(null);
                     
                     StarredProject project = mapToEntity(gitHubRepo, existingProject);
+                    boolean isNewProject = false;
+                    boolean hasProjectChanges = false;
                     
                     if (existingProject == null) {
-                        repository.save(project);
+                        StarredProject savedProject = repository.save(project);
                         created++;
-                        log.debug("Created new starred project: {}", project.getName());
+                        isNewProject = true;
+                        log.debug("Created new starred project: {}", savedProject.getName());
+                        
+                        // Add to processing queue with rate limiting
+                        try {
+                            // Add 2-second delay to prevent API rate limiting
+                            Thread.sleep(2000);
+                            semanticTransformationService.processStarredProject(savedProject);
+                            semanticallyProcessed++;
+                            log.debug("Successfully processed semantic transformation for new project: {}", savedProject.getName());
+                        } catch (InterruptedException e) {
+                            log.warn("Thread interrupted during rate limiting delay");
+                            Thread.currentThread().interrupt();
+                        } catch (Exception semanticError) {
+                            log.error("Failed semantic transformation for new project '{}': {}", 
+                                    savedProject.getName(), semanticError.getMessage());
+                        }
+                        
                     } else if (hasChanges(existingProject, project)) {
                         project.setId(existingProject.getId());
                         project.setCreatedAt(existingProject.getCreatedAt());
-                        repository.save(project);
+                        StarredProject savedProject = repository.save(project);
                         updated++;
-                        log.debug("Updated starred project: {}", project.getName());
+                        hasProjectChanges = true;
+                        log.debug("Updated starred project: {}", savedProject.getName());
+                        
+                        // Re-process updated project with Claude if significant changes
+                        if (hasSignificantChanges(existingProject, project)) {
+                            try {
+                                // Add 2-second delay to prevent API rate limiting
+                                Thread.sleep(2000);
+                                semanticTransformationService.processStarredProject(savedProject);
+                                semanticallyProcessed++;
+                                log.debug("Reprocessed semantic transformation for updated project: {}", savedProject.getName());
+                            } catch (InterruptedException e) {
+                                log.warn("Thread interrupted during rate limiting delay");
+                                Thread.currentThread().interrupt();
+                            } catch (Exception semanticError) {
+                                log.error("Failed semantic reprocessing for updated project '{}': {}", 
+                                        savedProject.getName(), semanticError.getMessage());
+                            }
+                        }
                     }
                     
                 } catch (Exception e) {
@@ -66,7 +105,8 @@ public class StarredProjectService {
             // Optional: Remove projects that are no longer starred
             removeUnstarredProjects(gitHubRepos);
             
-            log.info("Sync completed successfully. Created: {}, Updated: {}", created, updated);
+            log.info("Sync completed successfully. Created: {}, Updated: {}, Semantically Processed: {}", 
+                    created, updated, semanticallyProcessed);
             
         } catch (Exception e) {
             log.error("Failed to sync starred repositories", e);
@@ -152,6 +192,14 @@ public class StarredProjectService {
         return !existing.getName().equals(updated.getName()) ||
                !equals(existing.getDescription(), updated.getDescription()) ||
                !equals(existing.getHomepageUrl(), updated.getHomepageUrl()) ||
+               !equals(existing.getPrimaryLanguage(), updated.getPrimaryLanguage()) ||
+               !existing.getTopics().equals(updated.getTopics());
+    }
+    
+    private boolean hasSignificantChanges(StarredProject existing, StarredProject updated) {
+        // Only reprocess with Claude if description, language, or topics change
+        // (these affect semantic analysis the most)
+        return !equals(existing.getDescription(), updated.getDescription()) ||
                !equals(existing.getPrimaryLanguage(), updated.getPrimaryLanguage()) ||
                !existing.getTopics().equals(updated.getTopics());
     }

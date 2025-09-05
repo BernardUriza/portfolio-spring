@@ -61,13 +61,13 @@ public class ProjectService {
     public String generateDynamicMessage(Long id) {
         Project project = projectRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Project not found with id: " + id));
-        return aiService.generateDynamicMessage(project.getStack());
+        return aiService.generateDynamicMessage(String.join(", ", project.getMainTechnologies()));
     }
 
     public String generateSummaryMessage(Long id) {
         Project project = projectRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Project not found with id: " + id));
-        return aiService.generateProjectSummary(project.getTitle(), project.getDescription(), project.getStack());
+        return aiService.generateProjectSummary(project.getTitle(), project.getDescription(), String.join(", ", project.getMainTechnologies()));
     }
 
 }

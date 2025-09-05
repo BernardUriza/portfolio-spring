@@ -11,6 +11,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Component
 public class DataLoader implements CommandLineRunner {
@@ -48,7 +49,9 @@ public class DataLoader implements CommandLineRunner {
                 .link("https://portfolio-frontend-bernaruriza.vercel.app")
                 .githubRepo("https://github.com/BernardUriza/portfolio-frontend")
                 .createdDate(LocalDate.of(2024, 12, 1))
-                .stack("Angular 20, Spring Boot, PostgreSQL, Tailwind CSS, JWT, Vercel")
+                .mainTechnologies(List.of("Angular 20", "Spring Boot", "PostgreSQL", "Tailwind CSS", "JWT", "Vercel"))
+                .status(Project.ProjectStatus.ACTIVE)
+                .type(Project.ProjectType.PERSONAL)
                 .build();
 
         // Proyecto 2: Sistema de gestión empresarial (ejemplo)
@@ -58,7 +61,9 @@ public class DataLoader implements CommandLineRunner {
                 .link("https://vhouse.example.com")
                 .githubRepo("https://github.com/BernardUriza/vhouse-system")
                 .createdDate(LocalDate.of(2024, 8, 15))
-                .stack("React, Node.js, MongoDB, Express, Material-UI")
+                .mainTechnologies(List.of("React", "Node.js", "MongoDB", "Express", "Material-UI"))
+                .status(Project.ProjectStatus.ACTIVE)
+                .type(Project.ProjectType.PROFESSIONAL)
                 .build();
 
         projectRepository.save(portfolioProject);
@@ -125,19 +130,23 @@ public class DataLoader implements CommandLineRunner {
     }
 
     private void loadExperiences() {
-        Experience fullStackDev = new Experience(
-                null,
-                "Desarrollador Full Stack",
-                "Freelance / Proyectos Personales",
-                "Desarrollo de aplicaciones web completas utilizando Angular, React, Spring Boot y Node.js. Experiencia en diseño de APIs REST, manejo de bases de datos relacionales y NoSQL, implementación de autenticación y despliegue en la nube. Enfoque en mejores prácticas de desarrollo, testing y arquitectura de software."
-        );
+        Experience fullStackDev = Experience.builder()
+                .title("Desarrollador Full Stack")
+                .company("Freelance / Proyectos Personales")
+                .description("Desarrollo de aplicaciones web completas utilizando Angular, React, Spring Boot y Node.js. Experiencia en diseño de APIs REST, manejo de bases de datos relacionales y NoSQL, implementación de autenticación y despliegue en la nube. Enfoque en mejores prácticas de desarrollo, testing y arquitectura de software.")
+                .type(Experience.ExperienceType.FREELANCE)
+                .level(Experience.ExperienceLevel.INTERMEDIATE)
+                .isActive(true)
+                .build();
 
-        Experience webDeveloper = new Experience(
-                null,
-                "Desarrollador Web Frontend",
-                "Proyectos Académicos y Personales",
-                "Creación de interfaces de usuario modernas y responsivas con Angular y React. Implementación de diseño UI/UX con Tailwind CSS y SCSS. Integración con APIs REST, manejo de estado de aplicaciones y optimización de rendimiento web."
-        );
+        Experience webDeveloper = Experience.builder()
+                .title("Desarrollador Web Frontend")
+                .company("Proyectos Académicos y Personales")
+                .description("Creación de interfaces de usuario modernas y responsivas con Angular y React. Implementación de diseño UI/UX con Tailwind CSS y SCSS. Integración con APIs REST, manejo de estado de aplicaciones y optimización de rendimiento web.")
+                .type(Experience.ExperienceType.EDUCATIONAL)
+                .level(Experience.ExperienceLevel.INTERMEDIATE)
+                .isActive(true)
+                .build();
 
         experienceRepository.save(fullStackDev);
         experienceRepository.save(webDeveloper);

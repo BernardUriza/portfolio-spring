@@ -8,6 +8,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -25,7 +26,13 @@ class ProjectServiceTest {
 
     @Test
     void generateMessageUsesProjectStack() {
-        Project project = Project.builder().id(1L).stack("Java").build();
+        Project project = Project.builder()
+                .id(1L)
+                .title("Test Project")
+                .description("Test Description")
+                .createdDate(java.time.LocalDate.now())
+                .mainTechnologies(List.of("Java"))
+                .build();
         when(projectRepository.findById(1L)).thenReturn(Optional.of(project));
         when(aiService.generateDynamicMessage("Java")).thenReturn("Hi");
 
@@ -41,7 +48,8 @@ class ProjectServiceTest {
                 .id(2L)
                 .title("Demo")
                 .description("Desc")
-                .stack("Java")
+                .createdDate(java.time.LocalDate.now())
+                .mainTechnologies(List.of("Java"))
                 .build();
         when(projectRepository.findById(2L)).thenReturn(Optional.of(project));
         when(aiService.generateProjectSummary("Demo", "Desc", "Java")).thenReturn("Summary");
