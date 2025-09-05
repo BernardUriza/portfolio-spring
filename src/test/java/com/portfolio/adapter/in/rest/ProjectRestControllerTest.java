@@ -67,7 +67,7 @@ class ProjectRestControllerTest {
         when(restMapper.toRestDto(mockProject)).thenReturn(mockDto);
 
         // When & Then
-        mockMvc.perform(get("/api/v2/projects/{id}", projectId))
+        mockMvc.perform(get("/api/projects/{id}", projectId))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.id").value(projectId))
@@ -84,7 +84,7 @@ class ProjectRestControllerTest {
         when(getProjectsUseCase.getProjectById(projectId)).thenReturn(Optional.empty());
 
         // When & Then
-        mockMvc.perform(get("/api/v2/projects/{id}", projectId))
+        mockMvc.perform(get("/api/projects/{id}", projectId))
                 .andExpect(status().isInternalServerError()); // Expecting 500 due to thrown exception
     }
 
@@ -111,7 +111,7 @@ class ProjectRestControllerTest {
         when(restMapper.toRestDto(mockCreatedProject)).thenReturn(responseDto);
 
         // When & Then
-        mockMvc.perform(post("/api/v2/projects")
+        mockMvc.perform(post("/api/projects")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(inputDto)))
                 .andExpect(status().isOk())
@@ -143,7 +143,7 @@ class ProjectRestControllerTest {
         when(restMapper.toRestDto(mockUpdatedProject)).thenReturn(responseDto);
 
         // When & Then
-        mockMvc.perform(put("/api/v2/projects/{id}", projectId)
+        mockMvc.perform(put("/api/projects/{id}", projectId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(inputDto)))
                 .andExpect(status().isOk())
@@ -158,7 +158,7 @@ class ProjectRestControllerTest {
         Long projectId = 1L;
 
         // When & Then
-        mockMvc.perform(delete("/api/v2/projects/{id}", projectId))
+        mockMvc.perform(delete("/api/projects/{id}", projectId))
                 .andExpect(status().isNoContent());
     }
 
@@ -172,7 +172,7 @@ class ProjectRestControllerTest {
         when(generateProjectContentUseCase.generateProjectSummary(projectId)).thenReturn(mockSummary);
 
         // When & Then
-        mockMvc.perform(get("/api/v2/projects/{id}/ai-summary", projectId))
+        mockMvc.perform(get("/api/projects/{id}/ai-summary", projectId))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.message").value(mockSummary));
@@ -188,7 +188,7 @@ class ProjectRestControllerTest {
         when(generateProjectContentUseCase.generateDynamicMessage(projectId)).thenReturn(mockMessage);
 
         // When & Then
-        mockMvc.perform(get("/api/v2/projects/{id}/ai-message", projectId))
+        mockMvc.perform(get("/api/projects/{id}/ai-message", projectId))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.message").value(mockMessage));

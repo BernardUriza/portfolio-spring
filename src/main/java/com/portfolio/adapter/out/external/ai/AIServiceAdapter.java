@@ -1,7 +1,6 @@
 package com.portfolio.adapter.out.external.ai;
 
 import com.portfolio.core.port.out.AIServicePort;
-import com.portfolio.service.AIService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -13,7 +12,7 @@ import java.util.List;
 @Slf4j
 public class AIServiceAdapter implements AIServicePort {
     
-    private final AIService aiService;
+    private final AIServiceImpl aiService;
     
     @Override
     public String generateProjectSummary(String title, String description, String technologies) {

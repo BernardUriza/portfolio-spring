@@ -22,9 +22,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/v2/projects")
+@RequestMapping("/api/projects")
 @RequiredArgsConstructor
-@Tag(name = "Project API V2", description = "Clean architecture project management")
+@Tag(name = "Project API", description = "Clean hexagonal architecture project management")
 @Slf4j
 public class ProjectRestController {
 
