@@ -5,7 +5,17 @@
       "Bash(mkdir:*)",
       "Bash(./mvnw:*)",
       "Bash(git commit:*)",
-      "Read(//c/Users/Bernard/Documents/GitHub/portfolio-frontend/**)"
+      "Read(//c/Users/Bernard/Documents/GitHub/portfolio-frontend/**)",
+      "Bash(git add:*)",
+      "Bash(git push:*)",
+      "Read(//c/Users/Bernard/Documents/GitHub/**)",
+      "Bash(chmod:*)",
+      "Bash(npm install:*)",
+      "Bash(npm start)",
+      "Bash(git fetch:*)",
+      "Bash(git checkout:*)",
+      "Bash(git stash:*)",
+      "Bash(curl:*)"
     ],
     "deny": [],
     "ask": []
