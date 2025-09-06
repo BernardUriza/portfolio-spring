@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/experiences")
-@CrossOrigin(origins = "${cors.allowed-origins}")
+@CrossOrigin(origins = "${app.cors.allowed-origins}")
 @RequiredArgsConstructor
 public class ExperienceRestController {
     

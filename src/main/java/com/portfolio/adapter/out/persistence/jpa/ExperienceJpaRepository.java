@@ -24,8 +24,8 @@ public interface ExperienceJpaRepository extends JpaRepository<ExperienceJpaEnti
     List<ExperienceJpaEntity> findCurrentExperiencesOrderedByStartDate();
     
     @Query("SELECT e FROM ExperienceJpaEntity e WHERE " +
-           "(e.endDate IS NULL AND DATEDIFF(CURRENT_DATE, e.startDate) >= 365) OR " +
-           "(e.endDate IS NOT NULL AND DATEDIFF(e.endDate, e.startDate) >= 365)")
+           "(e.endDate IS NULL AND YEAR(CURRENT_DATE) - YEAR(e.startDate) >= 1) OR " +
+           "(e.endDate IS NOT NULL AND YEAR(e.endDate) - YEAR(e.startDate) >= 1)")
     List<ExperienceJpaEntity> findLongTermExperiences();
     
     @Query("SELECT e FROM ExperienceJpaEntity e WHERE e.type = :type ORDER BY e.startDate DESC")
