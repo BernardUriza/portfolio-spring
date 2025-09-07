@@ -23,6 +23,7 @@ public class AIServiceImpl {
     private final ObjectMapper objectMapper;
     private final String anthropicApiKey;
     private final String anthropicApiUrl;
+    private String portfolioToneContext = null;
     
     public AIServiceImpl(RestTemplate restTemplate, ObjectMapper objectMapper,
                         @Value("${anthropic.api.key:}") String anthropicApiKey,
@@ -37,6 +38,69 @@ public class AIServiceImpl {
         } else {
             log.warn("Anthropic API key not configured - will use mock data");
         }
+        
+        loadPortfolioToneContext();
+    }
+    
+    private void loadPortfolioToneContext() {
+        try {
+            // Try to load the portfolio landing page content
+            String frontendPath = System.getProperty("user.dir");
+            if (frontendPath.contains("portfolio-backend")) {
+                frontendPath = frontendPath.replace("portfolio-backend", "portfolio-frontend");
+            }
+            
+            java.nio.file.Path indexPath = java.nio.file.Paths.get(frontendPath, "src", "index.html");
+            if (java.nio.file.Files.exists(indexPath)) {
+                String indexContent = new String(java.nio.file.Files.readAllBytes(indexPath), java.nio.charset.StandardCharsets.UTF_8);
+                
+                // Extract key portfolio tone elements
+                StringBuilder toneBuilder = new StringBuilder();
+                toneBuilder.append("Portfolio Landing Page Context:\n");
+                
+                if (indexContent.contains("Catalytic Architect")) {
+                    toneBuilder.append("- Professional title: Catalytic Architect & Full-Stack Engineer\n");
+                }
+                if (indexContent.contains("technical transformation")) {
+                    toneBuilder.append("- Mission: Architect of technical transformation. Design and execute software systems that catalyze change.\n");
+                }
+                
+                // Load i18n content if available
+                java.nio.file.Path i18nPath = java.nio.file.Paths.get(frontendPath, "src", "app", "core", "i18n.service.ts");
+                if (java.nio.file.Files.exists(i18nPath)) {
+                    String i18nContent = new String(java.nio.file.Files.readAllBytes(i18nPath), java.nio.charset.StandardCharsets.UTF_8);
+                    
+                    // Extract key messages
+                    if (i18nContent.contains("Your team doesn't need more developers")) {
+                        toneBuilder.append("- Core message: Your team doesn't need more developers. It needs a phase catalyst.\n");
+                    }
+                    if (i18nContent.contains("I break systems")) {
+                        toneBuilder.append("- Philosophy: I break systems that have outgrown their chaos but are not yet ready for stability.\n");
+                    }
+                    if (i18nContent.contains("Technical catalyst")) {
+                        toneBuilder.append("- Identity: Technical catalyst and architecture strategist. I expose what is broken and engineer coherence where chaos once reigned.\n");
+                    }
+                }
+                
+                portfolioToneContext = toneBuilder.toString();
+                log.info("Portfolio tone context loaded successfully");
+            } else {
+                log.warn("Portfolio frontend files not found, using default tone context");
+                portfolioToneContext = getDefaultPortfolioTone();
+            }
+        } catch (Exception e) {
+            log.warn("Error loading portfolio tone context, using defaults: " + e.getMessage());
+            portfolioToneContext = getDefaultPortfolioTone();
+        }
+    }
+    
+    private String getDefaultPortfolioTone() {
+        return "Portfolio Tone Context:\n" +
+               "- Title: \"Catalytic Architect & Full-Stack Engineer\"\n" +
+               "- Hero: \"Your team doesn't need more developers. It needs a phase catalyst.\"\n" +
+               "- Sub: \"I break systems that have outgrown their chaos but are not yet ready for stability.\"\n" +
+               "- About: \"Technical catalyst and architecture strategist. I expose what is broken and engineer coherence where chaos once reigned. I do not adapt, I transform. I do not decorate, I reconfigure.\"\n" +
+               "- Key phrases: \"Dissonance sparks transformation\", \"Refactoring cultures drives true development\", \"Code is the output, not the objective\"\n";
     }
     
     public String generateProjectSummary(String title, String description, String technologies) {
@@ -102,10 +166,16 @@ public class AIServiceImpl {
             throw new IllegalArgumentException("Repository name cannot be null or empty");
         }
         
-        StringBuilder prompt = new StringBuilder(2048);
-        prompt.append("Analyze this GitHub repository and extract structured information:\n\n");
+        StringBuilder prompt = new StringBuilder(4096);
+        
+        // Add dynamically loaded portfolio tone context
+        prompt.append("You are creating content for Bernard Uriza's portfolio website.\n\n");
+        prompt.append(portfolioToneContext != null ? portfolioToneContext : getDefaultPortfolioTone());
+        prompt.append("\n");
+        
+        prompt.append("Analyze this GitHub repository and create content that matches the portfolio's bold, transformative tone:\n\n");
         prompt.append("Repository Name: ").append(repoName.trim()).append("\n");
-        prompt.append("Description: ").append(description != null && !description.trim().isEmpty() ? 
+        prompt.append("Original GitHub Description: ").append(description != null && !description.trim().isEmpty() ? 
                      description.trim() : "No description available").append("\n");
         prompt.append("Language: ").append(language != null && !language.trim().isEmpty() ? 
                      language.trim() : "Unknown").append("\n");
@@ -113,18 +183,25 @@ public class AIServiceImpl {
                      String.join(", ", topics) : "None").append("\n");
         
         if (readmeContent != null && !readmeContent.trim().isEmpty()) {
-            int maxReadmeLength = 3500; // Reduced to leave room for other content
+            int maxReadmeLength = 2500; // Reduced to leave room for other content
             String truncatedReadme = readmeContent.length() > maxReadmeLength ? 
                                    readmeContent.substring(0, maxReadmeLength) + "... [truncated]" : 
                                    readmeContent;
             prompt.append("README Content:\n").append(truncatedReadme).append("\n");
         }
         
-        prompt.append("\nExtract and return ONLY a valid JSON object with this exact structure:\n");
+        prompt.append("\nCreate a JSON response where:\n");
+        prompt.append("1. The project description is REWRITTEN in the portfolio's bold, transformative tone (not just copying the GitHub description)\n");
+        prompt.append("2. Focus on the transformative impact and architectural significance\n");
+        prompt.append("3. Use powerful, decisive language that matches the portfolio style\n");
+        prompt.append("4. Skills should be technical and strategic\n");
+        prompt.append("5. Experiences should reflect leadership and transformation\n\n");
+        
+        prompt.append("Return ONLY a valid JSON object with this exact structure:\n");
         prompt.append("{\n");
         prompt.append("  \"project\": {\n");
         prompt.append("    \"name\": \"project name\",\n");
-        prompt.append("    \"description\": \"concise project description (max 500 chars)\",\n");
+        prompt.append("    \"description\": \"powerful description in portfolio tone (max 500 chars)\",\n");
         prompt.append("    \"estimatedDurationWeeks\": number_or_null,\n");
         prompt.append("    \"technologies\": [\"tech1\", \"tech2\"],\n");
         prompt.append("    \"url\": \"github_url_or_homepage\"\n");
