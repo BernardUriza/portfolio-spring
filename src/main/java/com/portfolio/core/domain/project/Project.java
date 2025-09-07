@@ -36,6 +36,16 @@ public class Project extends DomainEntity {
     private final LocalDateTime createdAt;
     private final LocalDateTime updatedAt;
     
+    // Manual override flags to protect fields from sync overwriting
+    @Builder.Default
+    private final Boolean manualDescriptionOverride = false;
+    @Builder.Default
+    private final Boolean manualLinkOverride = false;
+    @Builder.Default
+    private final Boolean manualSkillsOverride = false;
+    @Builder.Default
+    private final Boolean manualExperiencesOverride = false;
+    
     public static Project create(String title, String description, String link, 
                                 String githubRepo, LocalDate createdDate, 
                                 List<String> mainTechnologies) {
@@ -120,6 +130,62 @@ public class Project extends DomainEntity {
     
     public boolean hasExternalLink() {
         return link != null && !link.trim().isEmpty();
+    }
+    
+    // Manual update methods with override protection
+    public Project updateDescriptionManually(String description) {
+        validateDescription(description);
+        return this.toBuilder()
+                .description(description)
+                .manualDescriptionOverride(true)
+                .updatedAt(LocalDateTime.now())
+                .build();
+    }
+    
+    public Project updateLinkManually(String link) {
+        return this.toBuilder()
+                .link(link)
+                .manualLinkOverride(true)
+                .updatedAt(LocalDateTime.now())
+                .build();
+    }
+    
+    public Project updateSkillsManually(Set<Long> skillIds) {
+        return this.toBuilder()
+                .skillIds(new HashSet<>(skillIds))
+                .manualSkillsOverride(true)
+                .updatedAt(LocalDateTime.now())
+                .build();
+    }
+    
+    public Project updateExperiencesManually(Set<Long> experienceIds) {
+        return this.toBuilder()
+                .experienceIds(new HashSet<>(experienceIds))
+                .manualExperiencesOverride(true)
+                .updatedAt(LocalDateTime.now())
+                .build();
+    }
+    
+    // Validation methods for completeness
+    public boolean isDescriptionComplete() {
+        return description != null && !description.trim().isEmpty();
+    }
+    
+    public boolean isLiveDemoComplete() {
+        return link != null && !link.trim().isEmpty();
+    }
+    
+    public boolean hasSkills() {
+        return skillIds != null && !skillIds.isEmpty();
+    }
+    
+    public boolean hasExperiences() {
+        return experienceIds != null && !experienceIds.isEmpty();
+    }
+    
+    public boolean hasReadmeMarkdown() {
+        // This will need to be checked against StarredProject
+        return true; // Placeholder - will be implemented in service layer
     }
     
     private static void validateTitle(String title) {

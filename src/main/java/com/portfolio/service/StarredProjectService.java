@@ -279,14 +279,25 @@ public class StarredProjectService {
         
         Project project;
         if (!existingProjects.isEmpty()) {
-            // Update existing project
+            // Update existing project with sync immunity
             project = existingProjects.get(0);
-            project = project.updateBasicInfo(
-                projectData.name,
-                projectData.description,
-                projectData.url,
-                starredProject.getGithubRepoUrl() // Direct use, no prefix
-            );
+            
+            // Only update fields that haven't been manually overridden
+            String newTitle = projectData.name;
+            String newDescription = project.getManualDescriptionOverride() ? 
+                    project.getDescription() : projectData.description;
+            String newUrl = project.getManualLinkOverride() ? 
+                    project.getLink() : projectData.url;
+            String githubRepo = starredProject.getGithubRepoUrl();
+            
+            project = project.updateBasicInfo(newTitle, newDescription, newUrl, githubRepo);
+            
+            syncMonitorService.appendLog("DEBUG", String.format(
+                "Updated project '%s' - protected fields: desc=%s, link=%s", 
+                newTitle, 
+                project.getManualDescriptionOverride() ? "YES" : "NO",
+                project.getManualLinkOverride() ? "YES" : "NO"
+            ));
         } else {
             // Create new project
             project = Project.create(
@@ -383,15 +394,35 @@ public class StarredProjectService {
     private Project linkProjectToEntities(Project project, Set<Long> skillIds, Set<Long> experienceIds) {
         Project.ProjectBuilder builder = project.toBuilder();
         
-        // Add all skill IDs to project
-        Set<Long> allSkillIds = new HashSet<>(project.getSkillIds());
-        allSkillIds.addAll(skillIds);
-        builder.skillIds(allSkillIds);
+        // Only update skills if not manually overridden
+        if (!project.getManualSkillsOverride()) {
+            Set<Long> allSkillIds = new HashSet<>(project.getSkillIds());
+            allSkillIds.addAll(skillIds);
+            builder.skillIds(allSkillIds);
+            
+            syncMonitorService.appendLog("DEBUG", 
+                String.format("Updated skills for project '%s' (total: %d)", 
+                             project.getTitle(), allSkillIds.size()));
+        } else {
+            syncMonitorService.appendLog("DEBUG", 
+                String.format("Skipped skills update for project '%s' - manually protected", 
+                             project.getTitle()));
+        }
         
-        // Add all experience IDs to project
-        Set<Long> allExperienceIds = new HashSet<>(project.getExperienceIds());
-        allExperienceIds.addAll(experienceIds);
-        builder.experienceIds(allExperienceIds);
+        // Only update experiences if not manually overridden
+        if (!project.getManualExperiencesOverride()) {
+            Set<Long> allExperienceIds = new HashSet<>(project.getExperienceIds());
+            allExperienceIds.addAll(experienceIds);
+            builder.experienceIds(allExperienceIds);
+            
+            syncMonitorService.appendLog("DEBUG", 
+                String.format("Updated experiences for project '%s' (total: %d)", 
+                             project.getTitle(), allExperienceIds.size()));
+        } else {
+            syncMonitorService.appendLog("DEBUG", 
+                String.format("Skipped experiences update for project '%s' - manually protected", 
+                             project.getTitle()));
+        }
         
         builder.updatedAt(LocalDateTime.now());
         

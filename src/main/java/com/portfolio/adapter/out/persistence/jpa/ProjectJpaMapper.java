@@ -33,6 +33,14 @@ public class ProjectJpaMapper {
                 .sourceStarredProjectId(jpaEntity.getSourceStarredProjectId())
                 .createdAt(jpaEntity.getCreatedAt())
                 .updatedAt(jpaEntity.getUpdatedAt())
+                .manualDescriptionOverride(jpaEntity.getManualDescriptionOverride() != null ? 
+                        jpaEntity.getManualDescriptionOverride() : false)
+                .manualLinkOverride(jpaEntity.getManualLinkOverride() != null ? 
+                        jpaEntity.getManualLinkOverride() : false)
+                .manualSkillsOverride(jpaEntity.getManualSkillsOverride() != null ? 
+                        jpaEntity.getManualSkillsOverride() : false)
+                .manualExperiencesOverride(jpaEntity.getManualExperiencesOverride() != null ? 
+                        jpaEntity.getManualExperiencesOverride() : false)
                 .build();
     }
     
@@ -58,6 +66,14 @@ public class ProjectJpaMapper {
                 .sourceStarredProjectId(domain.getSourceStarredProjectId())
                 .createdAt(domain.getCreatedAt())
                 .updatedAt(domain.getUpdatedAt())
+                .manualDescriptionOverride(domain.getManualDescriptionOverride() != null ? 
+                        domain.getManualDescriptionOverride() : false)
+                .manualLinkOverride(domain.getManualLinkOverride() != null ? 
+                        domain.getManualLinkOverride() : false)
+                .manualSkillsOverride(domain.getManualSkillsOverride() != null ? 
+                        domain.getManualSkillsOverride() : false)
+                .manualExperiencesOverride(domain.getManualExperiencesOverride() != null ? 
+                        domain.getManualExperiencesOverride() : false)
                 .build();
     }
     

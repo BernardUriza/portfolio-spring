@@ -89,6 +89,23 @@ public class ProjectJpaEntity {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
     
+    // Manual override flags to prevent sync overwriting
+    @Column(name = "manual_description_override")
+    @Builder.Default
+    private Boolean manualDescriptionOverride = false;
+    
+    @Column(name = "manual_link_override")
+    @Builder.Default
+    private Boolean manualLinkOverride = false;
+    
+    @Column(name = "manual_skills_override")
+    @Builder.Default
+    private Boolean manualSkillsOverride = false;
+    
+    @Column(name = "manual_experiences_override")
+    @Builder.Default
+    private Boolean manualExperiencesOverride = false;
+    
     public enum ProjectStatusJpa {
         ACTIVE, COMPLETED, ON_HOLD, ARCHIVED
     }

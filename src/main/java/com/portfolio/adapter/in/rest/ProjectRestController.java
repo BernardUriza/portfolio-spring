@@ -18,7 +18,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @RestController
@@ -118,5 +121,65 @@ public class ProjectRestController {
         
         String message = generateProjectContentUseCase.generateDynamicMessage(id);
         return ResponseEntity.ok(new MessageResponse(message));
+    }
+
+    @PatchMapping("/{id}/description")
+    @Operation(summary = "Update project description manually (with sync protection)")
+    public ResponseEntity<ProjectRestDto> updateDescriptionManually(
+            @PathVariable Long id, 
+            @RequestBody Map<String, String> payload) {
+        log.info("Manually updating description for project ID: {}", id);
+        
+        String description = payload.get("description");
+        if (description == null) {
+            return ResponseEntity.badRequest().build();
+        }
+        
+        Project updatedProject = updateProjectUseCase.updateDescriptionManually(id, description);
+        return ResponseEntity.ok(restMapper.toRestDto(updatedProject));
+    }
+
+    @PatchMapping("/{id}/link")
+    @Operation(summary = "Update project live demo link manually (with sync protection)")
+    public ResponseEntity<ProjectRestDto> updateLinkManually(
+            @PathVariable Long id, 
+            @RequestBody Map<String, String> payload) {
+        log.info("Manually updating link for project ID: {}", id);
+        
+        String link = payload.get("link");
+        Project updatedProject = updateProjectUseCase.updateLinkManually(id, link);
+        return ResponseEntity.ok(restMapper.toRestDto(updatedProject));
+    }
+
+    @PatchMapping("/{id}/skills")
+    @Operation(summary = "Update project skills manually (with sync protection)")
+    public ResponseEntity<ProjectRestDto> updateSkillsManually(
+            @PathVariable Long id, 
+            @RequestBody Map<String, Set<Long>> payload) {
+        log.info("Manually updating skills for project ID: {}", id);
+        
+        Set<Long> skillIds = payload.get("skillIds");
+        if (skillIds == null) {
+            skillIds = new HashSet<>();
+        }
+        
+        Project updatedProject = updateProjectUseCase.updateSkillsManually(id, skillIds);
+        return ResponseEntity.ok(restMapper.toRestDto(updatedProject));
+    }
+
+    @PatchMapping("/{id}/experiences")
+    @Operation(summary = "Update project experiences manually (with sync protection)")
+    public ResponseEntity<ProjectRestDto> updateExperiencesManually(
+            @PathVariable Long id, 
+            @RequestBody Map<String, Set<Long>> payload) {
+        log.info("Manually updating experiences for project ID: {}", id);
+        
+        Set<Long> experienceIds = payload.get("experienceIds");
+        if (experienceIds == null) {
+            experienceIds = new HashSet<>();
+        }
+        
+        Project updatedProject = updateProjectUseCase.updateExperiencesManually(id, experienceIds);
+        return ResponseEntity.ok(restMapper.toRestDto(updatedProject));
     }
 }
