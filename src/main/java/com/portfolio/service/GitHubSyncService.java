@@ -48,6 +48,11 @@ public class GitHubSyncService {
             return;
         }
         
+        if (githubUsername == null || githubUsername.trim().isEmpty()) {
+            syncMonitorService.appendLog("ERROR", "GitHub username not configured - cannot sync");
+            return;
+        }
+        
         syncMonitorService.markSyncStarted();
         
         try {
@@ -55,6 +60,12 @@ public class GitHubSyncService {
             
             // Step 1: Fetch starred repositories from GitHub
             List<GitHubRepo> starredRepos = fetchStarredRepositories();
+            if (starredRepos.isEmpty()) {
+                syncMonitorService.appendLog("WARN", "No starred repositories found for user: " + githubUsername);
+                syncMonitorService.markSyncCompleted(0, 0, Collections.emptyList());
+                return;
+            }
+            
             syncMonitorService.appendLog("INFO", "Fetched " + starredRepos.size() + " starred repositories from GitHub");
             
             // Step 2: Update StarredProject entities
@@ -124,17 +135,37 @@ public class GitHubSyncService {
     }
     
     private List<GitHubRepo> fetchStarredRepositories() {
+        if (githubUsername == null || githubUsername.trim().isEmpty()) {
+            log.warn("GitHub username is null or empty, cannot fetch starred repositories");
+            return Collections.emptyList();
+        }
+        
         WebClient webClient = createWebClient();
+        String uri = "/users/" + githubUsername.trim() + "/starred?per_page=100";
         
-        String uri = "/users/" + githubUsername + "/starred?per_page=100";
-        
-        Mono<GitHubRepo[]> response = webClient.get()
-            .uri(uri)
-            .retrieve()
-            .bodyToMono(GitHubRepo[].class);
-        
-        GitHubRepo[] repos = response.block();
-        return repos != null ? Arrays.asList(repos) : Collections.emptyList();
+        try {
+            Mono<GitHubRepo[]> response = webClient.get()
+                .uri(uri)
+                .retrieve()
+                .bodyToMono(GitHubRepo[].class);
+            
+            GitHubRepo[] repos = response.timeout(java.time.Duration.ofSeconds(30))
+                                        .block();
+            
+            if (repos == null) {
+                log.warn("Received null response from GitHub API for user: {}", githubUsername);
+                return Collections.emptyList();
+            }
+            
+            // Filter out repos with missing essential data
+            return Arrays.stream(repos)
+                         .filter(repo -> repo.id != null && repo.name != null && !repo.name.trim().isEmpty())
+                         .collect(Collectors.toList());
+                         
+        } catch (Exception e) {
+            log.error("Failed to fetch starred repositories for user: {}, Error: {}", githubUsername, e.getMessage());
+            throw new RuntimeException("GitHub API request failed: " + e.getMessage(), e);
+        }
     }
     
     private void updateExistingStarredProject(StarredProjectJpaEntity existing, GitHubRepo repo) {
@@ -202,21 +233,40 @@ public class GitHubSyncService {
     }
     
     private String fetchRepositoryReadme(String fullName) {
+        if (fullName == null || fullName.trim().isEmpty()) {
+            log.warn("Invalid repository full name provided for README fetch");
+            return null;
+        }
+        
         WebClient webClient = createWebClient();
+        String uri = "/repos/" + fullName.trim() + "/readme";
         
         try {
-            String uri = "/repos/" + fullName + "/readme";
-            
             Mono<GitHubReadmeResponse> response = webClient.get()
                 .uri(uri)
                 .retrieve()
                 .bodyToMono(GitHubReadmeResponse.class);
             
-            GitHubReadmeResponse readmeResponse = response.block();
-            if (readmeResponse != null && readmeResponse.content != null) {
-                // Decode base64 content
-                byte[] decodedBytes = Base64.getDecoder().decode(readmeResponse.content.replace("\n", ""));
-                return new String(decodedBytes);
+            GitHubReadmeResponse readmeResponse = response.timeout(java.time.Duration.ofSeconds(15))
+                                                          .block();
+                                                          
+            if (readmeResponse != null && readmeResponse.content != null && !readmeResponse.content.trim().isEmpty()) {
+                try {
+                    // Decode base64 content with better error handling
+                    String cleanedContent = readmeResponse.content.replaceAll("\\s", "");
+                    byte[] decodedBytes = Base64.getDecoder().decode(cleanedContent);
+                    String decodedContent = new String(decodedBytes, java.nio.charset.StandardCharsets.UTF_8);
+                    
+                    // Limit README size to prevent memory issues
+                    if (decodedContent.length() > 50000) {
+                        log.debug("Truncating large README for repository: {} (size: {})", fullName, decodedContent.length());
+                        return decodedContent.substring(0, 50000) + "\n\n... [README truncated due to size]";
+                    }
+                    
+                    return decodedContent;
+                } catch (IllegalArgumentException e) {
+                    log.warn("Failed to decode base64 README content for {}: {}", fullName, e.getMessage());
+                }
             }
         } catch (Exception e) {
             log.debug("Could not fetch README for {}: {}", fullName, e.getMessage());

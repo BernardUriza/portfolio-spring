@@ -40,12 +40,22 @@ public class AIServiceImpl {
     }
     
     public String generateProjectSummary(String title, String description, String technologies) {
+        if (title == null || title.trim().isEmpty()) {
+            log.warn("Invalid title provided for project summary generation");
+            return "No project summary available - invalid title";
+        }
+        
         log.info("Generating project summary for: {}", title);
         
-        // TODO: Implement actual AI service call (Claude)
-        // For now, return a mock response
+        String safeDescription = description != null ? description : "No description available";
+        String safeTechnologies = technologies != null ? technologies : "No technologies specified";
+        
+        if (safeDescription.length() > 50) {
+            safeDescription = safeDescription.substring(0, 50) + "...";
+        }
+        
         return String.format("AI Summary for '%s': This project uses %s and focuses on %s", 
-                title, technologies, description.substring(0, Math.min(description.length(), 50)));
+                title, safeTechnologies, safeDescription);
     }
     
     public String generateDynamicMessage(String technologies) {
@@ -58,6 +68,11 @@ public class AIServiceImpl {
     
     public AIServicePort.ClaudeAnalysisResult analyzeRepository(String repoName, String description, 
                                                                String readmeContent, List<String> topics, String language) {
+        if (repoName == null || repoName.trim().isEmpty()) {
+            log.warn("Invalid repository name provided for analysis");
+            return createMockAnalysisResult("unknown-repo", description, topics, language);
+        }
+        
         log.info("Analyzing repository: {} with Claude API", repoName);
         
         if (anthropicApiKey == null || anthropicApiKey.trim().isEmpty()) {
@@ -66,28 +81,43 @@ public class AIServiceImpl {
         }
         
         try {
-            log.info("Making actual Claude API call for repository: {}", repoName);
+            log.debug("Making Claude API call for repository: {}", repoName);
             String prompt = buildAnalysisPrompt(repoName, description, readmeContent, topics, language);
             String response = callClaudeApi(prompt);
-            log.info("Claude API response received successfully for: {}", repoName);
+            log.debug("Claude API response received successfully for: {}", repoName);
             return parseClaudeResponse(response, repoName, description, topics);
+        } catch (IllegalArgumentException e) {
+            log.error("Invalid input for Claude API call for repository: {}", repoName, e);
+            return createMockAnalysisResult(repoName, description, topics, language);
         } catch (Exception e) {
-            log.error("Error calling Claude API for repository: {}, falling back to mock data", repoName, e);
+            log.error("Error calling Claude API for repository: {}, falling back to mock data. Error: {}", 
+                     repoName, e.getMessage());
             return createMockAnalysisResult(repoName, description, topics, language);
         }
     }
     
     private String buildAnalysisPrompt(String repoName, String description, String readmeContent, 
                                       List<String> topics, String language) {
-        StringBuilder prompt = new StringBuilder();
+        if (repoName == null || repoName.trim().isEmpty()) {
+            throw new IllegalArgumentException("Repository name cannot be null or empty");
+        }
+        
+        StringBuilder prompt = new StringBuilder(2048);
         prompt.append("Analyze this GitHub repository and extract structured information:\n\n");
-        prompt.append("Repository Name: ").append(repoName).append("\n");
-        prompt.append("Description: ").append(description != null ? description : "No description").append("\n");
-        prompt.append("Language: ").append(language != null ? language : "Unknown").append("\n");
-        prompt.append("Topics: ").append(topics != null ? String.join(", ", topics) : "None").append("\n");
+        prompt.append("Repository Name: ").append(repoName.trim()).append("\n");
+        prompt.append("Description: ").append(description != null && !description.trim().isEmpty() ? 
+                     description.trim() : "No description available").append("\n");
+        prompt.append("Language: ").append(language != null && !language.trim().isEmpty() ? 
+                     language.trim() : "Unknown").append("\n");
+        prompt.append("Topics: ").append(topics != null && !topics.isEmpty() ? 
+                     String.join(", ", topics) : "None").append("\n");
         
         if (readmeContent != null && !readmeContent.trim().isEmpty()) {
-            prompt.append("README Content:\n").append(readmeContent.substring(0, Math.min(readmeContent.length(), 4000))).append("\n");
+            int maxReadmeLength = 3500; // Reduced to leave room for other content
+            String truncatedReadme = readmeContent.length() > maxReadmeLength ? 
+                                   readmeContent.substring(0, maxReadmeLength) + "... [truncated]" : 
+                                   readmeContent;
+            prompt.append("README Content:\n").append(truncatedReadme).append("\n");
         }
         
         prompt.append("\nExtract and return ONLY a valid JSON object with this exact structure:\n");
