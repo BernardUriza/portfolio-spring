@@ -44,8 +44,15 @@ public class GenerateProjectContentUseCaseImpl implements GenerateProjectContent
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new IllegalArgumentException("Project not found with ID: " + projectId));
         
+        // Create enhanced context for the AI
         String technologies = String.join(", ", project.getMainTechnologies());
-        String message = aiService.generateDynamicMessage(technologies);
+        String enhancedContext = String.format("Project: %s | Tech Stack: %s | Type: %s | Status: %s", 
+                project.getTitle(),
+                technologies,
+                project.getType() != null ? project.getType().toString() : "Not specified",
+                project.getStatus() != null ? project.getStatus().toString() : "Active");
+        
+        String message = aiService.generateDynamicMessage(enhancedContext);
         
         log.info("Dynamic message generated successfully for project ID: {}", projectId);
         return message;

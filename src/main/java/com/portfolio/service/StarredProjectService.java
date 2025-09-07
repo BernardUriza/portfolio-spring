@@ -53,6 +53,26 @@ public class StarredProjectService {
     }
     
     @Transactional
+    public Optional<StarredProjectDto> updateProjectHomepage(Long id, String homepage) {
+        Optional<StarredProjectJpaEntity> projectOpt = starredProjectRepository.findById(id);
+        
+        if (projectOpt.isEmpty()) {
+            return Optional.empty();
+        }
+        
+        StarredProjectJpaEntity project = projectOpt.get();
+        project.setHomepage(homepage);
+        project.setUpdatedAt(LocalDateTime.now());
+        
+        StarredProjectJpaEntity updated = starredProjectRepository.save(project);
+        
+        syncMonitorService.appendLog("INFO", 
+            String.format("Updated homepage for project '%s': %s", project.getName(), homepage));
+        
+        return Optional.of(mapToDto(updated));
+    }
+    
+    @Transactional
     public boolean deleteStarredProject(Long id) {
         Optional<StarredProjectJpaEntity> starredProjectOpt = starredProjectRepository.findById(id);
         
@@ -265,7 +285,7 @@ public class StarredProjectService {
                 projectData.name,
                 projectData.description,
                 projectData.url,
-                starredProject.getGithubRepoUrl()
+                starredProject.getGithubRepoUrl() // Direct use, no prefix
             );
         } else {
             // Create new project

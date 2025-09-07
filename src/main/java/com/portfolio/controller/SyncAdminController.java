@@ -16,6 +16,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -175,6 +176,25 @@ public class SyncAdminController {
             }
         } catch (Exception e) {
             log.error("Error deleting starred project with ID {}: {}", id, e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+    
+    @PatchMapping("/projects/{id}/homepage")
+    public ResponseEntity<StarredProjectDto> updateProjectHomepage(
+            @PathVariable Long id,
+            @RequestBody Map<String, String> payload) {
+        try {
+            String homepage = payload.get("homepage");
+            if (homepage == null) {
+                return ResponseEntity.badRequest().build();
+            }
+            
+            Optional<StarredProjectDto> updated = starredProjectService.updateProjectHomepage(id, homepage);
+            return updated.map(ResponseEntity::ok)
+                         .orElse(ResponseEntity.notFound().build());
+        } catch (Exception e) {
+            log.error("Error updating project homepage for ID {}: {}", id, e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }

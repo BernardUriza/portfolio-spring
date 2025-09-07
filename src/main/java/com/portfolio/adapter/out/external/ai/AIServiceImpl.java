@@ -50,44 +50,89 @@ public class AIServiceImpl {
                 frontendPath = frontendPath.replace("portfolio-backend", "portfolio-frontend");
             }
             
+            StringBuilder toneBuilder = new StringBuilder();
+            toneBuilder.append("Bernard Uriza's Portfolio Tone & Style Context:\n\n");
+            
+            // Load index.html meta information
             java.nio.file.Path indexPath = java.nio.file.Paths.get(frontendPath, "src", "index.html");
             if (java.nio.file.Files.exists(indexPath)) {
                 String indexContent = new String(java.nio.file.Files.readAllBytes(indexPath), java.nio.charset.StandardCharsets.UTF_8);
-                
-                // Extract key portfolio tone elements
-                StringBuilder toneBuilder = new StringBuilder();
-                toneBuilder.append("Portfolio Landing Page Context:\n");
-                
                 if (indexContent.contains("Catalytic Architect")) {
-                    toneBuilder.append("- Professional title: Catalytic Architect & Full-Stack Engineer\n");
+                    toneBuilder.append("Professional Identity: Catalytic Architect & Full-Stack Engineer\n");
                 }
                 if (indexContent.contains("technical transformation")) {
-                    toneBuilder.append("- Mission: Architect of technical transformation. Design and execute software systems that catalyze change.\n");
+                    toneBuilder.append("Mission Statement: Architect of technical transformation. Design and execute software systems that catalyze change.\n\n");
                 }
-                
-                // Load i18n content if available
-                java.nio.file.Path i18nPath = java.nio.file.Paths.get(frontendPath, "src", "app", "core", "i18n.service.ts");
-                if (java.nio.file.Files.exists(i18nPath)) {
-                    String i18nContent = new String(java.nio.file.Files.readAllBytes(i18nPath), java.nio.charset.StandardCharsets.UTF_8);
-                    
-                    // Extract key messages
-                    if (i18nContent.contains("Your team doesn't need more developers")) {
-                        toneBuilder.append("- Core message: Your team doesn't need more developers. It needs a phase catalyst.\n");
-                    }
-                    if (i18nContent.contains("I break systems")) {
-                        toneBuilder.append("- Philosophy: I break systems that have outgrown their chaos but are not yet ready for stability.\n");
-                    }
-                    if (i18nContent.contains("Technical catalyst")) {
-                        toneBuilder.append("- Identity: Technical catalyst and architecture strategist. I expose what is broken and engineer coherence where chaos once reigned.\n");
-                    }
-                }
-                
-                portfolioToneContext = toneBuilder.toString();
-                log.info("Portfolio tone context loaded successfully");
-            } else {
-                log.warn("Portfolio frontend files not found, using default tone context");
-                portfolioToneContext = getDefaultPortfolioTone();
             }
+            
+            // Load comprehensive i18n content
+            java.nio.file.Path i18nPath = java.nio.file.Paths.get(frontendPath, "src", "app", "core", "i18n.service.ts");
+            if (java.nio.file.Files.exists(i18nPath)) {
+                String i18nContent = new String(java.nio.file.Files.readAllBytes(i18nPath), java.nio.charset.StandardCharsets.UTF_8);
+                
+                // Hero message and philosophy
+                toneBuilder.append("CORE MESSAGING:\n");
+                if (i18nContent.contains("Your team doesn't need more developers")) {
+                    toneBuilder.append("- Hero Statement: \"Your team doesn't need more developers. It needs a phase catalyst.\"\n");
+                }
+                if (i18nContent.contains("I break systems that have outgrown their chaos")) {
+                    toneBuilder.append("- Core Philosophy: \"I break systems that have outgrown their chaos but are not yet ready for stability.\"\n");
+                }
+                
+                // About section identity
+                if (i18nContent.contains("Technical catalyst and architecture strategist")) {
+                    toneBuilder.append("- Professional Identity: \"Technical catalyst and architecture strategist. I expose what is broken and engineer coherence where chaos once reigned. I do not adapt, I transform. I do not decorate, I reconfigure.\"\n\n");
+                }
+                
+                // Key phrases/mantras
+                toneBuilder.append("KEY MANTRAS:\n");
+                if (i18nContent.contains("Dissonance sparks transformation")) {
+                    toneBuilder.append("- \"Dissonance sparks transformation\"\n");
+                }
+                if (i18nContent.contains("Refactoring cultures drives true development")) {
+                    toneBuilder.append("- \"Refactoring cultures drives true development\"\n");
+                }
+                if (i18nContent.contains("Code is the output, not the objective")) {
+                    toneBuilder.append("- \"Code is the output, not the objective\"\n");
+                }
+                if (i18nContent.contains("Architecting beyond the codebase")) {
+                    toneBuilder.append("- \"Architecting beyond the codebase\"\n");
+                }
+                if (i18nContent.contains("Cyber-resilience through catalytic design")) {
+                    toneBuilder.append("- \"Cyber-resilience through catalytic design\"\n\n");
+                }
+                
+                // Service approach
+                toneBuilder.append("APPROACH & METHODOLOGY:\n");
+                if (i18nContent.contains("I engineer safe collapse")) {
+                    toneBuilder.append("- \"I engineer safe collapse. I break the parts that are silently holding you back.\"\n");
+                }
+                if (i18nContent.contains("I leave when I'm no longer needed")) {
+                    toneBuilder.append("- \"I leave when I'm no longer needed. I don't grow with your org. I evolve it.\"\n");
+                }
+                if (i18nContent.contains("I won't make you feel comfortable")) {
+                    toneBuilder.append("- \"I won't make you feel comfortable. I'll make you feel clear.\"\n\n");
+                }
+                
+                // Transformation process
+                if (i18nContent.contains("Crisis becomes opportunity")) {
+                    toneBuilder.append("TRANSFORMATION PHILOSOPHY:\n");
+                    toneBuilder.append("- \"Crisis becomes opportunity when you embrace necessary dissonance\"\n");
+                    toneBuilder.append("- \"Only a catalytic shock can realign your organizational story\"\n\n");
+                }
+            }
+            
+            // Final style guidance
+            toneBuilder.append("TONE REQUIREMENTS:\n");
+            toneBuilder.append("- Bold, transformative, confident language\n");
+            toneBuilder.append("- Focus on systemic change and catalytic intervention\n");
+            toneBuilder.append("- Emphasize breaking through chaos to achieve coherence\n");
+            toneBuilder.append("- Use technical precision with philosophical depth\n");
+            toneBuilder.append("- Avoid generic development descriptions - focus on transformation\n\n");
+            
+            portfolioToneContext = toneBuilder.toString();
+            log.info("Portfolio tone context loaded successfully with {} characters", portfolioToneContext.length());
+            
         } catch (Exception e) {
             log.warn("Error loading portfolio tone context, using defaults: " + e.getMessage());
             portfolioToneContext = getDefaultPortfolioTone();
@@ -111,23 +156,47 @@ public class AIServiceImpl {
         
         log.info("Generating project summary for: {}", title);
         
-        String safeDescription = description != null ? description : "No description available";
-        String safeTechnologies = technologies != null ? technologies : "No technologies specified";
-        
-        if (safeDescription.length() > 50) {
-            safeDescription = safeDescription.substring(0, 50) + "...";
+        if (anthropicApiKey == null || anthropicApiKey.trim().isEmpty()) {
+            log.warn("Claude API key not configured, returning basic summary");
+            String safeDescription = description != null ? description : "No description available";
+            String safeTechnologies = technologies != null ? technologies : "No technologies specified";
+            
+            return String.format("Transformative project '%s' leveraging %s for systemic impact. %s", 
+                    title, safeTechnologies, safeDescription.length() > 100 ? 
+                    safeDescription.substring(0, 100) + "..." : safeDescription);
         }
         
-        return String.format("AI Summary for '%s': This project uses %s and focuses on %s", 
-                title, safeTechnologies, safeDescription);
+        try {
+            String prompt = buildProjectSummaryPrompt(title, description, technologies);
+            String response = callClaudeApi(prompt);
+            return parseProjectSummaryResponse(response, title, description, technologies);
+        } catch (Exception e) {
+            log.error("Error generating project summary for '{}': {}", title, e.getMessage());
+            return String.format("Catalytic project '%s' demonstrating architectural excellence through %s", 
+                    title, technologies != null ? technologies : "cutting-edge technology");
+        }
     }
     
     public String generateDynamicMessage(String technologies) {
         log.info("Generating dynamic message for technologies: {}", technologies);
         
-        // TODO: Implement actual AI service call
-        return String.format("Dynamic message: Great choice using %s! These technologies are trending.", 
-                technologies != null ? technologies : "modern tech stack");
+        if (anthropicApiKey == null || anthropicApiKey.trim().isEmpty()) {
+            log.warn("Claude API key not configured, returning catalytic message");
+            return String.format("Your project catalyzes change through %s. " +
+                    "This technology stack doesn't just build solutions—it transforms systems and breaks through complexity.", 
+                    technologies != null ? technologies : "strategic technology choices");
+        }
+        
+        try {
+            String prompt = buildDynamicMessagePrompt(technologies);
+            String response = callClaudeApi(prompt);
+            return parseDynamicMessageResponse(response, technologies);
+        } catch (Exception e) {
+            log.error("Error generating dynamic message for technologies '{}': {}", technologies, e.getMessage());
+            return String.format("These technologies (%s) are instruments of transformation. " +
+                    "They don't just solve problems—they reconfigure possibilities.", 
+                    technologies != null ? technologies : "your chosen stack");
+        }
     }
     
     public AIServicePort.ClaudeAnalysisResult analyzeRepository(String repoName, String description, 
@@ -301,5 +370,98 @@ public class AIServiceImpl {
         List<String> experiences = Arrays.asList("Software Development", "Open Source Development");
         
         return new AIServicePort.ClaudeAnalysisResult(projectData, skills, experiences);
+    }
+    
+    private String buildProjectSummaryPrompt(String title, String description, String technologies) {
+        StringBuilder prompt = new StringBuilder();
+        
+        prompt.append("You are creating content for Bernard Uriza's portfolio website.\n\n");
+        prompt.append(portfolioToneContext != null ? portfolioToneContext : getDefaultPortfolioTone());
+        prompt.append("\n");
+        
+        prompt.append("Create a powerful, catalytic summary for this project that matches the portfolio's transformative tone:\n\n");
+        prompt.append("Project Title: ").append(title).append("\n");
+        prompt.append("Description: ").append(description != null ? description : "No description provided").append("\n");
+        prompt.append("Technologies: ").append(technologies != null ? technologies : "Not specified").append("\n\n");
+        
+        prompt.append("Requirements:\n");
+        prompt.append("- Write in Bernard's bold, transformative voice\n");
+        prompt.append("- Focus on architectural significance and systemic impact\n");
+        prompt.append("- Use decisive, powerful language that avoids generic development terms\n");
+        prompt.append("- Maximum 200 characters\n");
+        prompt.append("- Return ONLY the summary text, no explanations\n");
+        
+        return prompt.toString();
+    }
+    
+    private String buildDynamicMessagePrompt(String technologies) {
+        StringBuilder prompt = new StringBuilder();
+        
+        prompt.append("You are creating content for Bernard Uriza's portfolio website.\n\n");
+        prompt.append(portfolioToneContext != null ? portfolioToneContext : getDefaultPortfolioTone());
+        prompt.append("\n");
+        
+        prompt.append("Create an engaging, catalytic message about these technologies that matches the portfolio's tone:\n\n");
+        prompt.append("Technologies: ").append(technologies != null ? technologies : "Modern technology stack").append("\n\n");
+        
+        prompt.append("Requirements:\n");
+        prompt.append("- Write as Bernard's AI representative\n");
+        prompt.append("- Focus on transformation and systemic change potential\n");
+        prompt.append("- Avoid generic tech praise - focus on architectural and catalytic aspects\n");
+        prompt.append("- Maximum 250 characters\n");
+        prompt.append("- Return ONLY the message text, no explanations\n");
+        
+        return prompt.toString();
+    }
+    
+    private String parseProjectSummaryResponse(String response, String fallbackTitle, String fallbackDescription, String fallbackTech) {
+        try {
+            // Try to parse as JSON first, but if it's plain text, use it directly
+            if (response.trim().startsWith("{")) {
+                JsonNode jsonNode = objectMapper.readTree(response);
+                if (jsonNode.has("summary")) {
+                    return jsonNode.path("summary").asText();
+                }
+            }
+            
+            // Use response as-is if it looks like a summary
+            String cleaned = response.trim().replaceAll("^[\"']|[\"']$", "");
+            if (cleaned.length() > 10 && cleaned.length() <= 400) {
+                return cleaned;
+            }
+            
+        } catch (Exception e) {
+            log.debug("Could not parse Claude response as JSON, using fallback");
+        }
+        
+        // Fallback
+        return String.format("Transformative project '%s' leveraging %s for catalytic impact.", 
+                fallbackTitle, fallbackTech != null ? fallbackTech : "cutting-edge technology");
+    }
+    
+    private String parseDynamicMessageResponse(String response, String fallbackTech) {
+        try {
+            // Try to parse as JSON first, but if it's plain text, use it directly
+            if (response.trim().startsWith("{")) {
+                JsonNode jsonNode = objectMapper.readTree(response);
+                if (jsonNode.has("message")) {
+                    return jsonNode.path("message").asText();
+                }
+            }
+            
+            // Use response as-is if it looks like a message
+            String cleaned = response.trim().replaceAll("^[\"']|[\"']$", "");
+            if (cleaned.length() > 10 && cleaned.length() <= 500) {
+                return cleaned;
+            }
+            
+        } catch (Exception e) {
+            log.debug("Could not parse Claude response as JSON, using fallback");
+        }
+        
+        // Fallback
+        return String.format("These technologies (%s) are instruments of systemic transformation. " +
+                "They don't just solve problems—they reconfigure architectural possibilities.", 
+                fallbackTech != null ? fallbackTech : "your chosen stack");
     }
 }

@@ -158,9 +158,27 @@ public class GitHubSyncService {
             }
             
             // Filter out repos with missing essential data
-            return Arrays.stream(repos)
-                         .filter(repo -> repo.id != null && repo.name != null && !repo.name.trim().isEmpty())
+            List<GitHubRepo> validRepos = Arrays.stream(repos)
+                         .filter(repo -> {
+                             if (repo.id == null) {
+                                 log.debug("Skipping repo with null ID");
+                                 return false;
+                             }
+                             if (repo.name == null || repo.name.trim().isEmpty()) {
+                                 log.debug("Skipping repo with empty name (ID: {})", repo.id);
+                                 return false;
+                             }
+                             if (!repo.hasValidFullName()) {
+                                 log.warn("Skipping repo '{}' with invalid full_name format: '{}'", 
+                                         repo.name, repo.full_name);
+                                 return false;
+                             }
+                             return true;
+                         })
                          .collect(Collectors.toList());
+                         
+            log.debug("Filtered {} valid repositories out of {} total", validRepos.size(), repos.length);
+            return validRepos;
                          
         } catch (Exception e) {
             log.error("Failed to fetch starred repositories for user: {}, Error: {}", githubUsername, e.getMessage());
@@ -172,6 +190,7 @@ public class GitHubSyncService {
         existing.setName(repo.name);
         existing.setFullName(repo.full_name);
         existing.setDescription(repo.description);
+        existing.setGithubRepoUrl(repo.html_url); // Fix: ensure URL is always updated from GitHub
         existing.setHomepage(repo.homepage);
         existing.setLanguage(repo.language);
         existing.setFork(repo.fork);
@@ -216,32 +235,61 @@ public class GitHubSyncService {
     
     private void fetchAndStoreReadme(StarredProjectJpaEntity starredProject, GitHubRepo repo) {
         try {
-            syncMonitorService.appendLog("DEBUG", "Fetching README for: " + repo.name);
+            syncMonitorService.appendLog("DEBUG", "Fetching README for: " + repo.name + " (fullName: " + repo.full_name + ")");
             
             String readmeContent = fetchRepositoryReadme(repo.full_name);
             if (readmeContent != null && !readmeContent.trim().isEmpty()) {
                 starredProject.setReadmeMarkdown(readmeContent);
                 starredProjectRepository.save(starredProject);
-                syncMonitorService.appendLog("DEBUG", "README fetched for: " + repo.name);
+                syncMonitorService.appendLog("DEBUG", "README successfully fetched for: " + repo.name);
             } else {
-                syncMonitorService.appendLog("DEBUG", "No README found for: " + repo.name);
+                // Clear any existing README content if it's no longer available
+                starredProject.setReadmeMarkdown(null);
+                starredProjectRepository.save(starredProject);
+                syncMonitorService.appendLog("DEBUG", "No README available for: " + repo.name + " - marked as unavailable");
             }
         } catch (Exception e) {
-            log.warn("Failed to fetch README for {}: {}", repo.name, e.getMessage());
+            log.warn("Failed to fetch README for {} ({}): {}", repo.name, repo.full_name, e.getMessage());
             syncMonitorService.appendLog("WARN", "Failed to fetch README for " + repo.name + ": " + e.getMessage());
+            
+            // Ensure README is marked as unavailable on fetch failure
+            starredProject.setReadmeMarkdown(null);
+            starredProjectRepository.save(starredProject);
         }
     }
     
+    /**
+     * Fetch README content from GitHub API using repository full name.
+     * 
+     * IMPORTANT: Uses GitHub API endpoint, NOT raw.githubusercontent.com
+     * 
+     * @param fullName Repository full name in format "owner/repo" (e.g., "BernardUriza/portfolio-backend")
+     * @return README markdown content or null if not available
+     * 
+     * Examples:
+     * ✅ Correct usage: fetchRepositoryReadme("BernardUriza/portfolio-backend")
+     * ❌ Incorrect: Using html_url or constructing raw URLs like:
+     *   "https://raw.githubusercontent.com/https://github.com/owner/repo/master/README.md"
+     */
     private String fetchRepositoryReadme(String fullName) {
         if (fullName == null || fullName.trim().isEmpty()) {
             log.warn("Invalid repository full name provided for README fetch");
             return null;
         }
         
+        // Ensure fullName is in correct format (owner/repo)
+        String cleanFullName = fullName.trim();
+        if (!cleanFullName.matches("^[^/]+/[^/]+$")) {
+            log.warn("Invalid fullName format: '{}'. Expected format: 'owner/repo'", cleanFullName);
+            return null;
+        }
+        
         WebClient webClient = createWebClient();
-        String uri = "/repos/" + fullName.trim() + "/readme";
+        String uri = "/repos/" + cleanFullName + "/readme";
         
         try {
+            log.debug("Fetching README from GitHub API: {}", uri);
+            
             Mono<GitHubReadmeResponse> response = webClient.get()
                 .uri(uri)
                 .retrieve()
@@ -259,17 +307,26 @@ public class GitHubSyncService {
                     
                     // Limit README size to prevent memory issues
                     if (decodedContent.length() > 50000) {
-                        log.debug("Truncating large README for repository: {} (size: {})", fullName, decodedContent.length());
+                        log.debug("Truncating large README for repository: {} (size: {})", cleanFullName, decodedContent.length());
                         return decodedContent.substring(0, 50000) + "\n\n... [README truncated due to size]";
                     }
                     
+                    log.debug("Successfully fetched and decoded README for: {}", cleanFullName);
                     return decodedContent;
                 } catch (IllegalArgumentException e) {
-                    log.warn("Failed to decode base64 README content for {}: {}", fullName, e.getMessage());
+                    log.warn("Failed to decode base64 README content for {}: {}", cleanFullName, e.getMessage());
                 }
+            } else {
+                log.debug("Empty or null README response for: {}", cleanFullName);
+            }
+        } catch (org.springframework.web.reactive.function.client.WebClientResponseException e) {
+            if (e.getStatusCode().value() == 404) {
+                log.debug("README not found for repository: {} (404)", cleanFullName);
+            } else {
+                log.warn("HTTP error {} fetching README for {}: {}", e.getStatusCode().value(), cleanFullName, e.getMessage());
             }
         } catch (Exception e) {
-            log.debug("Could not fetch README for {}: {}", fullName, e.getMessage());
+            log.debug("Could not fetch README for {}: {}", cleanFullName, e.getMessage());
         }
         
         return null;
@@ -302,6 +359,32 @@ public class GitHubSyncService {
         public List<String> topics;
         public String created_at;
         public String updated_at;
+        
+        /**
+         * Validates that the full_name is in the correct format for GitHub API calls.
+         * @return true if full_name is in "owner/repo" format
+         */
+        public boolean hasValidFullName() {
+            return full_name != null && full_name.matches("^[^/]+/[^/]+$");
+        }
+        
+        /**
+         * Gets the repository owner from full_name.
+         * @return owner name or null if invalid format
+         */
+        public String getOwner() {
+            if (!hasValidFullName()) return null;
+            return full_name.split("/")[0];
+        }
+        
+        /**
+         * Gets the repository name from full_name.
+         * @return repository name or null if invalid format
+         */
+        public String getRepoName() {
+            if (!hasValidFullName()) return null;
+            return full_name.split("/")[1];
+        }
     }
     
     private static class GitHubReadmeResponse {
