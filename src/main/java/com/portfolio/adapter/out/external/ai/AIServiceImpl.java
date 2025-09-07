@@ -264,7 +264,8 @@ public class AIServiceImpl {
         prompt.append("2. Focus on the transformative impact and architectural significance\n");
         prompt.append("3. Use powerful, decisive language that matches the portfolio style\n");
         prompt.append("4. Skills should be technical and strategic\n");
-        prompt.append("5. Experiences should reflect leadership and transformation\n\n");
+        prompt.append("5. Experiences should reflect leadership and transformation\n");
+        prompt.append("6. CRITICAL: Keep project description under 900 characters - be concise but powerful\n\n");
         
         prompt.append("Return ONLY a valid JSON object with this exact structure:\n");
         prompt.append("{\n");
@@ -319,9 +320,12 @@ public class AIServiceImpl {
             
             // Parse project data
             JsonNode projectNode = jsonNode.path("project");
+            String rawDescription = projectNode.path("description").asText(fallbackDescription);
+            String safeDescription = truncateDescription(rawDescription, fallbackDescription);
+            
             AIServicePort.ProjectData projectData = new AIServicePort.ProjectData(
                 projectNode.path("name").asText(fallbackName),
-                projectNode.path("description").asText(fallbackDescription),
+                safeDescription,
                 projectNode.path("estimatedDurationWeeks").isNull() ? null : projectNode.path("estimatedDurationWeeks").asInt(),
                 parseStringArray(projectNode.path("technologies"), fallbackTopics),
                 projectNode.path("url").asText("")
@@ -354,9 +358,10 @@ public class AIServiceImpl {
             technologies.add(language);
         }
         
+        String safeDescription = truncateDescription(description, "GitHub repository: " + repoName);
         AIServicePort.ProjectData projectData = new AIServicePort.ProjectData(
             repoName,
-            description != null ? description : "GitHub repository: " + repoName,
+            safeDescription,
             null,
             technologies,
             ""
@@ -388,7 +393,7 @@ public class AIServiceImpl {
         prompt.append("- Write in Bernard's bold, transformative voice\n");
         prompt.append("- Focus on architectural significance and systemic impact\n");
         prompt.append("- Use decisive, powerful language that avoids generic development terms\n");
-        prompt.append("- Maximum 200 characters\n");
+        prompt.append("- CRITICAL: Maximum 180 characters - be concise and impactful\n");
         prompt.append("- Return ONLY the summary text, no explanations\n");
         
         return prompt.toString();
@@ -463,5 +468,46 @@ public class AIServiceImpl {
         return String.format("These technologies (%s) are instruments of systemic transformation. " +
                 "They don't just solve problems—they reconfigure architectural possibilities.", 
                 fallbackTech != null ? fallbackTech : "your chosen stack");
+    }
+    
+    /**
+     * Safely truncates description to fit within database constraints
+     * @param description The AI-generated description
+     * @param fallback Fallback description if truncation results in empty string
+     * @return Description that fits within 1000 character limit
+     */
+    private String truncateDescription(String description, String fallback) {
+        if (description == null || description.trim().isEmpty()) {
+            return fallback != null ? fallback : "GitHub repository";
+        }
+        
+        String cleanDescription = description.trim();
+        
+        // If within limit, return as-is
+        if (cleanDescription.length() <= 1000) {
+            return cleanDescription;
+        }
+        
+        // Truncate intelligently at sentence boundary if possible
+        String truncated = cleanDescription.substring(0, 997); // Leave room for "..."
+        
+        // Try to end at sentence boundary
+        int lastSentenceEnd = Math.max(truncated.lastIndexOf('. '), truncated.lastIndexOf('! '));
+        lastSentenceEnd = Math.max(lastSentenceEnd, truncated.lastIndexOf('? '));
+        
+        if (lastSentenceEnd > 500) { // Only use sentence boundary if it's not too short
+            truncated = truncated.substring(0, lastSentenceEnd + 1);
+        } else {
+            // Fallback: truncate at word boundary
+            int lastSpace = truncated.lastIndexOf(' ');
+            if (lastSpace > 500) {
+                truncated = truncated.substring(0, lastSpace) + "...";
+            } else {
+                truncated = truncated + "...";
+            }
+        }
+        
+        log.debug("Truncated description from {} to {} characters", cleanDescription.length(), truncated.length());
+        return truncated;
     }
 }
