@@ -265,7 +265,8 @@ public class AIServiceImpl {
         prompt.append("3. Use powerful, decisive language that matches the portfolio style\n");
         prompt.append("4. Skills should be technical and strategic\n");
         prompt.append("5. Experiences should reflect leadership and transformation\n");
-        prompt.append("6. CRITICAL: Keep project description under 900 characters - be concise but powerful\n\n");
+        prompt.append("6. CRITICAL: Keep project description under 900 characters - be concise but powerful\n");
+        prompt.append("7. CRITICAL: Experience job titles must be under 180 characters - be precise and impactful\n\n");
         
         prompt.append("Return ONLY a valid JSON object with this exact structure:\n");
         prompt.append("{\n");
@@ -468,6 +469,39 @@ public class AIServiceImpl {
         return String.format("These technologies (%s) are instruments of systemic transformation. " +
                 "They don't just solve problems—they reconfigure architectural possibilities.", 
                 fallbackTech != null ? fallbackTech : "your chosen stack");
+    }
+    
+    /**
+     * Safely truncates job title to fit within database constraints
+     * @param jobTitle The AI-generated job title
+     * @param fallback Fallback job title if truncation results in empty string
+     * @return Job title that fits within 200 character limit
+     */
+    public String truncateJobTitle(String jobTitle, String fallback) {
+        if (jobTitle == null || jobTitle.trim().isEmpty()) {
+            return fallback != null ? fallback : "Software Developer";
+        }
+        
+        String cleanJobTitle = jobTitle.trim();
+        
+        // If within limit, return as-is
+        if (cleanJobTitle.length() <= 200) {
+            return cleanJobTitle;
+        }
+        
+        // Truncate intelligently at word boundary if possible
+        String truncated = cleanJobTitle.substring(0, 197); // Leave room for "..."
+        
+        // Try to end at word boundary
+        int lastSpace = truncated.lastIndexOf(' ');
+        if (lastSpace > 100) { // Only use word boundary if it's not too short
+            truncated = truncated.substring(0, lastSpace) + "...";
+        } else {
+            truncated = truncated + "...";
+        }
+        
+        log.debug("Truncated job title from {} to {} characters", cleanJobTitle.length(), truncated.length());
+        return truncated;
     }
     
     /**

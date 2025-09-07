@@ -361,7 +361,7 @@ public class StarredProjectService {
         for (String experienceName : experienceNames) {
             if (experienceName == null || experienceName.trim().isEmpty()) continue;
             
-            String cleanExperienceName = experienceName.trim();
+            String cleanExperienceName = truncateJobTitle(experienceName.trim());
             
             // Check if similar experience already exists
             Optional<Experience> existingExperience = experienceRepositoryPort.findAll().stream()
@@ -488,5 +488,38 @@ public class StarredProjectService {
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
                 .build();
+    }
+    
+    /**
+     * Safely truncates job title to fit within database constraints
+     * @param jobTitle The AI-generated job title
+     * @return Job title that fits within 200 character limit
+     */
+    private String truncateJobTitle(String jobTitle) {
+        if (jobTitle == null || jobTitle.trim().isEmpty()) {
+            return "Software Developer";
+        }
+        
+        String cleanJobTitle = jobTitle.trim();
+        
+        // If within limit, return as-is
+        if (cleanJobTitle.length() <= 200) {
+            return cleanJobTitle;
+        }
+        
+        // Truncate intelligently at word boundary if possible
+        String truncated = cleanJobTitle.substring(0, 197); // Leave room for "..."
+        
+        // Try to end at word boundary
+        int lastSpace = truncated.lastIndexOf(' ');
+        if (lastSpace > 100) { // Only use word boundary if it's not too short
+            truncated = truncated.substring(0, lastSpace) + "...";
+        } else {
+            truncated = truncated + "...";
+        }
+        
+        log.debug("Truncated job title from {} to {} characters: '{}' -> '{}'", 
+                cleanJobTitle.length(), truncated.length(), cleanJobTitle, truncated);
+        return truncated;
     }
 }
