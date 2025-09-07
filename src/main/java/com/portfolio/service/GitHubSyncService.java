@@ -29,6 +29,7 @@ public class GitHubSyncService {
     private final StarredProjectJpaRepository starredProjectRepository;
     private final SyncMonitorService syncMonitorService;
     private final WebClient.Builder webClientBuilder;
+    private final StarredProjectService starredProjectService;
     
     @Value("${github.api.token:}")
     private String githubToken;
@@ -99,6 +100,16 @@ public class GitHubSyncService {
             
             syncMonitorService.appendLog("INFO", 
                 String.format("Sync completed: %d synced, %d skipped", syncedCount, skippedCount));
+            
+            // Process unsynced projects with Claude API
+            try {
+                syncMonitorService.appendLog("INFO", "Starting Claude analysis of unsynced projects");
+                starredProjectService.processUnsyncedProjects();
+                syncMonitorService.appendLog("INFO", "Claude analysis completed");
+            } catch (Exception e) {
+                log.error("Error during Claude processing", e);
+                syncMonitorService.appendLog("ERROR", "Claude processing failed: " + e.getMessage());
+            }
             
             syncMonitorService.markSyncCompleted(
                 starredRepos.size(),

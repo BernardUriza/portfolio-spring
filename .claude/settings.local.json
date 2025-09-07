@@ -18,7 +18,9 @@
       "Bash(curl:*)",
       "Bash(timeout:*)",
       "Bash(npm run build:*)",
-      "Bash(taskkill:*)"
+      "Bash(taskkill:*)",
+      "Bash(find:*)",
+      "Bash(del:*)"
     ],
     "deny": [],
     "ask": []

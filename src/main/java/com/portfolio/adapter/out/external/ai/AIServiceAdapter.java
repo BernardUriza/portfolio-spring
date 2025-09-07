@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Component
@@ -48,6 +49,33 @@ public class AIServiceAdapter implements AIServicePort {
         } catch (Exception e) {
             log.error("Error analyzing technologies", e);
             return "Unable to analyze technologies at this time.";
+        }
+    }
+    
+    @Override
+    public AIServicePort.ClaudeAnalysisResult analyzeRepository(String repoName, String description, 
+                                                               String readmeContent, List<String> topics, String language) {
+        log.debug("Analyzing repository with AI: {}", repoName);
+        
+        try {
+            return aiService.analyzeRepository(repoName, description, readmeContent, topics, language);
+        } catch (Exception e) {
+            log.error("Error analyzing repository with AI", e);
+            // Return minimal fallback data
+            List<String> skills = topics != null ? new ArrayList<>(topics) : new ArrayList<>();
+            if (language != null && !skills.contains(language)) {
+                skills.add(language);
+            }
+            
+            AIServicePort.ProjectData projectData = new AIServicePort.ProjectData(
+                repoName, 
+                description != null ? description : "GitHub repository: " + repoName,
+                null,
+                skills,
+                ""
+            );
+            
+            return new AIServicePort.ClaudeAnalysisResult(projectData, skills, List.of("Software Development"));
         }
     }
 }

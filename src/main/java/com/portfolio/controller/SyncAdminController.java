@@ -15,6 +15,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -175,6 +176,92 @@ public class SyncAdminController {
         } catch (Exception e) {
             log.error("Error deleting starred project with ID {}: {}", id, e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+    
+    @PostMapping("/process")
+    public ResponseEntity<Void> processUnsyncedProjects() {
+        try {
+            syncMonitorService.appendLog("INFO", "Manual Claude processing triggered");
+            
+            // Run processing asynchronously
+            CompletableFuture.runAsync(() -> {
+                try {
+                    starredProjectService.processUnsyncedProjects();
+                } catch (Exception e) {
+                    log.error("Manual Claude processing failed", e);
+                    syncMonitorService.markSyncFailed(e.getMessage());
+                }
+            }, executorService);
+            
+            return ResponseEntity.accepted().build();
+        } catch (Exception e) {
+            log.error("Error triggering Claude processing", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+    
+    @PostMapping("/process/{id}")
+    public ResponseEntity<Void> processSpecificProject(@PathVariable Long id) {
+        try {
+            syncMonitorService.appendLog("INFO", "Manual Claude processing triggered for project ID: " + id);
+            
+            // Run processing asynchronously  
+            CompletableFuture.runAsync(() -> {
+                try {
+                    starredProjectService.processStarredProject(id);
+                } catch (Exception e) {
+                    log.error("Manual Claude processing failed for project ID: " + id, e);
+                    syncMonitorService.appendLog("ERROR", "Processing failed for project " + id + ": " + e.getMessage());
+                }
+            }, executorService);
+            
+            return ResponseEntity.accepted().build();
+        } catch (Exception e) {
+            log.error("Error triggering Claude processing for project ID: {}", id, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+    
+    @PostMapping("/reset-unsynced")
+    public ResponseEntity<Void> resetToUnsynced() {
+        try {
+            syncMonitorService.appendLog("INFO", "Resetting all projects to UNSYNCED status");
+            starredProjectService.resetAllProjectsToUnsynced();
+            return ResponseEntity.accepted().build();
+        } catch (Exception e) {
+            log.error("Error resetting projects to unsynced", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+    
+    @GetMapping("/test-claude")
+    public ResponseEntity<Map<String, Object>> testClaudeAPI() {
+        try {
+            log.info("Testing Claude API connection");
+            Map<String, Object> result = starredProjectService.testClaudeConnection();
+            
+            // Add debug info about API key
+            String apiKey = System.getProperty("anthropic.api.key");
+            if (apiKey == null) {
+                apiKey = System.getenv("ANTHROPIC_API_KEY");
+            }
+            
+            if (apiKey != null && apiKey.length() > 10) {
+                result.put("apiKeyPresent", true);
+                result.put("apiKeyPreview", apiKey.substring(0, 10) + "...");
+            } else {
+                result.put("apiKeyPresent", false);
+                result.put("apiKeyValue", apiKey);
+            }
+            
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            log.error("Error testing Claude API", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                "success", false,
+                "error", e.getMessage()
+            ));
         }
     }
 }
