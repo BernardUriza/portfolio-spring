@@ -526,8 +526,8 @@ public class AIServiceImpl {
         String truncated = cleanDescription.substring(0, 997); // Leave room for "..."
         
         // Try to end at sentence boundary
-        int lastSentenceEnd = Math.max(truncated.lastIndexOf('. '), truncated.lastIndexOf('! '));
-        lastSentenceEnd = Math.max(lastSentenceEnd, truncated.lastIndexOf('? '));
+        int lastSentenceEnd = Math.max(truncated.lastIndexOf(". "), truncated.lastIndexOf("! "));
+        lastSentenceEnd = Math.max(lastSentenceEnd, truncated.lastIndexOf("? "));
         
         if (lastSentenceEnd > 500) { // Only use sentence boundary if it's not too short
             truncated = truncated.substring(0, lastSentenceEnd + 1);

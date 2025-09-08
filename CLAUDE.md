@@ -47,6 +47,9 @@ This is a Spring Boot portfolio backend API with the following structure:
 - `/api/projects/starred/sync` - Manual sync trigger
 - `/api/projects/starred/stats` - Repository statistics
 - `/api/projects/starred/rate-limit` - GitHub API rate limit status
+- `/api/admin/factory-reset` - Factory reset endpoint (destructive)
+- `/api/admin/factory-reset/stream/{jobId}` - SSE progress streaming
+- `/api/admin/factory-reset/audit` - Factory reset audit history
 
 ## Important Claude Code Lessons Learned
 
@@ -84,6 +87,7 @@ Remember to configure:
 2. `GITHUB_TOKEN` environment variable with GitHub personal access token
 3. `ANTHROPIC_API_KEY` environment variable with your Claude API key
 4. Frontend CORS origin in application.properties if different from localhost:4200
+5. For Factory Reset: `ENABLE_FACTORY_RESET=true` and `ADMIN_RESET_TOKEN=your-secure-token`
 
 ### Claude API Integration
 The system now includes semantic analysis that:
@@ -92,5 +96,21 @@ The system now includes semantic analysis that:
 - Uses intelligent prompt engineering to extract meaningful data
 - Handles API failures gracefully with comprehensive logging
 - Only processes new repos or those with significant changes (description, language, topics)
+
+### Factory Reset Feature
+A comprehensive admin feature for database cleanup with:
+- **Security**: Token validation, confirmation headers, rate limiting
+- **Async Processing**: Server-Sent Events (SSE) for progress streaming
+- **Database Support**: PostgreSQL (TRUNCATE) and H2 (repository-based)
+- **Audit Trail**: Complete logging of all reset attempts with timing
+- **Hexagonal Architecture**: Domain-driven design with clean separation
+
+The implementation includes:
+- `ResetAudit` domain entity with lifecycle methods
+- `FactoryResetService` with database-specific strategies
+- `AdminResetController` with comprehensive security validation
+- SSE streaming for real-time progress updates
+- Rate limiting (1 attempt per 10 minutes per IP)
+- Comprehensive unit tests for domain and service layers
 
 When making changes, follow Spring Boot conventions for package structure, use Lombok annotations for boilerplate reduction, and implement proper error handling with try-catch blocks and logging.
