@@ -156,4 +156,12 @@ public class ProjectJpaEntity {
     public enum ProjectTypeJpa {
         PERSONAL, PROFESSIONAL, OPEN_SOURCE, EDUCATIONAL, CLIENT_WORK
     }
+    
+    public enum ProjectCompletionStatusJpa {
+        BACKLOG, IN_PROGRESS, LIVE, ARCHIVED
+    }
+    
+    public enum ProjectPriorityJpa {
+        LOW, MEDIUM, HIGH
+    }
 }
