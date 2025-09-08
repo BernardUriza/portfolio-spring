@@ -81,6 +81,49 @@ public class ProjectJpaEntity {
     @Column(name = "starred_project_id")
     private Long sourceStarredProjectId;
     
+    // Repository linking information
+    @Column(name = "repository_id")
+    private Long repositoryId;
+    
+    @Column(name = "repository_full_name", length = 300)
+    private String repositoryFullName;
+    
+    @Column(name = "repository_url", length = 500)
+    private String repositoryUrl;
+    
+    @Column(name = "repository_stars")
+    private Integer repositoryStars;
+    
+    @Column(name = "default_branch", length = 100)
+    private String defaultBranch;
+    
+    // Project completion management
+    @Enumerated(EnumType.STRING)
+    @Column(name = "completion_status")
+    @Builder.Default
+    private ProjectCompletionStatusJpa completionStatus = ProjectCompletionStatusJpa.BACKLOG;
+    
+    @Enumerated(EnumType.STRING)
+    @Column(name = "priority")
+    private ProjectPriorityJpa priority;
+    
+    // Field protection flags
+    @Column(name = "protect_description")
+    @Builder.Default
+    private Boolean protectDescription = false;
+    
+    @Column(name = "protect_live_demo_url")
+    @Builder.Default
+    private Boolean protectLiveDemoUrl = false;
+    
+    @Column(name = "protect_skills")
+    @Builder.Default
+    private Boolean protectSkills = false;
+    
+    @Column(name = "protect_experiences")
+    @Builder.Default
+    private Boolean protectExperiences = false;
+    
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -112,5 +155,13 @@ public class ProjectJpaEntity {
     
     public enum ProjectTypeJpa {
         PERSONAL, PROFESSIONAL, OPEN_SOURCE, EDUCATIONAL, CLIENT_WORK
+    }
+    
+    public enum ProjectCompletionStatusJpa {
+        BACKLOG, IN_PROGRESS, LIVE, ARCHIVED
+    }
+    
+    public enum ProjectPriorityJpa {
+        LOW, MEDIUM, HIGH
     }
 }

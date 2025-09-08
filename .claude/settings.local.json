@@ -22,7 +22,8 @@
       "Bash(find:*)",
       "Bash(del:*)",
       "Bash(ng serve:*)",
-      "Bash(dir:*)"
+      "Bash(dir:*)",
+      "Bash(java:*)"
     ],
     "deny": [],
     "ask": []

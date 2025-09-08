@@ -36,7 +36,21 @@ public class Project extends DomainEntity {
     private final LocalDateTime createdAt;
     private final LocalDateTime updatedAt;
     
-    // Manual override flags to protect fields from sync overwriting
+    // Repository linking information
+    private final Long repositoryId;
+    private final String repositoryFullName;
+    private final String repositoryUrl;
+    private final Integer repositoryStars;
+    private final String defaultBranch;
+    
+    // Project completion management
+    @Builder.Default
+    private final ProjectCompletionStatus completionStatus = ProjectCompletionStatus.BACKLOG;
+    private final ProjectPriority priority;
+    @Builder.Default
+    private final FieldProtection protection = FieldProtection.allUnprotected();
+    
+    // Manual override flags to protect fields from sync overwriting (deprecated - use protection)
     @Builder.Default
     private final Boolean manualDescriptionOverride = false;
     @Builder.Default
@@ -186,6 +200,84 @@ public class Project extends DomainEntity {
     public boolean hasReadmeMarkdown() {
         // This will need to be checked against StarredProject
         return true; // Placeholder - will be implemented in service layer
+    }
+    
+    // Repository linking methods
+    public Project linkToRepository(Long repositoryId, String repositoryFullName, String repositoryUrl, 
+                                   Integer repositoryStars, String defaultBranch) {
+        return this.toBuilder()
+                .repositoryId(repositoryId)
+                .repositoryFullName(repositoryFullName)
+                .repositoryUrl(repositoryUrl)
+                .repositoryStars(repositoryStars)
+                .defaultBranch(defaultBranch)
+                .updatedAt(LocalDateTime.now())
+                .build();
+    }
+    
+    public Project unlinkFromRepository() {
+        return this.toBuilder()
+                .repositoryId(null)
+                .repositoryFullName(null)
+                .repositoryUrl(null)
+                .repositoryStars(null)
+                .defaultBranch(null)
+                .updatedAt(LocalDateTime.now())
+                .build();
+    }
+    
+    public boolean isLinkedToRepository() {
+        return repositoryId != null && repositoryFullName != null;
+    }
+    
+    // Completion status methods
+    public Project changeCompletionStatus(ProjectCompletionStatus newStatus) {
+        if (newStatus == null) {
+            throw new IllegalArgumentException("Completion status cannot be null");
+        }
+        
+        return this.toBuilder()
+                .completionStatus(newStatus)
+                .updatedAt(LocalDateTime.now())
+                .build();
+    }
+    
+    public Project changePriority(ProjectPriority newPriority) {
+        return this.toBuilder()
+                .priority(newPriority)
+                .updatedAt(LocalDateTime.now())
+                .build();
+    }
+    
+    // Field protection methods
+    public Project protectField(String fieldName, boolean protect) {
+        FieldProtection newProtection = switch (fieldName.toLowerCase()) {
+            case "description" -> protection.withDescription(protect);
+            case "livedemouri", "link" -> protection.withLiveDemoUrl(protect);
+            case "skills" -> protection.withSkills(protect);
+            case "experiences" -> protection.withExperiences(protect);
+            default -> throw new IllegalArgumentException("Unknown field: " + fieldName);
+        };
+        
+        return this.toBuilder()
+                .protection(newProtection)
+                .updatedAt(LocalDateTime.now())
+                .build();
+    }
+    
+    public boolean isFieldProtected(String fieldName) {
+        return switch (fieldName.toLowerCase()) {
+            case "description" -> protection.getDescription();
+            case "livedemouri", "link" -> protection.getLiveDemoUrl();
+            case "skills" -> protection.getSkills();
+            case "experiences" -> protection.getExperiences();
+            default -> false;
+        };
+    }
+    
+    // Completeness calculation
+    public ProjectCompleteness getCompleteness() {
+        return ProjectCompleteness.calculate(this);
     }
     
     private static void validateTitle(String title) {
