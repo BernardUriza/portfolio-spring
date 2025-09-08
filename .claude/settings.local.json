@@ -25,7 +25,11 @@
       "Bash(dir:*)",
       "Bash(java:*)",
       "Bash(git cherry-pick:*)",
-      "Bash(git merge:*)"
+      "Bash(git merge:*)",
+      "Bash(git branch:*)",
+      "Read(//mnt/c/Users/Bernard/Documents/GitHub/portfolio-frontend/**)",
+      "Read(//mnt/c/Users/Bernard/Documents/GitHub/portfolio-frontend/**)",
+      "Read(//mnt/c/Users/Bernard/Documents/GitHub/portfolio-frontend/**)"
     ],
     "deny": [],
     "ask": []
