@@ -38,7 +38,7 @@ This is a Spring Boot portfolio backend API with the following structure:
 ### GitHub Integration
 - Requires `GITHUB_TOKEN` environment variable
 - Configure `github.username` in application.properties
-- Automated sync every 5 minutes
+- **Auto Sync**: Configurable scheduled synchronization (replaces fixed 5-minute interval)
 - Rate limiting and error handling implemented
 
 ### API Endpoints
@@ -47,6 +47,47 @@ This is a Spring Boot portfolio backend API with the following structure:
 - `/api/projects/starred/sync` - Manual sync trigger
 - `/api/projects/starred/stats` - Repository statistics
 - `/api/projects/starred/rate-limit` - GitHub API rate limit status
+
+### Auto Sync Configuration
+The application now features a dynamic, configurable auto-sync system that replaces the legacy fixed @Scheduled approach:
+
+**Core Features:**
+- **Admin-controlled**: Enable/disable via UI checkbox
+- **Flexible intervals**: 1-168 hours (configurable at runtime)
+- **Dynamic rescheduling**: No restart required for config changes
+- **Concurrency protection**: Prevents overlapping sync executions
+- **Persistent configuration**: Settings stored in database with audit trail
+
+**API Endpoints:**
+- `GET /api/admin/sync-config` - Retrieve current sync configuration
+- `PUT /api/admin/sync-config` - Update sync settings (enabled, intervalHours)
+- `GET /api/admin/sync-config/status` - Get real-time sync status and timing
+- `POST /api/admin/sync-config/run-now` - Trigger immediate sync execution
+
+**Database Schema:**
+```sql
+CREATE TABLE sync_config (
+    id BIGINT PRIMARY KEY,
+    enabled BOOLEAN NOT NULL DEFAULT FALSE,
+    interval_hours INTEGER NOT NULL DEFAULT 6,
+    last_run_at TIMESTAMP,
+    next_run_at TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL,
+    updated_by VARCHAR(255) NOT NULL
+);
+```
+
+**Architecture:**
+- `SyncConfigJpaEntity`: JPA entity with validation constraints
+- `SyncConfigService`: Business logic for CRUD operations
+- `SyncSchedulerService`: ThreadPoolTaskScheduler with dynamic task management
+- `SyncConfigAdminController`: REST endpoints with validation and error handling
+
+**Security & Validation:**
+- Input validation: 1-168 hours range enforcement
+- Concurrency control: AtomicBoolean prevents race conditions
+- Error handling: Graceful failure with detailed logging
+- Admin-only access: Secured endpoints (future enhancement)
 
 ## Important Claude Code Lessons Learned
 

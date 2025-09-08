@@ -20,7 +20,9 @@
       "Bash(npm run build:*)",
       "Bash(taskkill:*)",
       "Bash(find:*)",
-      "Bash(del:*)"
+      "Bash(del:*)",
+      "Bash(java:*)",
+      "Bash(git cherry-pick:*)"
     ],
     "deny": [],
     "ask": []

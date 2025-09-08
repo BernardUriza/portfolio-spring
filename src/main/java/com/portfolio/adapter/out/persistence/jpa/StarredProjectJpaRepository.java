@@ -13,6 +13,8 @@ public interface StarredProjectJpaRepository extends JpaRepository<StarredProjec
     
     Optional<StarredProjectJpaEntity> findByGithubId(Long githubId);
     
+    Optional<StarredProjectJpaEntity> findByFullName(String fullName);
+    
     Optional<StarredProjectJpaEntity> findByGithubRepoUrl(String githubRepoUrl);
     
     List<StarredProjectJpaEntity> findBySyncStatus(StarredProjectJpaEntity.SyncStatus syncStatus);

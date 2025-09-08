@@ -1,8 +1,6 @@
 package com.portfolio.adapter.out.persistence.jpa;
 
-import com.portfolio.core.domain.project.Project;
-import com.portfolio.core.domain.project.ProjectStatus;
-import com.portfolio.core.domain.project.ProjectType;
+import com.portfolio.core.domain.project.*;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -31,6 +29,19 @@ public class ProjectJpaMapper {
                 .experienceIds(jpaEntity.getExperienceIds() != null ? 
                         new HashSet<>(jpaEntity.getExperienceIds()) : new HashSet<>())
                 .sourceStarredProjectId(jpaEntity.getSourceStarredProjectId())
+                .repositoryId(jpaEntity.getRepositoryId())
+                .repositoryFullName(jpaEntity.getRepositoryFullName())
+                .repositoryUrl(jpaEntity.getRepositoryUrl())
+                .repositoryStars(jpaEntity.getRepositoryStars())
+                .defaultBranch(jpaEntity.getDefaultBranch())
+                .completionStatus(toDomainCompletionStatus(jpaEntity.getCompletionStatus()))
+                .priority(toDomainPriority(jpaEntity.getPriority()))
+                .protection(FieldProtection.builder()
+                        .description(jpaEntity.getProtectDescription() != null ? jpaEntity.getProtectDescription() : false)
+                        .liveDemoUrl(jpaEntity.getProtectLiveDemoUrl() != null ? jpaEntity.getProtectLiveDemoUrl() : false)
+                        .skills(jpaEntity.getProtectSkills() != null ? jpaEntity.getProtectSkills() : false)
+                        .experiences(jpaEntity.getProtectExperiences() != null ? jpaEntity.getProtectExperiences() : false)
+                        .build())
                 .createdAt(jpaEntity.getCreatedAt())
                 .updatedAt(jpaEntity.getUpdatedAt())
                 .manualDescriptionOverride(jpaEntity.getManualDescriptionOverride() != null ? 
@@ -64,6 +75,17 @@ public class ProjectJpaMapper {
                 .experienceIds(domain.getExperienceIds() != null ? 
                         new HashSet<>(domain.getExperienceIds()) : new HashSet<>())
                 .sourceStarredProjectId(domain.getSourceStarredProjectId())
+                .repositoryId(domain.getRepositoryId())
+                .repositoryFullName(domain.getRepositoryFullName())
+                .repositoryUrl(domain.getRepositoryUrl())
+                .repositoryStars(domain.getRepositoryStars())
+                .defaultBranch(domain.getDefaultBranch())
+                .completionStatus(toJpaCompletionStatus(domain.getCompletionStatus()))
+                .priority(toJpaPriority(domain.getPriority()))
+                .protectDescription(domain.getProtection().getDescription())
+                .protectLiveDemoUrl(domain.getProtection().getLiveDemoUrl())
+                .protectSkills(domain.getProtection().getSkills())
+                .protectExperiences(domain.getProtection().getExperiences())
                 .createdAt(domain.getCreatedAt())
                 .updatedAt(domain.getUpdatedAt())
                 .manualDescriptionOverride(domain.getManualDescriptionOverride() != null ? 
@@ -120,6 +142,48 @@ public class ProjectJpaMapper {
             case OPEN_SOURCE -> ProjectJpaEntity.ProjectTypeJpa.OPEN_SOURCE;
             case EDUCATIONAL -> ProjectJpaEntity.ProjectTypeJpa.EDUCATIONAL;
             case CLIENT_WORK -> ProjectJpaEntity.ProjectTypeJpa.CLIENT_WORK;
+        };
+    }
+    
+    public ProjectCompletionStatus toDomainCompletionStatus(ProjectJpaEntity.ProjectCompletionStatusJpa jpaStatus) {
+        if (jpaStatus == null) return ProjectCompletionStatus.BACKLOG;
+        
+        return switch (jpaStatus) {
+            case BACKLOG -> ProjectCompletionStatus.BACKLOG;
+            case IN_PROGRESS -> ProjectCompletionStatus.IN_PROGRESS;
+            case LIVE -> ProjectCompletionStatus.LIVE;
+            case ARCHIVED -> ProjectCompletionStatus.ARCHIVED;
+        };
+    }
+    
+    public ProjectJpaEntity.ProjectCompletionStatusJpa toJpaCompletionStatus(ProjectCompletionStatus domainStatus) {
+        if (domainStatus == null) return ProjectJpaEntity.ProjectCompletionStatusJpa.BACKLOG;
+        
+        return switch (domainStatus) {
+            case BACKLOG -> ProjectJpaEntity.ProjectCompletionStatusJpa.BACKLOG;
+            case IN_PROGRESS -> ProjectJpaEntity.ProjectCompletionStatusJpa.IN_PROGRESS;
+            case LIVE -> ProjectJpaEntity.ProjectCompletionStatusJpa.LIVE;
+            case ARCHIVED -> ProjectJpaEntity.ProjectCompletionStatusJpa.ARCHIVED;
+        };
+    }
+    
+    public ProjectPriority toDomainPriority(ProjectJpaEntity.ProjectPriorityJpa jpaPriority) {
+        if (jpaPriority == null) return null;
+        
+        return switch (jpaPriority) {
+            case LOW -> ProjectPriority.LOW;
+            case MEDIUM -> ProjectPriority.MEDIUM;
+            case HIGH -> ProjectPriority.HIGH;
+        };
+    }
+    
+    public ProjectJpaEntity.ProjectPriorityJpa toJpaPriority(ProjectPriority domainPriority) {
+        if (domainPriority == null) return null;
+        
+        return switch (domainPriority) {
+            case LOW -> ProjectJpaEntity.ProjectPriorityJpa.LOW;
+            case MEDIUM -> ProjectJpaEntity.ProjectPriorityJpa.MEDIUM;
+            case HIGH -> ProjectJpaEntity.ProjectPriorityJpa.HIGH;
         };
     }
 }
