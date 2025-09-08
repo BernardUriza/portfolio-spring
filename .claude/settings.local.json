@@ -24,7 +24,8 @@
       "Bash(ng serve:*)",
       "Bash(dir:*)",
       "Bash(java:*)",
-      "Bash(git cherry-pick:*)"
+      "Bash(git cherry-pick:*)",
+      "Bash(git merge:*)"
     ],
     "deny": [],
     "ask": []
