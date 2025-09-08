@@ -82,10 +82,21 @@ git status
 - Frontend structure: `src/app/`
 
 ### Environment Setup
-Remember to configure:
-1. `github.username=your-actual-github-username` in application.properties
-2. `GITHUB_TOKEN` environment variable with GitHub personal access token
-3. `ANTHROPIC_API_KEY` environment variable with your Claude API key
+
+#### Using .env File (Recommended)
+1. Copy `.env.example` to `.env`: `cp .env.example .env`
+2. Configure the following variables in your `.env` file:
+   - `GITHUB_USERNAME=your-actual-github-username`
+   - `GITHUB_TOKEN=your-github-personal-access-token`
+   - `ANTHROPIC_API_KEY=your-claude-api-key`
+   - `ENABLE_FACTORY_RESET=true` (optional, for factory reset functionality)
+   - `ADMIN_RESET_TOKEN=your-secure-token` (required if factory reset enabled)
+
+#### Using Environment Variables
+Alternatively, set environment variables directly:
+1. `GITHUB_USERNAME` with your GitHub username
+2. `GITHUB_TOKEN` with GitHub personal access token
+3. `ANTHROPIC_API_KEY` with your Claude API key
 4. Frontend CORS origin in application.properties if different from localhost:4200
 5. For Factory Reset: `ENABLE_FACTORY_RESET=true` and `ADMIN_RESET_TOKEN=your-secure-token`
 
