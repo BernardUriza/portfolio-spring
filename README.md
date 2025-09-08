@@ -173,6 +173,86 @@ Las respuestas devuelven un JSON con la forma:
 
 ---
 
+### 🚨 **Factory Reset (Admin)**
+
+| Método | Endpoint | Descripción |
+| ------ | -------- | ----------- |
+| `POST` | `/api/admin/factory-reset` | Iniciar reset completo de la base de datos |
+| `GET`  | `/api/admin/factory-reset/stream/{jobId}` | Stream SSE del progreso del reset |
+| `GET`  | `/api/admin/factory-reset/audit?limit=20` | Historial de resets ejecutados |
+
+**⚠️ IMPORTANTE**: Esta funcionalidad es destructiva y elimina TODOS los datos del sistema.
+
+#### Configuración requerida:
+
+```properties
+# Factory Reset Configuration
+app.admin.factory-reset.enabled=${ENABLE_FACTORY_RESET:false}
+app.admin.factory-reset.token=${ADMIN_RESET_TOKEN:tu-token-secreto}
+```
+
+#### Variables de entorno:
+
+- `ENABLE_FACTORY_RESET=true` - Habilita la funcionalidad de factory reset
+- `ADMIN_RESET_TOKEN=your-secure-token` - Token de seguridad para autorización
+
+#### Ejemplo de uso:
+
+```bash
+# 1. Iniciar factory reset
+curl -X POST http://localhost:8080/api/admin/factory-reset \
+  -H "X-Admin-Reset-Token: your-secure-token" \
+  -H "X-Admin-Confirm: DELETE" \
+  -H "Content-Type: application/json"
+
+# Respuesta:
+# {
+#   "jobId": "uuid-del-trabajo",
+#   "message": "Factory reset started successfully",
+#   "streamUrl": "/api/admin/factory-reset/stream/uuid-del-trabajo"
+# }
+
+# 2. Monitorear progreso (Server-Sent Events)
+curl -N http://localhost:8080/api/admin/factory-reset/stream/uuid-del-trabajo
+
+# 3. Ver historial de resets
+curl http://localhost:8080/api/admin/factory-reset/audit?limit=10
+```
+
+#### Características de seguridad:
+
+- ✅ **Token de autorización** obligatorio (`X-Admin-Reset-Token`)
+- ✅ **Confirmación doble** (`X-Admin-Confirm: DELETE`)
+- ✅ **Rate limiting** - 1 intento cada 10 minutos por IP
+- ✅ **Gate global** - Debe estar habilitado explícitamente
+- ✅ **Auditoría completa** - Logs de todos los intentos
+- ✅ **IP tracking** - Rastreo de origen de las peticiones
+- ✅ **Prevención de concurrencia** - Solo un reset a la vez
+
+#### Estrategias por base de datos:
+
+- **PostgreSQL**: `TRUNCATE` con `RESTART IDENTITY CASCADE`
+- **H2 (desarrollo)**: `deleteAllInBatch()` + reset de secuencias
+
+#### Stream de progreso (SSE):
+
+```javascript
+// Frontend JavaScript ejemplo
+const eventSource = new EventSource('/api/admin/factory-reset/stream/job-id');
+eventSource.addEventListener('reset-progress', function(event) {
+    const data = JSON.parse(event.data);
+    console.log(`${data.type}: ${data.message}`);
+});
+```
+
+#### Estados de audit:
+
+- `STARTED` - Reset en progreso
+- `COMPLETED` - Reset completado exitosamente  
+- `FAILED` - Reset falló con error
+
+---
+
 ## ⚙ **Arquitectura y flujo lógico**
 
 La aplicación sigue un diseño de **capas**:
