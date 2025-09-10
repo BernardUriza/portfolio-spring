@@ -18,7 +18,16 @@ import java.util.List;
 import java.util.Set;
 
 @Entity
-@Table(name = "experiences")
+@Table(name = "experiences",
+       indexes = {
+           @Index(name = "idx_exp_type", columnList = "type"),
+           @Index(name = "idx_exp_current", columnList = "is_current_position"),
+           @Index(name = "idx_exp_company", columnList = "company_name"),
+           @Index(name = "idx_exp_start_date", columnList = "start_date"),
+           @Index(name = "idx_exp_end_date", columnList = "end_date"),
+           @Index(name = "idx_exp_type_start", columnList = "type, start_date"),
+           @Index(name = "idx_exp_current_start", columnList = "is_current_position, start_date")
+       })
 @Data
 @Builder
 @NoArgsConstructor
@@ -87,4 +96,7 @@ public class ExperienceJpaEntity {
     @LastModifiedDate
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+    
+    @Version
+    private Long version;
 }

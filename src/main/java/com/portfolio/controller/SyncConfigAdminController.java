@@ -1,5 +1,8 @@
 package com.portfolio.controller;
 
+import com.portfolio.aspect.RateLimit;
+import com.portfolio.aspect.RequiresFeature;
+import com.portfolio.service.RateLimitingService;
 import com.portfolio.service.SyncSchedulerService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +24,8 @@ public class SyncConfigAdminController {
     private final SyncSchedulerService syncSchedulerService;
     
     @PostMapping("/run-now")
+    @RequiresFeature("manual_sync")
+    @RateLimit(type = RateLimitingService.RateLimitType.SYNC_OPERATIONS)
     public ResponseEntity<Map<String, String>> runSyncNow() {
         log.info("Manual sync trigger requested");
         

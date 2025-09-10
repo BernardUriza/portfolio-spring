@@ -13,9 +13,18 @@ import java.util.List;
 import java.util.Set;
 
 @Entity
-@Table(name = "portfolio_projects")
+@Table(name = "portfolio_projects",
+       indexes = {
+           @Index(name = "idx_portfolio_status", columnList = "status"),
+           @Index(name = "idx_portfolio_completion_status", columnList = "completion_status"),
+           @Index(name = "idx_portfolio_source_repo", columnList = "source_repository_id"),
+           @Index(name = "idx_portfolio_updated_at", columnList = "updated_at"),
+           @Index(name = "idx_portfolio_created_date", columnList = "created_date"),
+           @Index(name = "idx_portfolio_type", columnList = "type"),
+           @Index(name = "idx_portfolio_status_updated", columnList = "status, updated_at")
+       })
 @Data
-@Builder
+@Builder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(exclude = {"skillIds", "experienceIds"})
@@ -136,6 +145,9 @@ public class PortfolioProjectJpaEntity {
     @UpdateTimestamp
     @Column(nullable = false)
     private LocalDateTime updatedAt;
+    
+    @Version
+    private Long version;
     
     // Manual override flags to prevent sync overwriting
     @Column(name = "manual_description_override")

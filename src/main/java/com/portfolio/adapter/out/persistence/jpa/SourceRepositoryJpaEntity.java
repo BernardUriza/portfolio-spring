@@ -11,7 +11,17 @@ import java.util.List;
 
 @Entity
 @Table(name = "source_repositories", 
-       uniqueConstraints = @UniqueConstraint(columnNames = "github_repo_url"))
+       uniqueConstraints = @UniqueConstraint(columnNames = "github_repo_url"),
+       indexes = {
+           @Index(name = "idx_source_github_id", columnList = "github_id"),
+           @Index(name = "idx_source_full_name", columnList = "full_name"),
+           @Index(name = "idx_source_sync_status", columnList = "sync_status"),
+           @Index(name = "idx_source_language", columnList = "language"),
+           @Index(name = "idx_source_updated_at", columnList = "updated_at"),
+           @Index(name = "idx_source_sync_updated", columnList = "sync_status, updated_at"),
+           @Index(name = "idx_source_lang_sync", columnList = "language, sync_status"),
+           @Index(name = "idx_source_stars", columnList = "stars_count")
+       })
 @Data
 @Builder
 @NoArgsConstructor
@@ -84,6 +94,9 @@ public class SourceRepositoryJpaEntity {
     @UpdateTimestamp
     @Column(nullable = false)
     private LocalDateTime updatedAt;
+    
+    @Version
+    private Long version;
 
     public enum SyncStatus {
         UNSYNCED,      // Never processed

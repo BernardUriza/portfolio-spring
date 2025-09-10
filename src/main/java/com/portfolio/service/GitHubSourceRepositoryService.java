@@ -2,6 +2,10 @@ package com.portfolio.service;
 
 import com.portfolio.adapter.out.persistence.jpa.SourceRepositoryJpaEntity;
 import com.portfolio.adapter.out.persistence.jpa.SourceRepositoryJpaRepository;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
+import io.github.resilience4j.retry.annotation.Retry;
+import io.github.resilience4j.timelimiter.annotation.TimeLimiter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -114,6 +118,106 @@ public class GitHubSourceRepositoryService {
         }
     }
     
+    /**
+     * Refresh single repository data from GitHub
+     */
+    public void refreshSingleRepository(String githubRepoUrl) {
+        if (githubRepoUrl == null || githubRepoUrl.trim().isEmpty()) {
+            throw new IllegalArgumentException("GitHub repository URL is required");
+        }
+        
+        // Extract owner/repo from URL
+        String fullName = extractFullNameFromUrl(githubRepoUrl);
+        if (fullName == null) {
+            throw new IllegalArgumentException("Invalid GitHub repository URL format: " + githubRepoUrl);
+        }
+        
+        syncMonitorService.appendLog("INFO", "Refreshing single repository: " + fullName);
+        
+        try {
+            // Fetch repository data from GitHub API
+            GitHubRepo repo = fetchSingleRepository(fullName);
+            if (repo == null) {
+                throw new RuntimeException("Repository not found or not accessible: " + fullName);
+            }
+            
+            // Find existing source repository
+            Optional<SourceRepositoryJpaEntity> existingOpt = sourceRepositoryRepository.findByGithubRepoUrl(githubRepoUrl);
+            
+            if (existingOpt.isPresent()) {
+                SourceRepositoryJpaEntity existing = existingOpt.get();
+                updateExistingSourceRepository(existing, repo);
+                
+                // Fetch updated README
+                fetchAndStoreReadme(existing, repo);
+                
+                syncMonitorService.appendLog("INFO", "Successfully refreshed repository: " + repo.name);
+            } else {
+                syncMonitorService.appendLog("WARN", "Repository not found in database, cannot refresh: " + fullName);
+                throw new IllegalArgumentException("Repository not found in database: " + fullName);
+            }
+            
+        } catch (Exception e) {
+            log.error("Failed to refresh repository {}: {}", fullName, e.getMessage(), e);
+            syncMonitorService.appendLog("ERROR", "Failed to refresh repository " + fullName + ": " + e.getMessage());
+            throw new RuntimeException("Failed to refresh repository: " + e.getMessage(), e);
+        }
+    }
+    
+    private String extractFullNameFromUrl(String githubRepoUrl) {
+        try {
+            // Handle URLs like https://github.com/owner/repo or https://github.com/owner/repo.git
+            String cleanUrl = githubRepoUrl.trim();
+            if (cleanUrl.endsWith(".git")) {
+                cleanUrl = cleanUrl.substring(0, cleanUrl.length() - 4);
+            }
+            
+            if (cleanUrl.startsWith("https://github.com/")) {
+                String path = cleanUrl.substring("https://github.com/".length());
+                if (path.matches("^[^/]+/[^/]+$")) {
+                    return path;
+                }
+            }
+            
+            return null;
+        } catch (Exception e) {
+            log.warn("Failed to extract full name from URL: {}", githubRepoUrl, e);
+            return null;
+        }
+    }
+    
+    @Retry(name = "github", fallbackMethod = "fetchSingleRepositoryFallback")
+    @CircuitBreaker(name = "github", fallbackMethod = "fetchSingleRepositoryFallback")
+    @RateLimiter(name = "github")
+    @TimeLimiter(name = "github")
+    private GitHubRepo fetchSingleRepository(String fullName) {
+        WebClient webClient = createWebClient();
+        String uri = "/repos/" + fullName;
+        
+        try {
+            Mono<GitHubRepo> response = webClient.get()
+                .uri(uri)
+                .retrieve()
+                .bodyToMono(GitHubRepo.class);
+            
+            GitHubRepo repo = response.block();
+            
+            if (repo != null && repo.id != null && repo.name != null && repo.hasValidFullName()) {
+                return repo;
+            }
+            
+            return null;
+            
+        } catch (Exception e) {
+            log.error("Failed to fetch single repository {}: {}", fullName, e.getMessage());
+            throw new RuntimeException("GitHub API request failed: " + e.getMessage(), e);
+        }
+    }
+    
+    @Retry(name = "github", fallbackMethod = "fetchStarredRepositoriesFallback")
+    @CircuitBreaker(name = "github", fallbackMethod = "fetchStarredRepositoriesFallback")
+    @RateLimiter(name = "github")
+    @TimeLimiter(name = "github")
     private List<GitHubRepo> fetchStarredRepositories() {
         if (githubUsername == null || githubUsername.trim().isEmpty()) {
             log.warn("GitHub username is null or empty, cannot fetch starred repositories");
@@ -129,8 +233,7 @@ public class GitHubSourceRepositoryService {
                 .retrieve()
                 .bodyToMono(GitHubRepo[].class);
             
-            GitHubRepo[] repos = response.timeout(java.time.Duration.ofSeconds(30))
-                                        .block();
+            GitHubRepo[] repos = response.block();
             
             if (repos == null) {
                 log.warn("Received null response from GitHub API for user: {}", githubUsername);
@@ -164,6 +267,24 @@ public class GitHubSourceRepositoryService {
             log.error("Failed to fetch starred repositories for user: {}, Error: {}", githubUsername, e.getMessage());
             throw new RuntimeException("GitHub API request failed: " + e.getMessage(), e);
         }
+    }
+    
+    /**
+     * Fallback method for GitHub API calls
+     */
+    private List<GitHubRepo> fetchStarredRepositoriesFallback(Exception ex) {
+        log.warn("GitHub API fallback triggered due to: {}", ex.getMessage());
+        syncMonitorService.appendLog("WARN", "GitHub API unavailable, using empty result: " + ex.getMessage());
+        return Collections.emptyList();
+    }
+    
+    /**
+     * Fallback method for single repository fetch
+     */
+    private GitHubRepo fetchSingleRepositoryFallback(String fullName, Exception ex) {
+        log.warn("GitHub API fallback triggered for repository {}: {}", fullName, ex.getMessage());
+        syncMonitorService.appendLog("WARN", "GitHub API unavailable for repository " + fullName + ": " + ex.getMessage());
+        return null;
     }
     
     private void updateExistingSourceRepository(SourceRepositoryJpaEntity existing, GitHubRepo repo) {

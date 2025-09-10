@@ -15,7 +15,15 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "skills", 
-       uniqueConstraints = @UniqueConstraint(columnNames = "name"))
+       uniqueConstraints = @UniqueConstraint(columnNames = "name"),
+       indexes = {
+           @Index(name = "idx_skill_category", columnList = "category"),
+           @Index(name = "idx_skill_level", columnList = "level"),
+           @Index(name = "idx_skill_featured", columnList = "is_featured"),
+           @Index(name = "idx_skill_experience", columnList = "years_of_experience"),
+           @Index(name = "idx_skill_cat_level", columnList = "category, level"),
+           @Index(name = "idx_skill_created_at", columnList = "created_at")
+       })
 @Data
 @Builder
 @NoArgsConstructor
@@ -61,4 +69,7 @@ public class SkillJpaEntity {
     @LastModifiedDate
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+    
+    @Version
+    private Long version;
 }

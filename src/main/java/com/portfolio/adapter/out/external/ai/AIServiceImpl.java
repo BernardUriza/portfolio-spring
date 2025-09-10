@@ -3,6 +3,11 @@ package com.portfolio.adapter.out.external.ai;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.portfolio.core.port.out.AIServicePort;
+import com.portfolio.service.ClaudeTokenBudgetService;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
+import io.github.resilience4j.retry.annotation.Retry;
+import io.github.resilience4j.timelimiter.annotation.TimeLimiter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.DependsOn;
@@ -21,15 +26,18 @@ public class AIServiceImpl {
     
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
+    private final ClaudeTokenBudgetService tokenBudgetService;
     private final String anthropicApiKey;
     private final String anthropicApiUrl;
     private String portfolioToneContext = null;
     
     public AIServiceImpl(RestTemplate restTemplate, ObjectMapper objectMapper,
+                        ClaudeTokenBudgetService tokenBudgetService,
                         @Value("${anthropic.api.key:}") String anthropicApiKey,
                         @Value("${anthropic.api.url:https://api.anthropic.com/v1/messages}") String anthropicApiUrl) {
         this.restTemplate = restTemplate;
         this.objectMapper = objectMapper;
+        this.tokenBudgetService = tokenBudgetService;
         this.anthropicApiKey = anthropicApiKey;
         this.anthropicApiUrl = anthropicApiUrl;
         
@@ -285,7 +293,19 @@ public class AIServiceImpl {
         return prompt.toString();
     }
     
+    @Retry(name = "claude", fallbackMethod = "callClaudeApiFallback")
+    @CircuitBreaker(name = "claude", fallbackMethod = "callClaudeApiFallback")
+    @RateLimiter(name = "claude")
+    @TimeLimiter(name = "claude")
     private String callClaudeApi(String prompt) throws Exception {
+        // Check token budget before making the call
+        int estimatedTokens = estimateTokenUsage(prompt);
+        ClaudeTokenBudgetService.BudgetResult budgetResult = tokenBudgetService.useTokens(estimatedTokens, "claude_api_call");
+        
+        if (!budgetResult.isAllowed()) {
+            log.warn("Claude API call blocked due to budget limit: {}", budgetResult.getReason());
+            throw new RuntimeException("Claude API budget exceeded: " + budgetResult.getReason());
+        }
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.set("x-api-key", anthropicApiKey);
@@ -312,6 +332,33 @@ public class AIServiceImpl {
         }
         
         throw new RuntimeException("Failed to get valid response from Claude API");
+    }
+    
+    /**
+     * Fallback method for Claude API calls
+     */
+    private String callClaudeApiFallback(String prompt, Exception ex) {
+        log.warn("Claude API fallback triggered due to: {}", ex.getMessage());
+        
+        if (ex.getMessage() != null && ex.getMessage().contains("budget")) {
+            return "{\"project\":{\"name\":\"Draft Project\",\"description\":\"AI curation temporarily disabled due to budget limits\",\"technologies\":[],\"url\":\"\"},\"skills\":[],\"experiences\":[]}";
+        }
+        
+        return "{\"project\":{\"name\":\"Draft Project\",\"description\":\"AI curation temporarily unavailable\",\"technologies\":[],\"url\":\"\"},\"skills\":[],\"experiences\":[]}";
+    }
+    
+    /**
+     * Estimate token usage for a prompt (rough estimation)
+     */
+    private int estimateTokenUsage(String prompt) {
+        if (prompt == null) return 0;
+        
+        // Rough estimation: 1 token ≈ 4 characters for English text
+        // Add overhead for response tokens (typically 2-3x the prompt)
+        int promptTokens = prompt.length() / 4;
+        int responseTokens = promptTokens * 2; // Conservative estimate
+        
+        return promptTokens + responseTokens;
     }
     
     private AIServicePort.ClaudeAnalysisResult parseClaudeResponse(String response, String fallbackName, 

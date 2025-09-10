@@ -1,6 +1,9 @@
 package com.portfolio.adapter.out.persistence.jpa;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -9,7 +12,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface SourceRepositoryJpaRepository extends JpaRepository<SourceRepositoryJpaEntity, Long> {
+public interface SourceRepositoryJpaRepository extends JpaRepository<SourceRepositoryJpaEntity, Long>, JpaSpecificationExecutor<SourceRepositoryJpaEntity> {
     
     Optional<SourceRepositoryJpaEntity> findByGithubId(Long githubId);
     
@@ -27,4 +30,15 @@ public interface SourceRepositoryJpaRepository extends JpaRepository<SourceRepos
     
     @Query("SELECT s FROM SourceRepositoryJpaEntity s ORDER BY s.updatedAt DESC")
     List<SourceRepositoryJpaEntity> findAllOrderByUpdatedAtDesc();
+    
+    // Pagination methods for admin controller
+    Page<SourceRepositoryJpaEntity> findBySyncStatus(SourceRepositoryJpaEntity.SyncStatus syncStatus, Pageable pageable);
+    
+    Page<SourceRepositoryJpaEntity> findByLanguage(String language, Pageable pageable);
+    
+    Page<SourceRepositoryJpaEntity> findBySyncStatusAndLanguage(SourceRepositoryJpaEntity.SyncStatus syncStatus, 
+                                                               String language, Pageable pageable);
+    
+    @Query("SELECT COUNT(p) FROM PortfolioProjectJpaEntity p WHERE p.sourceRepositoryId = :sourceId")
+    long countLinkedPortfolioProjects(@Param("sourceId") Long sourceId);
 }
