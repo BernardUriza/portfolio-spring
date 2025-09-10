@@ -6,6 +6,7 @@ package com.portfolio.service;
 
 import com.portfolio.model.JourneyEvent;
 import com.portfolio.model.JourneySession;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -81,7 +82,7 @@ public class JourneySessionService {
     }
     
     private boolean isValidEventType(String type) {
-        return List.of("route", "project_view", "project_click", "project_hover").contains(type);
+        return List.of("route", "project_view", "project_click", "project_hover", "heartbeat", "finish").contains(type);
     }
     
     public List<JourneyEvent> getRecentEvents(String sessionId, int count) {

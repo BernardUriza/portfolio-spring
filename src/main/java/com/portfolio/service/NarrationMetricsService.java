@@ -10,6 +10,8 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -17,12 +19,15 @@ import java.util.concurrent.atomic.AtomicLong;
 @Service
 public class NarrationMetricsService {
     
+    private static final Logger logger = LoggerFactory.getLogger(NarrationMetricsService.class);
+    
     private final Counter sessionsCreated;
     private final Counter eventsReceived;
     private final Counter tokensUsed;
     private final Counter streamsCompleted;
     private final Counter streamsErrored;
     private final Timer narrationGenerationTime;
+    private final Counter contactMessagesCreated;
     
     private final AtomicInteger activeStreams = new AtomicInteger(0);
     private final AtomicLong totalTokensLastMinute = new AtomicLong(0);
@@ -51,6 +56,10 @@ public class NarrationMetricsService {
                 
         this.streamsErrored = Counter.builder("portfolio.narration.streams.errored")
                 .description("Total number of SSE streams that errored")
+                .register(meterRegistry);
+                
+        this.contactMessagesCreated = Counter.builder("portfolio.contact.messages.created")
+                .description("Total number of contact messages created")
                 .register(meterRegistry);
         
         // Timer
@@ -132,6 +141,16 @@ public class NarrationMetricsService {
     
     public double getRateLimitHits() {
         return rateLimitHits.get();
+    }
+    
+    public void recordContactMessageCreated() {
+        contactMessagesCreated.increment();
+    }
+    
+    public void recordSessionFinalized() {
+        // For now, we'll track this as a session creation metric
+        // In a full implementation, we'd have a separate counter
+        logger.debug("Session finalized");
     }
     
     // Health check method
