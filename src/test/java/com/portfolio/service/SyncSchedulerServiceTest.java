@@ -32,7 +32,7 @@ class SyncSchedulerServiceTest {
     private ThreadPoolTaskScheduler taskScheduler;
 
     @Mock
-    private ScheduledFuture<Object> scheduledFuture;
+    private ScheduledFuture<?> scheduledFuture;
 
     @InjectMocks
     private SyncSchedulerService syncSchedulerService;
@@ -60,7 +60,7 @@ class SyncSchedulerServiceTest {
         // Given
         when(syncConfigService.getOrCreate()).thenReturn(enabledConfig);
         when(taskScheduler.schedule(any(Runnable.class), any(PeriodicTrigger.class)))
-                .thenReturn(scheduledFuture);
+                .thenReturn((ScheduledFuture) scheduledFuture);
 
         // When
         syncSchedulerService.scheduleIfEnabled();
@@ -88,7 +88,7 @@ class SyncSchedulerServiceTest {
         // Given
         when(syncConfigService.getOrCreate()).thenReturn(enabledConfig);
         when(taskScheduler.schedule(any(Runnable.class), any(PeriodicTrigger.class)))
-                .thenReturn(scheduledFuture);
+                .thenReturn((ScheduledFuture) scheduledFuture);
         when(scheduledFuture.isDone()).thenReturn(false);
 
         // First schedule a task
@@ -107,14 +107,14 @@ class SyncSchedulerServiceTest {
         // Given
         when(syncConfigService.getOrCreate()).thenReturn(enabledConfig);
         when(taskScheduler.schedule(any(Runnable.class), any(PeriodicTrigger.class)))
-                .thenReturn(scheduledFuture);
+                .thenReturn((ScheduledFuture) scheduledFuture);
         when(scheduledFuture.isDone()).thenReturn(false);
 
         // First schedule a task
         syncSchedulerService.scheduleIfEnabled();
         reset(taskScheduler);
         when(taskScheduler.schedule(any(Runnable.class), any(PeriodicTrigger.class)))
-                .thenReturn(scheduledFuture);
+                .thenReturn((ScheduledFuture) scheduledFuture);
 
         // When
         syncSchedulerService.reschedule();

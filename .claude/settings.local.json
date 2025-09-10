@@ -50,7 +50,13 @@
       "Read(//mnt/c/Users/Bernard/Documents/GitHub/portfolio-frontend/**)",
       "Read(//mnt/c/Users/Bernard/Documents/GitHub/portfolio-frontend/**)",
       "Read(//mnt/c/Users/Bernard/Documents/GitHub/portfolio-frontend/**)",
-      "Read(//mnt/c/Users/Bernard/Documents/GitHub/portfolio-frontend/**)"
+      "Read(//mnt/c/Users/Bernard/Documents/GitHub/portfolio-frontend/**)",
+      "Read(//mnt/c/Users/Bernard/Documents/GitHub/portfolio-frontend/**)",
+      "Read(//mnt/c/Users/Bernard/Documents/GitHub/portfolio-frontend/**)",
+      "WebSearch",
+      "Bash(pkill:*)",
+      "Bash(netstat:*)",
+      "Bash(cmd /c:*)"
     ],
     "deny": [],
     "ask": []
