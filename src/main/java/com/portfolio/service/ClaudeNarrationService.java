@@ -40,7 +40,7 @@ public class ClaudeNarrationService {
     private JourneySessionService sessionService;
     
     @Autowired(required = false)
-    private StarredProjectService starredProjectService;
+    private SourceRepositoryService sourceRepositoryService;
     
     @Autowired
     private NarrationMetricsService metricsService;
@@ -236,7 +236,7 @@ public class ClaudeNarrationService {
         prompt.append("Experiencia: 15+ transformaciones empresariales, ciclos 3-6 meses, 100% éxito.\n");
         
         // Add project summaries if available
-        if (starredProjectService != null) {
+        if (sourceRepositoryService != null) {
             prompt.append("Proyectos clave: ").append(getProjectSummaries()).append("\n");
         }
         

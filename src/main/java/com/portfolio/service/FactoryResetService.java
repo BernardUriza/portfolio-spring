@@ -33,10 +33,13 @@ public class FactoryResetService implements FactoryResetUseCase {
     private final EntityManager entityManager;
     
     // All the repositories that need to be cleared
-    private final ProjectJpaRepository projectRepository;
+    private final PortfolioProjectJpaRepository portfolioProjectRepository;
     private final SkillJpaRepository skillRepository;
     private final ExperienceJpaRepository experienceRepository;
-    private final StarredProjectJpaRepository starredProjectRepository;
+    private final SourceRepositoryJpaRepository sourceRepositoryRepository;
+    // TODO: Add these repositories when Contact/Visitor features are implemented
+    // private final ContactMessageJpaRepository contactMessageRepository;
+    // private final VisitorInsightJpaRepository visitorInsightRepository;
     
     @Value("${spring.jpa.database-platform:}")
     private String databasePlatform;
@@ -213,12 +216,21 @@ public class FactoryResetService implements FactoryResetUseCase {
             int tablesCleared = 0;
             
             // Clear tables in dependency order (children first)
-            sendSseMessage(jobId, "STEP", "Clearing starred projects");
-            starredProjectRepository.deleteAllInBatch();
+            // TODO: Add visitor insights and contact messages clearing when implemented
+            // sendSseMessage(jobId, "STEP", "Clearing visitor insights");
+            // visitorInsightRepository.deleteAllInBatch();
+            // tablesCleared++;
+            
+            // sendSseMessage(jobId, "STEP", "Clearing contact messages");
+            // contactMessageRepository.deleteAllInBatch();
+            // tablesCleared++;
+            
+            sendSseMessage(jobId, "STEP", "Clearing portfolio projects");
+            portfolioProjectRepository.deleteAllInBatch();
             tablesCleared++;
             
-            sendSseMessage(jobId, "STEP", "Clearing projects");
-            projectRepository.deleteAllInBatch();
+            sendSseMessage(jobId, "STEP", "Clearing source repositories");
+            sourceRepositoryRepository.deleteAllInBatch();
             tablesCleared++;
             
             sendSseMessage(jobId, "STEP", "Clearing experiences");

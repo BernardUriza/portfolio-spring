@@ -1,6 +1,6 @@
 package com.portfolio.core.port.out;
 
-import com.portfolio.core.domain.project.Project;
+import com.portfolio.core.domain.project.PortfolioProject;
 import com.portfolio.core.domain.skill.Skill;
 import com.portfolio.core.domain.experience.Experience;
 import java.util.List;
