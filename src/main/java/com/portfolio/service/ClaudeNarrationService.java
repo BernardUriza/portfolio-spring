@@ -39,8 +39,7 @@ public class ClaudeNarrationService {
     @Autowired
     private JourneySessionService sessionService;
     
-    @Autowired(required = false)
-    private ProjectService projectService;
+    // ProjectService dependency removed - not available in current implementation
     
     @Autowired
     private NarrationMetricsService metricsService;
@@ -235,10 +234,8 @@ public class ClaudeNarrationService {
         prompt.append("Perfil: Bernard Orozco - Desarrollador full-stack especializado en transformación digital.\n");
         prompt.append("Experiencia: 15+ transformaciones empresariales, ciclos 3-6 meses, 100% éxito.\n");
         
-        // Add project summaries if available
-        if (projectService != null) {
-            prompt.append("Proyectos clave: ").append(getProjectSummaries()).append("\n");
-        }
+        // Add project summaries
+        prompt.append("Proyectos clave: ").append(getProjectSummaries()).append("\n");
         
         prompt.append("Contexto actual: ").append(context).append("\n");
         

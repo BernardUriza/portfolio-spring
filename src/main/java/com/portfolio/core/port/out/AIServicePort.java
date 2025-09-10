@@ -26,6 +26,14 @@ public interface AIServicePort {
                                          String readmeContent, List<String> topics, String language);
     
     /**
+     * General chat method for AI interactions
+     * @param systemPrompt System-level instructions for the AI
+     * @param userPrompt User message or prompt
+     * @return AI response
+     */
+    String chat(String systemPrompt, String userPrompt);
+    
+    /**
      * Result of Claude analysis containing structured data
      */
     class ClaudeAnalysisResult {

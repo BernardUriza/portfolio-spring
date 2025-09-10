@@ -68,21 +68,21 @@ public class NarrationMetricsService {
                 .register(meterRegistry);
         
         // Gauges
-        Gauge.builder("portfolio.narration.streams.active")
+        Gauge.builder("portfolio.narration.streams.active", this, NarrationMetricsService::getActiveStreams)
                 .description("Current number of active SSE streams")
-                .register(meterRegistry, this, NarrationMetricsService::getActiveStreams);
+                .register(meterRegistry);
                 
-        Gauge.builder("portfolio.narration.sessions.active")
+        Gauge.builder("portfolio.narration.sessions.active", this, metrics -> journeySessionService.getActiveSessionCount())
                 .description("Current number of active journey sessions")
-                .register(meterRegistry, this, metrics -> journeySessionService.getActiveSessionCount());
+                .register(meterRegistry);
                 
-        Gauge.builder("portfolio.narration.tokens.per.minute")
+        Gauge.builder("portfolio.narration.tokens.per.minute", this, NarrationMetricsService::getTokensLastMinute)
                 .description("AI tokens used in the last minute")
-                .register(meterRegistry, this, NarrationMetricsService::getTokensLastMinute);
+                .register(meterRegistry);
                 
-        Gauge.builder("portfolio.narration.rate.limit.hits")
+        Gauge.builder("portfolio.narration.rate.limit.hits", this, NarrationMetricsService::getRateLimitHits)
                 .description("Number of rate limit hits")
-                .register(meterRegistry, this, NarrationMetricsService::getRateLimitHits);
+                .register(meterRegistry);
     }
     
     public void recordSessionCreated() {
@@ -123,7 +123,7 @@ public class NarrationMetricsService {
     }
     
     public Timer.Sample startNarrationTimer() {
-        return Timer.start(narrationGenerationTime);
+        return Timer.start();
     }
     
     public void stopNarrationTimer(Timer.Sample sample) {
