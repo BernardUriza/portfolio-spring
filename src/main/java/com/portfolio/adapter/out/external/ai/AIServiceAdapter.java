@@ -78,4 +78,18 @@ public class AIServiceAdapter implements AIServicePort {
             return new AIServicePort.ClaudeAnalysisResult(projectData, skills, List.of("Software Development"));
         }
     }
+    
+    @Override
+    public String chat(String systemPrompt, String userPrompt) {
+        log.debug("Chat request with system prompt length: {}, user prompt length: {}", 
+                 systemPrompt != null ? systemPrompt.length() : 0, 
+                 userPrompt != null ? userPrompt.length() : 0);
+        
+        try {
+            return aiService.chat(systemPrompt, userPrompt);
+        } catch (Exception e) {
+            log.error("Error in chat request", e);
+            return "Lo siento, no puedo generar una respuesta en este momento.";
+        }
+    }
 }

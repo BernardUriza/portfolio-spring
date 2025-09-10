@@ -544,4 +544,49 @@ public class AIServiceImpl {
         log.debug("Truncated description from {} to {} characters", cleanDescription.length(), truncated.length());
         return truncated;
     }
+    
+    /**
+     * General chat method for AI interactions
+     * @param systemPrompt System-level instructions for the AI
+     * @param userPrompt User message or prompt
+     * @return AI response
+     */
+    public String chat(String systemPrompt, String userPrompt) {
+        if (userPrompt == null || userPrompt.trim().isEmpty()) {
+            log.warn("Empty user prompt provided to chat method");
+            return "No se proporcionó una consulta válida.";
+        }
+        
+        if (anthropicApiKey == null || anthropicApiKey.trim().isEmpty()) {
+            log.warn("Claude API key not configured, returning default response");
+            return "El análisis AI no está disponible en este momento.";
+        }
+        
+        try {
+            String fullPrompt = buildChatPrompt(systemPrompt, userPrompt);
+            String response = callClaudeApi(fullPrompt);
+            
+            if (response != null && !response.trim().isEmpty()) {
+                return response.trim();
+            } else {
+                return "No se pudo generar una respuesta válida.";
+            }
+            
+        } catch (Exception e) {
+            log.error("Error in chat API call", e);
+            return "Error generando respuesta AI: " + e.getMessage();
+        }
+    }
+    
+    private String buildChatPrompt(String systemPrompt, String userPrompt) {
+        StringBuilder prompt = new StringBuilder();
+        
+        if (systemPrompt != null && !systemPrompt.trim().isEmpty()) {
+            prompt.append(systemPrompt.trim()).append("\n\n");
+        }
+        
+        prompt.append(userPrompt.trim());
+        
+        return prompt.toString();
+    }
 }

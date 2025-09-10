@@ -198,24 +198,25 @@ public class ProjectRestController {
     }
     
     private ProjectSummaryDto toProjectSummary(Project project) {
-        List<String> tech = project.getSkills().stream()
-            .map(skill -> skill.getName())
-            .limit(5) // Top 5 technologies
-            .collect(Collectors.toList());
+        List<String> tech = project.getMainTechnologies() != null 
+            ? project.getMainTechnologies().stream()
+                .limit(5) // Top 5 technologies
+                .collect(Collectors.toList())
+            : List.of();
             
         List<String> outcomes = List.of(
-            "GitHub Stars: " + (project.getStars() != null ? project.getStars() : 0),
-            "Language: " + (project.getLanguage() != null ? project.getLanguage() : "N/A")
+            "GitHub Stars: " + (project.getRepositoryStars() != null ? project.getRepositoryStars() : 0),
+            "Repository: " + (project.getRepositoryFullName() != null ? project.getRepositoryFullName() : "N/A")
         );
         
-        String ownerRepo = project.getName(); // Simplified for now
-        if (project.getName() != null && project.getName().contains("/")) {
-            ownerRepo = project.getName();
+        String ownerRepo = project.getTitle(); // Use title instead of name
+        if (project.getRepositoryFullName() != null && project.getRepositoryFullName().contains("/")) {
+            ownerRepo = project.getRepositoryFullName();
         }
         
         return new ProjectSummaryDto(
             String.valueOf(project.getId()),
-            project.getName(),
+            project.getTitle(),
             ownerRepo,
             tech,
             outcomes
