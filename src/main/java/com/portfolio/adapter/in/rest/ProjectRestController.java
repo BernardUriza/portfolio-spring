@@ -3,6 +3,7 @@ package com.portfolio.adapter.in.rest;
 import com.portfolio.adapter.in.rest.dto.ProjectRestDto;
 import com.portfolio.adapter.in.rest.dto.MessageResponse;
 import com.portfolio.adapter.in.rest.mapper.ProjectRestMapper;
+import com.portfolio.dto.ProjectSummaryDto;
 import com.portfolio.core.domain.project.Project;
 import com.portfolio.core.port.in.CreateProjectUseCase;
 import com.portfolio.core.port.in.GenerateProjectContentUseCase;
@@ -181,5 +182,43 @@ public class ProjectRestController {
         
         Project updatedProject = updateProjectUseCase.updateExperiencesManually(id, experienceIds);
         return ResponseEntity.ok(restMapper.toRestDto(updatedProject));
+    }
+
+    @GetMapping("/summary")
+    @Operation(summary = "Get compact project summaries for narration context")
+    public ResponseEntity<List<ProjectSummaryDto>> getProjectsSummary() {
+        log.info("Getting compact project summaries for narration");
+        
+        List<Project> projects = getProjectsUseCase.getAllProjects();
+        List<ProjectSummaryDto> summaries = projects.stream()
+            .map(this::toProjectSummary)
+            .collect(Collectors.toList());
+            
+        return ResponseEntity.ok(summaries);
+    }
+    
+    private ProjectSummaryDto toProjectSummary(Project project) {
+        List<String> tech = project.getSkills().stream()
+            .map(skill -> skill.getName())
+            .limit(5) // Top 5 technologies
+            .collect(Collectors.toList());
+            
+        List<String> outcomes = List.of(
+            "GitHub Stars: " + (project.getStars() != null ? project.getStars() : 0),
+            "Language: " + (project.getLanguage() != null ? project.getLanguage() : "N/A")
+        );
+        
+        String ownerRepo = project.getName(); // Simplified for now
+        if (project.getName() != null && project.getName().contains("/")) {
+            ownerRepo = project.getName();
+        }
+        
+        return new ProjectSummaryDto(
+            String.valueOf(project.getId()),
+            project.getName(),
+            ownerRepo,
+            tech,
+            outcomes
+        );
     }
 }
