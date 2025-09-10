@@ -21,15 +21,23 @@ public class JourneySessionService {
     
     private static final Logger logger = LoggerFactory.getLogger(JourneySessionService.class);
     
+    @Autowired(required = false)
+    private NarrationMetricsService metricsService;
+    
     private final Cache<String, JourneySession> sessions = Caffeine.newBuilder()
-            .maximumSize(1000)
-            .expireAfterWrite(30, TimeUnit.MINUTES)
+            .maximumSize(2000)
+            .expireAfterAccess(30, TimeUnit.MINUTES)
             .build();
     
     public JourneySession createSession() {
         JourneySession session = new JourneySession();
         sessions.put(session.getSessionId(), session);
         logger.info("Created new journey session: {}", session.getSessionId());
+        
+        if (metricsService != null) {
+            metricsService.recordSessionCreated();
+        }
+        
         return session;
     }
     
@@ -55,6 +63,10 @@ public class JourneySessionService {
             session.addEvents(validEvents);
             sessions.put(sessionId, session);
             logger.debug("Added {} events to session: {}", validEvents.size(), sessionId);
+            
+            if (metricsService != null) {
+                metricsService.recordEventsReceived(validEvents.size());
+            }
         } else {
             logger.warn("Failed to add events - session not found or events empty: {}", sessionId);
         }
@@ -80,6 +92,11 @@ public class JourneySessionService {
     public void invalidateSession(String sessionId) {
         sessions.invalidate(sessionId);
         logger.info("Invalidated session: {}", sessionId);
+    }
+    
+    public void purgeExpiredSessions() {
+        sessions.cleanUp();
+        logger.debug("Purged expired sessions, active count: {}", sessions.estimatedSize());
     }
     
     public long getActiveSessionCount() {

@@ -26,7 +26,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/ai/journey")
-@CrossOrigin(origins = {"http://localhost:4200"})
+@CrossOrigin(origins = {"http://localhost:4200", "https://bernarduriza.github.io"})
 public class JourneyController {
     
     private static final Logger logger = LoggerFactory.getLogger(JourneyController.class);
@@ -76,7 +76,7 @@ public class JourneyController {
         
         if (request.getEvents().size() > 50) {
             logger.warn("Too many events in single request: {} from IP: {}", request.getEvents().size(), clientIp);
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE).build();
         }
         
         try {
