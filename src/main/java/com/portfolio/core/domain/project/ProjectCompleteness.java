@@ -13,7 +13,7 @@ public class ProjectCompleteness {
     @Builder.Default
     private final List<String> missing = new ArrayList<>();
     
-    public static ProjectCompleteness calculate(Project project) {
+    public static ProjectCompleteness calculate(PortfolioProject project) {
         List<String> missing = new ArrayList<>();
         int completedFields = 0;
         int totalFields = 4; // Description, LiveDemo, Skills, Experiences
