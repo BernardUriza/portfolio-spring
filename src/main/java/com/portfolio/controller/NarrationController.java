@@ -7,15 +7,15 @@ package com.portfolio.controller;
 import com.portfolio.adapter.out.persistence.jpa.PortfolioProjectJpaRepository;
 import com.portfolio.service.ClaudeNarrationService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.util.Map;
 
 @RestController
@@ -32,39 +32,51 @@ public class NarrationController {
     private PortfolioProjectJpaRepository portfolioProjectRepository;
     
     @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public ResponseEntity<?> streamNarration(@RequestParam String sessionId, HttpServletRequest request) {
+    public SseEmitter streamNarration(@RequestParam String sessionId, 
+                                     HttpServletRequest request, 
+                                     HttpServletResponse response) throws IOException {
         String clientIp = getClientIp(request);
         
         logger.info("Starting narration stream for session: {} from IP: {}", sessionId, clientIp);
+        
+        // Set proper SSE headers
+        response.setContentType(MediaType.TEXT_EVENT_STREAM_VALUE);
+        response.setCharacterEncoding("UTF-8");
+        response.setHeader("Cache-Control", "no-cache");
+        response.setHeader("Connection", "keep-alive");
+        response.setHeader("X-Accel-Buffering", "no");
         
         // Gate: Check if portfolio is empty
         long portfolioCount = portfolioProjectRepository.count();
         if (portfolioCount == 0) {
             logger.warn("Narration stream blocked - portfolio is empty (count={})", portfolioCount);
-            return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(Map.of("code", "portfolio-empty", 
-                               "message", "Portfolio is empty. Sync in progress. Try again soon."));
+            SseEmitter errorEmitter = new SseEmitter(5000L);
+            try {
+                errorEmitter.send(SseEmitter.event()
+                    .name("error")
+                    .data(Map.of("code", "portfolio-empty", 
+                               "message", "Portfolio is empty. Sync in progress. Try again soon.")));
+                errorEmitter.complete();
+            } catch (IOException e) {
+                logger.error("Failed to send portfolio-empty error", e);
+            }
+            return errorEmitter;
         }
         
         if (sessionId == null || sessionId.trim().isEmpty()) {
             logger.warn("Invalid sessionId provided");
-            return ResponseEntity.ok(createErrorStream("Invalid session ID"));
+            return createErrorStream("Invalid session ID");
         }
         
-        try {
-            SseEmitter emitter = narrationService.createNarrationStream(sessionId, clientIp);
-            
-            if (emitter == null) {
-                logger.warn("Failed to create narration stream for session: {}", sessionId);
-                return ResponseEntity.ok(createErrorStream("Failed to create stream"));
-            }
-            
-            return ResponseEntity.ok(emitter);
-            
-        } catch (Exception e) {
-            logger.error("Error creating narration stream", e);
-            return ResponseEntity.ok(createErrorStream("Internal server error"));
+        // Create narration stream using service
+        SseEmitter emitter = narrationService.createNarrationStream(sessionId, clientIp);
+        
+        if (emitter == null) {
+            logger.warn("Failed to create narration stream for session: {}", sessionId);
+            return createErrorStream("Failed to create narration stream");
         }
+        
+        return emitter;
     }
     
     private SseEmitter createErrorStream(String errorMessage) {
