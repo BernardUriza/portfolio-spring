@@ -14,6 +14,14 @@ public class JourneySession {
     private List<JourneyEvent> events;
     private boolean muted;
     
+    // Per-session narration quotas
+    private int narrationLinesUsed;
+    private int narrationTokensUsed;
+    
+    // Quota limits
+    private static final int MAX_LINES_PER_SESSION = 25;
+    private static final int MAX_TOKENS_PER_SESSION = 2000;
+    
     public JourneySession() {
         this.sessionId = UUID.randomUUID().toString();
         this.startedAt = LocalDateTime.now();
@@ -81,6 +89,51 @@ public class JourneySession {
     
     public void setMuted(boolean muted) {
         this.muted = muted;
+    }
+    
+    // Quota management methods
+    public int getNarrationLinesUsed() {
+        return narrationLinesUsed;
+    }
+    
+    public void setNarrationLinesUsed(int narrationLinesUsed) {
+        this.narrationLinesUsed = narrationLinesUsed;
+    }
+    
+    public int getNarrationTokensUsed() {
+        return narrationTokensUsed;
+    }
+    
+    public void setNarrationTokensUsed(int narrationTokensUsed) {
+        this.narrationTokensUsed = narrationTokensUsed;
+    }
+    
+    public void incrementNarrationLines(int lines) {
+        this.narrationLinesUsed += lines;
+    }
+    
+    public void incrementNarrationTokens(int tokens) {
+        this.narrationTokensUsed += tokens;
+    }
+    
+    public boolean hasExceededLineQuota() {
+        return narrationLinesUsed >= MAX_LINES_PER_SESSION;
+    }
+    
+    public boolean hasExceededTokenQuota() {
+        return narrationTokensUsed >= MAX_TOKENS_PER_SESSION;
+    }
+    
+    public boolean hasExceededQuotas() {
+        return hasExceededLineQuota() || hasExceededTokenQuota();
+    }
+    
+    public int getRemainingLines() {
+        return Math.max(0, MAX_LINES_PER_SESSION - narrationLinesUsed);
+    }
+    
+    public int getRemainingTokens() {
+        return Math.max(0, MAX_TOKENS_PER_SESSION - narrationTokensUsed);
     }
     
     public LocalDateTime getExpiresAt() {
