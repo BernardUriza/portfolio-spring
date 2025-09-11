@@ -20,7 +20,7 @@ import java.util.List;
            @Index(name = "idx_source_updated_at", columnList = "updated_at"),
            @Index(name = "idx_source_sync_updated", columnList = "sync_status, updated_at"),
            @Index(name = "idx_source_lang_sync", columnList = "language, sync_status"),
-           @Index(name = "idx_source_stars", columnList = "stars_count")
+           @Index(name = "idx_source_stars", columnList = "stargazers_count")
        })
 @Data
 @Builder

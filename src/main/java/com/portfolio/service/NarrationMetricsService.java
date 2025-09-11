@@ -9,6 +9,7 @@ import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,6 +35,7 @@ public class NarrationMetricsService {
     private final AtomicInteger rateLimitHits = new AtomicInteger(0);
     
     @Autowired
+    @Lazy
     private JourneySessionService journeySessionService;
     
     public NarrationMetricsService(MeterRegistry meterRegistry) {
