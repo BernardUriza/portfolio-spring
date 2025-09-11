@@ -58,7 +58,8 @@
       "Bash(netstat:*)",
       "Bash(cmd /c:*)",
       "Bash(.mvnw clean compile)",
-      "Bash(sed:*)"
+      "Bash(sed:*)",
+      "Bash(could not be registered. A bean with that name has already been defined\"\n- Conflict between custom RegistryEventConsumer bean and Resilience4j auto-config\n\n## Solution\n- Removed custom circuitBreakerRegistryEventConsumer bean from ResilienceConfig\n- Resilience4j Spring Boot auto-configuration provides built-in event consumers\n- This maintains all circuit breaker functionality while avoiding naming conflicts\n\n## Impact\n- ✅ Application now starts successfully\n- ✅ Circuit breaker patterns still work via annotations (@CircuitBreaker, @Retry, etc.)\n- ✅ Metrics collection continues via Resilience4j''s built-in Micrometer integration\n- ✅ Configuration remains in application.properties as before\n\nThe circuit breaker monitoring and metrics are still available through \nResilience4j''s standard auto-configuration, which provides the same \nfunctionality without bean conflicts.\n\n🤖 Generated with [Claude Code](https://claude.ai/code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
     ],
     "deny": [],
     "ask": []
