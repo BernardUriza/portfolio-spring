@@ -57,7 +57,8 @@
       "Bash(pkill:*)",
       "Bash(netstat:*)",
       "Bash(cmd /c:*)",
-      "Bash(.mvnw clean compile)"
+      "Bash(.mvnw clean compile)",
+      "Bash(sed:*)"
     ],
     "deny": [],
     "ask": []

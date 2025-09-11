@@ -38,7 +38,7 @@ class FactoryResetServiceTest {
     private EntityManager entityManager;
     
     @Mock
-    private ProjectJpaRepository projectRepository;
+    private PortfolioProjectJpaRepository projectRepository;
     
     @Mock
     private SkillJpaRepository skillRepository;
@@ -47,7 +47,7 @@ class FactoryResetServiceTest {
     private ExperienceJpaRepository experienceRepository;
     
     @Mock
-    private StarredProjectJpaRepository starredProjectRepository;
+    private SourceRepositoryJpaRepository sourceRepositoryRepository;
 
     @InjectMocks
     private FactoryResetService factoryResetService;
@@ -266,7 +266,7 @@ class FactoryResetServiceTest {
         // Then
         assertThat(result).isEqualTo(4);
         
-        verify(starredProjectRepository).deleteAllInBatch();
+        verify(sourceRepositoryRepository).deleteAllInBatch();
         verify(projectRepository).deleteAllInBatch();
         verify(experienceRepository).deleteAllInBatch();
         verify(skillRepository).deleteAllInBatch();

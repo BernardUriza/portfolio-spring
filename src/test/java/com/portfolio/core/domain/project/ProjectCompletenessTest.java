@@ -14,7 +14,7 @@ class ProjectCompletenessTest {
     @Test
     void calculate_AllFieldsComplete_ReturnsFullScore() {
         // Given
-        Project project = Project.builder()
+        PortfolioProject project = PortfolioProject.builder()
                 .id(1L)
                 .title("Test Project")
                 .description("A comprehensive test project description")
@@ -39,7 +39,7 @@ class ProjectCompletenessTest {
     @Test
     void calculate_NoFields_ReturnsZeroScore() {
         // Given
-        Project project = Project.builder()
+        PortfolioProject project = PortfolioProject.builder()
                 .id(1L)
                 .title("Test Project")
                 .description("")  // Empty description
@@ -68,7 +68,7 @@ class ProjectCompletenessTest {
     @Test
     void calculate_PartialFields_ReturnsPartialScore() {
         // Given - Only description and skills are complete
-        Project project = Project.builder()
+        PortfolioProject project = PortfolioProject.builder()
                 .id(1L)
                 .title("Test Project")
                 .description("A test project description")
@@ -97,32 +97,32 @@ class ProjectCompletenessTest {
         // Test individual field weights
         
         // Description only (40%)
-        Project descOnly = createBaseProject().toBuilder()
+        PortfolioProject descOnly = createBaseProject().toBuilder()
                 .description("Complete description")
                 .build();
         assertEquals(40, ProjectCompleteness.calculate(descOnly).getScore());
         
         // Live Demo only (20%)
-        Project linkOnly = createBaseProject().toBuilder()
+        PortfolioProject linkOnly = createBaseProject().toBuilder()
                 .link("https://example.com")
                 .build();
         assertEquals(20, ProjectCompleteness.calculate(linkOnly).getScore());
         
         // Skills only (20%)
-        Project skillsOnly = createBaseProject().toBuilder()
+        PortfolioProject skillsOnly = createBaseProject().toBuilder()
                 .skillIds(Set.of(1L))
                 .build();
         assertEquals(20, ProjectCompleteness.calculate(skillsOnly).getScore());
         
         // Experiences only (20%)
-        Project expOnly = createBaseProject().toBuilder()
+        PortfolioProject expOnly = createBaseProject().toBuilder()
                 .experienceIds(Set.of(1L))
                 .build();
         assertEquals(20, ProjectCompleteness.calculate(expOnly).getScore());
     }
     
-    private Project createBaseProject() {
-        return Project.builder()
+    private PortfolioProject createBaseProject() {
+        return PortfolioProject.builder()
                 .id(1L)
                 .title("Test Project")
                 .description("")  // Empty by default
