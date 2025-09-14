@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.Date;
 
 @RestController
+@ConditionalOnProperty(name = "app.ai.enabled", havingValue = "true")
 @RequestMapping("/api/chat")
 @CrossOrigin(origins = {"http://localhost:4200", "https://bernardowiredu.com"})
 @Slf4j
@@ -35,4 +36,5 @@ public class ChatContextController {
         
         return ResponseEntity.ok(response);
     }
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 }

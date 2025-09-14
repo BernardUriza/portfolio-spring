@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.Map;
 
 @RestController
+@ConditionalOnProperty(name = "app.narration.enabled", havingValue = "true")
 @RequestMapping("/api/ai/narration")
 @CrossOrigin(origins = {"http://localhost:4200", "http://localhost:5173", "https://bernarduriza.github.io"})
 public class NarrationController {
@@ -103,4 +104,5 @@ public class NarrationController {
         
         return request.getRemoteAddr();
     }
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 }

@@ -25,6 +25,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.Map;
 
 @RestController
+@ConditionalOnProperty(name = "app.ai.enabled", havingValue = "true")
 @RequestMapping("/api/ai/journey")
 @CrossOrigin(origins = {"http://localhost:4200", "https://bernarduriza.github.io"})
 public class JourneyController {
@@ -114,4 +115,5 @@ public class JourneyController {
         
         return request.getRemoteAddr();
     }
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 }
