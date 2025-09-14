@@ -66,6 +66,20 @@ public class SyncSchedulerService {
                     .register(meterRegistry));
         }
     }
+
+    /**
+     * Fire-and-forget async wrapper to run full sync without blocking caller.
+     * Any exception is logged and does not propagate to the caller.
+     */
+    @org.springframework.scheduling.annotation.Async
+    public void runFullSyncAsync() {
+        try {
+            runFullSync();
+        } catch (Exception e) {
+            log.error("Async sync failed", e);
+            // Swallow exception to avoid bubbling to controller threads
+        }
+    }
     
     /**
      * Phase 1: Source ingestion from GitHub

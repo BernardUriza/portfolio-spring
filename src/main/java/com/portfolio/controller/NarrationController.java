@@ -7,6 +7,7 @@ package com.portfolio.controller;
 import com.portfolio.adapter.out.persistence.jpa.PortfolioProjectJpaRepository;
 import com.portfolio.service.ClaudeNarrationService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -104,5 +105,4 @@ public class NarrationController {
         
         return request.getRemoteAddr();
     }
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 }

@@ -7,6 +7,7 @@ import lombok.Data;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Date;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
 @RestController
 @ConditionalOnProperty(name = "app.ai.enabled", havingValue = "true")
@@ -36,5 +37,4 @@ public class ChatContextController {
         
         return ResponseEntity.ok(response);
     }
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 }
