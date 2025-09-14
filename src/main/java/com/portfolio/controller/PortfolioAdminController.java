@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
 
 /**
  * Minimal admin controller exposing portfolio projects for the Admin UI.
@@ -33,6 +34,32 @@ public class PortfolioAdminController {
     private final SyncSchedulerService syncSchedulerService;
     private final SourceRepositoryJpaRepository sourceRepositoryRepository;
 
+    // DTOs to avoid Map.of generic inference and null constraints
+    public record AdminPortfolioItem(
+            Long id,
+            String title,
+            String description,
+            String link,
+            String githubRepo,
+            String status,
+            String type,
+            String completionStatus,
+            String priority,
+            List<String> mainTechnologies,
+            Long sourceRepositoryId,
+            String linkType,
+            String repositoryFullName,
+            String repositoryUrl,
+            Integer repositoryStars,
+            Boolean protectDescription,
+            Boolean protectLiveDemoUrl,
+            Boolean protectSkills,
+            Boolean protectExperiences,
+            Double overallCompleteness
+    ) {}
+
+    public record Pagination(int page, int size, long totalElements, int totalPages) {}
+
     /**
      * Return paginated portfolio projects with completion metrics for Admin table.
      */
@@ -44,10 +71,9 @@ public class PortfolioAdminController {
         PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "updatedAt"));
         Page<PortfolioProjectJpaEntity> result = portfolioRepository.findAll(pageable);
 
-        List<Object> projects = result.getContent().stream()
+        List<AdminPortfolioItem> projects = result.getContent().stream()
                 .map(completionService::calculateCompletion)
                 .map(dto -> {
-                    // Enrich with repository info when linked to a source repo
                     String repoFullName = null;
                     String repoUrl = null;
                     Integer repoStars = null;
@@ -60,41 +86,34 @@ public class PortfolioAdminController {
                             repoStars = src.getStargazersCount();
                         }
                     }
-                    return Map.of(
-                        "id", dto.getId(),
-                        "title", dto.getTitle(),
-                        "description", dto.getDescription(),
-                        "link", dto.getLink(),
-                        "githubRepo", dto.getGithubRepo(),
-                        "status", dto.getStatus(),
-                        "type", dto.getType(),
-                        "completionStatus", dto.getCompletionStatus(),
-                        "priority", dto.getPriority(),
-                        "mainTechnologies", dto.getMainTechnologies(),
-                        "sourceRepositoryId", dto.getSourceRepositoryId(),
-                        "linkType", dto.getLinkType(),
-                        // Enriched repository fields for UI convenience
-                        "repositoryFullName", repoFullName,
-                        "repositoryUrl", repoUrl,
-                        "repositoryStars", repoStars,
-                        "protectDescription", dto.getProtectDescription(),
-                        "protectLiveDemoUrl", dto.getProtectLiveDemoUrl(),
-                        "protectSkills", dto.getProtectSkills(),
-                        "protectExperiences", dto.getProtectExperiences(),
-                        "overallCompleteness", dto.getOverallCompleteness()
-                );
+                    return new AdminPortfolioItem(
+                            dto.getId(),
+                            dto.getTitle(),
+                            dto.getDescription(),
+                            dto.getLink(),
+                            dto.getGithubRepo(),
+                            dto.getStatus(),
+                            dto.getType(),
+                            dto.getCompletionStatus(),
+                            dto.getPriority(),
+                            dto.getMainTechnologies(),
+                            dto.getSourceRepositoryId(),
+                            dto.getLinkType(),
+                            repoFullName,
+                            repoUrl,
+                            repoStars,
+                            dto.getProtectDescription(),
+                            dto.getProtectLiveDemoUrl(),
+                            dto.getProtectSkills(),
+                            dto.getProtectExperiences(),
+                            dto.getOverallCompleteness()
+                    );
                 })
                 .toList();
 
-        Map<String, Object> body = Map.of(
-                "projects", projects,
-                "pagination", Map.of(
-                        "page", result.getNumber(),
-                        "size", result.getSize(),
-                        "totalElements", result.getTotalElements(),
-                        "totalPages", result.getTotalPages()
-                )
-        );
+        Map<String, Object> body = new HashMap<>();
+        body.put("projects", projects);
+        body.put("pagination", new Pagination(result.getNumber(), result.getSize(), result.getTotalElements(), result.getTotalPages()));
 
         return ResponseEntity.ok(body);
     }
@@ -107,17 +126,17 @@ public class PortfolioAdminController {
         try {
             Long sourceRepositoryId = Long.valueOf(payload.get("repositoryId").toString());
             var result = portfolioService.linkToSourceRepository(id, sourceRepositoryId, LinkType.MANUAL);
-            return ResponseEntity.ok(Map.of(
-                    "status", "success",
-                    "projectId", result.getId(),
-                    "sourceRepositoryId", result.getSourceRepositoryId()
-            ));
+            Map<String, Object> resp = new HashMap<>();
+            resp.put("status", "success");
+            resp.put("projectId", result.getId());
+            resp.put("sourceRepositoryId", result.getSourceRepositoryId());
+            return ResponseEntity.ok(resp);
         } catch (Exception e) {
             log.error("Failed to link portfolio {} to source: {}", id, e.getMessage(), e);
-            return ResponseEntity.status(400).body(Map.of(
-                    "status", "error",
-                    "message", e.getMessage()
-            ));
+            Map<String, Object> err = new HashMap<>();
+            err.put("status", "error");
+            err.put("message", e.getMessage());
+            return ResponseEntity.status(400).body(err);
         }
     }
 
@@ -126,17 +145,17 @@ public class PortfolioAdminController {
     public ResponseEntity<Map<String, Object>> unlinkSource(@PathVariable Long id) {
         try {
             var result = portfolioService.unlinkFromSourceRepository(id);
-            return ResponseEntity.ok(Map.of(
-                    "status", "success",
-                    "projectId", result.getId(),
-                    "sourceRepositoryId", result.getSourceRepositoryId()
-            ));
+            Map<String, Object> resp = new HashMap<>();
+            resp.put("status", "success");
+            resp.put("projectId", result.getId());
+            resp.put("sourceRepositoryId", result.getSourceRepositoryId());
+            return ResponseEntity.ok(resp);
         } catch (Exception e) {
             log.error("Failed to unlink portfolio {}: {}", id, e.getMessage(), e);
-            return ResponseEntity.status(400).body(Map.of(
-                    "status", "error",
-                    "message", e.getMessage()
-            ));
+            Map<String, Object> err = new HashMap<>();
+            err.put("status", "error");
+            err.put("message", e.getMessage());
+            return ResponseEntity.status(400).body(err);
         }
     }
 
@@ -161,7 +180,10 @@ public class PortfolioAdminController {
                         builder.protectExperiences(Boolean.parseBoolean(payload.get("protectExperiences").toString()));
                     }
                     var saved = portfolioRepository.save(builder.build());
-                    return ResponseEntity.ok(Map.of("status", "success", "id", saved.getId()));
+                    Map<String, Object> resp = new HashMap<>();
+                    resp.put("status", "success");
+                    resp.put("id", saved.getId());
+                    return ResponseEntity.ok(resp);
                 })
                 .orElse(ResponseEntity.notFound().build());
     }
@@ -178,7 +200,10 @@ public class PortfolioAdminController {
                     PortfolioProjectJpaEntity.ProjectCompletionStatusJpa newStatus =
                             PortfolioProjectJpaEntity.ProjectCompletionStatusJpa.valueOf(status.toUpperCase());
                     var saved = portfolioRepository.save(existing.toBuilder().completionStatus(newStatus).build());
-                    return ResponseEntity.ok(Map.of("status", "success", "id", saved.getId()));
+                    Map<String, Object> resp = new HashMap<>();
+                    resp.put("status", "success");
+                    resp.put("id", saved.getId());
+                    return ResponseEntity.ok(resp);
                 })
                 .orElse(ResponseEntity.notFound().build());
     }
@@ -195,7 +220,10 @@ public class PortfolioAdminController {
                     PortfolioProjectJpaEntity.ProjectPriorityJpa newPriority =
                             PortfolioProjectJpaEntity.ProjectPriorityJpa.valueOf(priority.toUpperCase());
                     var saved = portfolioRepository.save(existing.toBuilder().priority(newPriority).build());
-                    return ResponseEntity.ok(Map.of("status", "success", "id", saved.getId()));
+                    Map<String, Object> resp = new HashMap<>();
+                    resp.put("status", "success");
+                    resp.put("id", saved.getId());
+                    return ResponseEntity.ok(resp);
                 })
                 .orElse(ResponseEntity.notFound().build());
     }
@@ -215,7 +243,10 @@ public class PortfolioAdminController {
                         builder.link((String) payload.get("link"));
                     }
                     var saved = portfolioRepository.save(builder.build());
-                    return ResponseEntity.ok(Map.of("status", "success", "id", saved.getId()));
+                    Map<String, Object> resp = new HashMap<>();
+                    resp.put("status", "success");
+                    resp.put("id", saved.getId());
+                    return ResponseEntity.ok(resp);
                 })
                 .orElse(ResponseEntity.notFound().build());
     }
@@ -225,13 +256,16 @@ public class PortfolioAdminController {
     public ResponseEntity<Map<String, Object>> resyncProject(@PathVariable Long id) {
         try {
             syncSchedulerService.resyncPortfolioProject(id);
-            return ResponseEntity.accepted().body(Map.of("status", "accepted", "message", "Resync triggered"));
+            Map<String, Object> resp = new HashMap<>();
+            resp.put("status", "accepted");
+            resp.put("message", "Resync triggered");
+            return ResponseEntity.accepted().body(resp);
         } catch (Exception e) {
             log.error("Failed to resync portfolio {}: {}", id, e.getMessage(), e);
-            return ResponseEntity.status(500).body(Map.of(
-                    "status", "error",
-                    "message", e.getMessage()
-            ));
+            Map<String, Object> err = new HashMap<>();
+            err.put("status", "error");
+            err.put("message", e.getMessage());
+            return ResponseEntity.status(500).body(err);
         }
     }
 }
