@@ -144,6 +144,11 @@ public class FeatureFlagService {
                     throw new UnsupportedOperationException("Manual sync is disabled");
                 }
                 break;
+            case "scheduled_sync":
+                if (!isScheduledSyncAllowed()) {
+                    throw new UnsupportedOperationException("Scheduled sync is disabled");
+                }
+                break;
             case "ai_curation":
                 if (!isAiCurationEnabled()) {
                     throw new UnsupportedOperationException("AI curation feature is disabled");
