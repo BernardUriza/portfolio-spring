@@ -2,6 +2,7 @@ package com.portfolio.controller;
 
 import com.portfolio.adapter.out.persistence.jpa.PortfolioProjectJpaEntity;
 import com.portfolio.adapter.out.persistence.jpa.PortfolioProjectJpaRepository;
+import com.portfolio.adapter.out.persistence.jpa.SourceRepositoryJpaRepository;
 import com.portfolio.core.domain.project.LinkType;
 import com.portfolio.service.PortfolioCompletionService;
 import com.portfolio.service.PortfolioService;
@@ -30,6 +31,7 @@ public class PortfolioAdminController {
     private final PortfolioCompletionService completionService;
     private final PortfolioService portfolioService;
     private final SyncSchedulerService syncSchedulerService;
+    private final SourceRepositoryJpaRepository sourceRepositoryRepository;
 
     /**
      * Return paginated portfolio projects with completion metrics for Admin table.
@@ -44,7 +46,21 @@ public class PortfolioAdminController {
 
         List<Object> projects = result.getContent().stream()
                 .map(completionService::calculateCompletion)
-                .map(dto -> Map.of(
+                .map(dto -> {
+                    // Enrich with repository info when linked to a source repo
+                    String repoFullName = null;
+                    String repoUrl = null;
+                    Integer repoStars = null;
+                    if (dto.getSourceRepositoryId() != null) {
+                        var srcOpt = sourceRepositoryRepository.findById(dto.getSourceRepositoryId());
+                        if (srcOpt.isPresent()) {
+                            var src = srcOpt.get();
+                            repoFullName = src.getFullName();
+                            repoUrl = src.getGithubRepoUrl();
+                            repoStars = src.getStargazersCount();
+                        }
+                    }
+                    return Map.of(
                         "id", dto.getId(),
                         "title", dto.getTitle(),
                         "description", dto.getDescription(),
@@ -57,12 +73,17 @@ public class PortfolioAdminController {
                         "mainTechnologies", dto.getMainTechnologies(),
                         "sourceRepositoryId", dto.getSourceRepositoryId(),
                         "linkType", dto.getLinkType(),
+                        // Enriched repository fields for UI convenience
+                        "repositoryFullName", repoFullName,
+                        "repositoryUrl", repoUrl,
+                        "repositoryStars", repoStars,
                         "protectDescription", dto.getProtectDescription(),
                         "protectLiveDemoUrl", dto.getProtectLiveDemoUrl(),
                         "protectSkills", dto.getProtectSkills(),
                         "protectExperiences", dto.getProtectExperiences(),
                         "overallCompleteness", dto.getOverallCompleteness()
-                ))
+                );
+                })
                 .toList();
 
         Map<String, Object> body = Map.of(
@@ -214,4 +235,3 @@ public class PortfolioAdminController {
         }
     }
 }
-
