@@ -20,7 +20,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/ai/narration")
-@CrossOrigin(origins = {"http://localhost:4200", "https://bernarduriza.github.io"})
+@CrossOrigin(origins = {"http://localhost:4200", "http://localhost:5173", "https://bernarduriza.github.io"})
 public class NarrationController {
     
     private static final Logger logger = LoggerFactory.getLogger(NarrationController.class);

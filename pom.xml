@@ -135,11 +135,11 @@
 			<version>4.0.0</version>
 		</dependency>
 
-		<!-- Swagger / OpenAPI -->
+		<!-- Swagger / OpenAPI (Spring Boot 3.x compatible) -->
 		<dependency>
 			<groupId>org.springdoc</groupId>
-			<artifactId>springdoc-openapi-ui</artifactId>
-			<version>1.6.15</version>
+			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+			<version>2.6.0</version>
 		</dependency>
 
 		<!-- Rate Limiting -->

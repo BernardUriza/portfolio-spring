@@ -2,6 +2,7 @@ package com.portfolio.dto;
 
 import lombok.Builder;
 import lombok.Data;
+import java.util.Set;
 
 @Data
 @Builder
@@ -19,6 +20,10 @@ public class PortfolioCompletionDto {
     private java.util.List<String> mainTechnologies;
     private Long sourceRepositoryId;
     private String linkType;
+    
+    // Associations for admin editing
+    private Set<Long> skillIds;
+    private Set<Long> experienceIds;
     
     // Protection flags
     private Boolean protectDescription;

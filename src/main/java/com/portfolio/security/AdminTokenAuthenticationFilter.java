@@ -15,22 +15,28 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.List;
+import jakarta.annotation.PostConstruct;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class AdminTokenAuthenticationFilter extends OncePerRequestFilter {
     
-    @Value("${portfolio.admin.token:}")
+    @Value("${portfolio.admin.token:${PORTFOLIO_ADMIN_TOKEN:}}")
     private String adminToken;
     
-    @Value("${portfolio.admin.security.enabled:true}")
+    @Value("${portfolio.admin.security.enabled:${PORTFOLIO_ADMIN_SECURITY_ENABLED:true}}")
     private boolean securityEnabled;
     
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, 
                                     FilterChain filterChain) throws ServletException, IOException {
-        
+        // Always let CORS preflight pass
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         if (!securityEnabled) {
             log.debug("Admin security disabled, allowing request");
             filterChain.doFilter(request, response);
@@ -71,6 +77,15 @@ public class AdminTokenAuthenticationFilter extends OncePerRequestFilter {
             } else {
                 log.warn("Invalid or missing admin token for path: {} from IP: {}", 
                         path, getClientIpAddress(request));
+                // Set minimal CORS headers to avoid opaque failures in browsers
+                String origin = request.getHeader("Origin");
+                if (origin != null && !origin.isBlank()) {
+                    response.setHeader("Access-Control-Allow-Origin", origin);
+                    response.setHeader("Vary", "Origin");
+                    response.setHeader("Access-Control-Allow-Credentials", "true");
+                    response.setHeader("Access-Control-Allow-Headers", "Authorization, X-Admin-Token, Content-Type");
+                    response.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS");
+                }
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 response.setContentType("application/json");
                 response.getWriter().write("{\"error\":\"Unauthorized\",\"message\":\"Valid admin token required\"}");
@@ -79,6 +94,20 @@ public class AdminTokenAuthenticationFilter extends OncePerRequestFilter {
         }
         
         filterChain.doFilter(request, response);
+    }
+    
+    @PostConstruct
+    public void logSecurityConfig() {
+        if (securityEnabled) {
+            if (adminToken == null || adminToken.trim().isEmpty()) {
+                log.warn("Admin security is ENABLED but no admin token is configured");
+            } else {
+                String masked = maskToken(adminToken.trim());
+                log.info("Admin security is ENABLED; admin token configured: {} (len={})", masked, adminToken.trim().length());
+            }
+        } else {
+            log.warn("Admin security is DISABLED (portfolio.admin.security.enabled=false)");
+        }
     }
     
     private boolean isPublicAdminEndpoint(String path) {
@@ -92,8 +121,18 @@ public class AdminTokenAuthenticationFilter extends OncePerRequestFilter {
             log.warn("No admin token configured - denying access");
             return false;
         }
-        
-        return adminToken.equals(token);
+        String expected = adminToken.trim();
+        String provided = token == null ? "" : token.trim();
+        return expected.equals(provided);
+    }
+    
+    private String maskToken(String token) {
+        if (token == null || token.isEmpty()) return "";
+        int len = token.length();
+        if (len <= 8) return "********"; // short tokens fully masked
+        String start = token.substring(0, 4);
+        String end = token.substring(len - 4);
+        return start + "…" + end;
     }
     
     private String getClientIpAddress(HttpServletRequest request) {

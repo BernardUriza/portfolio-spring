@@ -2,7 +2,25 @@
   "permissions": {
     "allow": [
       "Bash(ng build:*)",
-      "Bash(mvn:*)"
+      "Bash(mvn:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npm i:*)",
+      "Bash(npm ci:*)",
+      "Bash(npm run e2e:all:*)",
+      "Bash(npm run e2e:ci:*)",
+      "Bash(cross-env CYPRESS_baseUrl=http://localhost:4200 npm run e2e:run)",
+      "Bash(set CYPRESS_baseUrl=http://localhost:4200)",
+      "Bash(cypress run:*)",
+      "Read(//c/Users/Bernard/Documents/GitHub/**)",
+      "Bash(npm run build:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(npm run:*)",
+      "Bash(npx cypress run:*)",
+      "Bash(curl:*)",
+      "Bash(./mvnw spring-boot:run:*)",
+      "Bash(ng serve:*)",
+      "Bash(timeout:*)"
     ],
     "deny": [],
     "ask": []

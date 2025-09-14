@@ -168,8 +168,8 @@ public class ClaudeNarrationService {
     private void generateNarrationAsync(SseEmitter emitter, JourneySession session) {
         CompletableFuture.runAsync(() -> {
             try {
-                // Send initial message
-                emitter.send(SseEmitter.event().data("STARTED"));
+                // Send initial message (named) with suggested reconnect delay to avoid rapid loops
+                emitter.send(SseEmitter.event().name("start").reconnectTime(60000).data("STARTED"));
                 
                 List<JourneyEvent> events = session.getRecentEvents(10);
                 String context = buildNarrationContext(events);
@@ -186,13 +186,15 @@ public class ClaudeNarrationService {
                     generateFreshNarration(emitter, userPrompt);
                 }
                 
-                emitter.send(SseEmitter.event().data("DONE"));
+                // Signal done with explicit event name so clients can stop reconnecting
+                emitter.send(SseEmitter.event().name("done").reconnectTime(600000).data("DONE"));
+                // Complete stream after DONE (clients should not reconnect on 'done')
                 emitter.complete();
                 
             } catch (Exception e) {
                 logger.error("Error generating narration", e);
                 try {
-                    emitter.send(SseEmitter.event().data("ERROR:Error en análisis AI"));
+                    emitter.send(SseEmitter.event().name("error").reconnectTime(60000).data("ERROR:Error en análisis AI"));
                     emitter.complete();
                 } catch (IOException ioException) {
                     logger.error("Failed to send error message", ioException);

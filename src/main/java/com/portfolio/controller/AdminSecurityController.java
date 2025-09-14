@@ -22,10 +22,10 @@ public class AdminSecurityController {
     private final FeatureFlagService featureFlagService;
     private final RateLimitingService rateLimitingService;
     
-    @Value("${portfolio.admin.security.enabled:true}")
+    @Value("${portfolio.admin.security.enabled:${PORTFOLIO_ADMIN_SECURITY_ENABLED:true}}")
     private boolean securityEnabled;
     
-    @Value("${portfolio.admin.token:}")
+    @Value("${portfolio.admin.token:${PORTFOLIO_ADMIN_TOKEN:}}")
     private String adminToken;
     
     /**

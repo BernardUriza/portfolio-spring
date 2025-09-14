@@ -24,8 +24,10 @@ public class AdminSecurityConfig {
     @Order(1)
     public SecurityFilterChain adminSecurityFilterChain(HttpSecurity http) throws Exception {
         return http
+            .cors(cors -> {})
             .securityMatcher("/api/admin/**")
             .authorizeHttpRequests(auth -> auth
+                .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
                 // Public admin endpoints (read-only)
                 .requestMatchers("/api/admin/sync-config/status").permitAll()
                 .requestMatchers("/api/admin/factory-reset/audit").permitAll()
@@ -44,8 +46,10 @@ public class AdminSecurityConfig {
     @Order(2)
     public SecurityFilterChain publicSecurityFilterChain(HttpSecurity http) throws Exception {
         return http
+            .cors(cors -> {})
             .securityMatcher("/**")
             .authorizeHttpRequests(auth -> auth
+                .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
                 // Public API endpoints
                 .requestMatchers("/api/projects/**").permitAll()
                 .requestMatchers("/api/contact/**").permitAll()

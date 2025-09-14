@@ -26,6 +26,7 @@ import org.springframework.web.context.request.WebRequest;
 
 import java.time.LocalDateTime;
 import java.time.Duration;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -73,7 +74,12 @@ public class PortfolioAdminController {
         
         List<PortfolioCompletionDto> completionDtos = portfolioPage.getContent()
                 .stream()
-                .map(portfolioCompletionService::calculateCompletion)
+                .map(entity -> {
+                    PortfolioCompletionDto dto = portfolioCompletionService.calculateCompletion(entity);
+                    dto.setSkillIds(new java.util.HashSet<>(entity.getSkillIds()));
+                    dto.setExperienceIds(new java.util.HashSet<>(entity.getExperienceIds()));
+                    return dto;
+                })
                 .toList();
         
         // Calculate aggregate metrics
@@ -140,6 +146,8 @@ public class PortfolioAdminController {
         }
         
         PortfolioCompletionDto completion = portfolioCompletionService.calculateCompletion(portfolio);
+        completion.setSkillIds(new java.util.HashSet<>(portfolio.getSkillIds()));
+        completion.setExperienceIds(new java.util.HashSet<>(portfolio.getExperienceIds()));
         
         return ResponseEntity.ok()
             .eTag(etag)
@@ -334,6 +342,104 @@ public class PortfolioAdminController {
                 .toList();
         
         return ResponseEntity.ok(completionDtos);
+    }
+
+    /**
+     * Manually update project skills (respects protection flags)
+     */
+    @PatchMapping("/{id}/skills")
+    @RequiresFeature("portfolio_management")
+    @RateLimit(type = RateLimitingService.RateLimitType.ADMIN_ENDPOINTS)
+    public ResponseEntity<Map<String, Object>> updateSkills(
+            @PathVariable Long id,
+            @RequestBody Map<String, List<Long>> payload) {
+        try {
+            Optional<PortfolioProjectJpaEntity> portfolioOpt = portfolioProjectRepository.findById(id);
+            if (portfolioOpt.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+            PortfolioProjectJpaEntity project = portfolioOpt.get();
+
+            if (Boolean.TRUE.equals(project.getProtectSkills())) {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "status", "error",
+                    "message", "Skills field is protected and cannot be modified"
+                ));
+            }
+
+            List<Long> skillIds = payload.getOrDefault("skillIds", List.of());
+            PortfolioProjectJpaEntity updated = project.toBuilder()
+                    .skillIds(new HashSet<>(skillIds))
+                    .manualSkillsOverride(true)
+                    .updatedAt(LocalDateTime.now())
+                    .build();
+
+            portfolioProjectRepository.save(updated);
+            portfolioCompletionService.evictCompletionCache(id);
+
+            log.info("Updated skills for portfolio project {} ({} skills)", id, skillIds.size());
+            return ResponseEntity.ok(Map.of(
+                "status", "success",
+                "message", "Skills updated successfully",
+                "portfolioProjectId", id,
+                "skillCount", skillIds.size()
+            ));
+        } catch (Exception e) {
+            log.error("Failed to update skills for portfolio {}: {}", id, e.getMessage(), e);
+            return ResponseEntity.status(500).body(Map.of(
+                "status", "error",
+                "message", "Failed to update skills: " + e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * Manually update project experiences (respects protection flags)
+     */
+    @PatchMapping("/{id}/experiences")
+    @RequiresFeature("portfolio_management")
+    @RateLimit(type = RateLimitingService.RateLimitType.ADMIN_ENDPOINTS)
+    public ResponseEntity<Map<String, Object>> updateExperiences(
+            @PathVariable Long id,
+            @RequestBody Map<String, List<Long>> payload) {
+        try {
+            Optional<PortfolioProjectJpaEntity> portfolioOpt = portfolioProjectRepository.findById(id);
+            if (portfolioOpt.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+            PortfolioProjectJpaEntity project = portfolioOpt.get();
+
+            if (Boolean.TRUE.equals(project.getProtectExperiences())) {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "status", "error",
+                    "message", "Experiences field is protected and cannot be modified"
+                ));
+            }
+
+            List<Long> experienceIds = payload.getOrDefault("experienceIds", List.of());
+            PortfolioProjectJpaEntity updated = project.toBuilder()
+                    .experienceIds(new HashSet<>(experienceIds))
+                    .manualExperiencesOverride(true)
+                    .updatedAt(LocalDateTime.now())
+                    .build();
+
+            portfolioProjectRepository.save(updated);
+            portfolioCompletionService.evictCompletionCache(id);
+
+            log.info("Updated experiences for portfolio project {} ({} experiences)", id, experienceIds.size());
+            return ResponseEntity.ok(Map.of(
+                "status", "success",
+                "message", "Experiences updated successfully",
+                "portfolioProjectId", id,
+                "experienceCount", experienceIds.size()
+            ));
+        } catch (Exception e) {
+            log.error("Failed to update experiences for portfolio {}: {}", id, e.getMessage(), e);
+            return ResponseEntity.status(500).body(Map.of(
+                "status", "error",
+                "message", "Failed to update experiences: " + e.getMessage()
+            ));
+        }
     }
     
     /**
