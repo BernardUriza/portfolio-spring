@@ -14,6 +14,7 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -272,6 +273,7 @@ public class GitHubSourceRepositoryService {
     /**
      * Fallback method for GitHub API calls
      */
+    @SuppressWarnings("unused")
     private List<GitHubRepo> fetchStarredRepositoriesFallback(Exception ex) {
         log.warn("GitHub API fallback triggered due to: {}", ex.getMessage());
         syncMonitorService.appendLog("WARN", "GitHub API unavailable, using empty result: " + ex.getMessage());
@@ -281,6 +283,7 @@ public class GitHubSourceRepositoryService {
     /**
      * Fallback method for single repository fetch
      */
+    @SuppressWarnings("unused")
     private GitHubRepo fetchSingleRepositoryFallback(String fullName, Exception ex) {
         log.warn("GitHub API fallback triggered for repository {}: {}", fullName, ex.getMessage());
         syncMonitorService.appendLog("WARN", "GitHub API unavailable for repository " + fullName + ": " + ex.getMessage());
@@ -426,6 +429,8 @@ public class GitHubSourceRepositoryService {
     }
     
     // GitHub API response models
+    @SuppressWarnings("unused")
+    @JsonIgnoreProperties(ignoreUnknown = true)
     private static class GitHubRepo {
         public Long id;
         public String name;
@@ -444,17 +449,21 @@ public class GitHubSourceRepositoryService {
             return full_name != null && full_name.matches("^[^/]+/[^/]+$");
         }
         
+        @SuppressWarnings("unused")
         public String getOwner() {
             if (!hasValidFullName()) return null;
             return full_name.split("/")[0];
         }
         
+        @SuppressWarnings("unused")
         public String getRepoName() {
             if (!hasValidFullName()) return null;
             return full_name.split("/")[1];
         }
     }
     
+    @SuppressWarnings("unused")
+    @JsonIgnoreProperties(ignoreUnknown = true)
     private static class GitHubReadmeResponse {
         public String name;
         public String path;

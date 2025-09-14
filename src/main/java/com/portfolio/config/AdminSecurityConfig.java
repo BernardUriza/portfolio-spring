@@ -38,6 +38,16 @@ public class AdminSecurityConfig {
             )
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .csrf(csrf -> csrf.disable())
+            .formLogin(form -> form.disable())
+            .httpBasic(basic -> basic.disable())
+            .logout(logout -> logout.disable())
+            .exceptionHandling(ex -> ex
+                .authenticationEntryPoint((req, res, e) -> {
+                    res.setStatus(javax.servlet.http.HttpServletResponse.SC_UNAUTHORIZED);
+                    res.setContentType("application/json");
+                    res.getWriter().write("{\"error\":\"Unauthorized\",\"message\":\"Valid admin token required\"}");
+                })
+            )
             .addFilterBefore(adminTokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
             .build();
     }
@@ -60,6 +70,9 @@ public class AdminSecurityConfig {
             )
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .csrf(csrf -> csrf.disable())
+            .formLogin(form -> form.disable())
+            .httpBasic(basic -> basic.disable())
+            .logout(logout -> logout.disable())
             .headers(headers -> headers.frameOptions().disable()) // For H2 console
             .build();
     }
