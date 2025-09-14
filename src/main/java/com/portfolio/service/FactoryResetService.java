@@ -2,6 +2,8 @@ package com.portfolio.service;
 
 import com.portfolio.adapter.out.persistence.jpa.*;
 import com.portfolio.core.application.usecase.FactoryResetUseCase;
+import com.portfolio.repository.ContactMessageRepository;
+import com.portfolio.repository.VisitorInsightRepository;
 import com.portfolio.core.domain.admin.ResetAudit;
 import com.portfolio.core.domain.admin.ResetStatus;
 import jakarta.annotation.PostConstruct;
@@ -37,9 +39,9 @@ public class FactoryResetService implements FactoryResetUseCase {
     private final SkillJpaRepository skillRepository;
     private final ExperienceJpaRepository experienceRepository;
     private final SourceRepositoryJpaRepository sourceRepositoryRepository;
-    // TODO: Add these repositories when Contact/Visitor features are implemented
-    // private final ContactMessageJpaRepository contactMessageRepository;
-    // private final VisitorInsightJpaRepository visitorInsightRepository;
+    // Contact/Visitor features repositories
+    private final ContactMessageRepository contactMessageRepository;
+    private final VisitorInsightRepository visitorInsightRepository;
     
     @Value("${spring.jpa.database-platform:}")
     private String databasePlatform;
@@ -216,14 +218,14 @@ public class FactoryResetService implements FactoryResetUseCase {
             int tablesCleared = 0;
             
             // Clear tables in dependency order (children first)
-            // TODO: Add visitor insights and contact messages clearing when implemented
-            // sendSseMessage(jobId, "STEP", "Clearing visitor insights");
-            // visitorInsightRepository.deleteAllInBatch();
-            // tablesCleared++;
+            // Visitor insights depend on contact messages via optional FK, so clear insights first
+            sendSseMessage(jobId, "STEP", "Clearing visitor insights");
+            visitorInsightRepository.deleteAllInBatch();
+            tablesCleared++;
             
-            // sendSseMessage(jobId, "STEP", "Clearing contact messages");
-            // contactMessageRepository.deleteAllInBatch();
-            // tablesCleared++;
+            sendSseMessage(jobId, "STEP", "Clearing contact messages");
+            contactMessageRepository.deleteAllInBatch();
+            tablesCleared++;
             
             sendSseMessage(jobId, "STEP", "Clearing portfolio projects");
             portfolioProjectRepository.deleteAllInBatch();
@@ -264,10 +266,12 @@ public class FactoryResetService implements FactoryResetUseCase {
         try {
             // Reset identity columns to start from 1
             String[] resetStatements = {
-                "ALTER TABLE projects ALTER COLUMN id RESTART WITH 1",
+                "ALTER TABLE portfolio_projects ALTER COLUMN id RESTART WITH 1",
+                "ALTER TABLE source_repositories ALTER COLUMN id RESTART WITH 1",
                 "ALTER TABLE skills ALTER COLUMN id RESTART WITH 1", 
                 "ALTER TABLE experiences ALTER COLUMN id RESTART WITH 1",
-                "ALTER TABLE starred_projects ALTER COLUMN id RESTART WITH 1"
+                "ALTER TABLE contact_messages ALTER COLUMN id RESTART WITH 1",
+                "ALTER TABLE visitor_insights ALTER COLUMN id RESTART WITH 1"
             };
             
             for (String statement : resetStatements) {
