@@ -1,5 +1,12 @@
+# Development profile sample (do not commit secrets)
+
+# Enable admin security in dev
 portfolio.admin.security.enabled=true
-portfolio.admin.token=6Erh5Jlw7hHWvtlkXLbPm3MbZ0d9m7ps6WpU5AqT0grYx29ETYTI2c5h2e3z7bh1
+
+# Provide admin token via environment variable instead of hardcoding here
+# PORTFOLIO_ADMIN_TOKEN will be read by AdminTokenAuthenticationFilter
+# You can still uncomment the line below locally but DO NOT commit it
+# portfolio.admin.token=replace-with-your-dev-token
 
 # Optional CORS for local dev (uncomment if needed)
 # spring.mvc.cors.mappings.[/api/**].allowed-origins=http://localhost:4200

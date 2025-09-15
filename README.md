@@ -338,6 +338,32 @@ Content-Type: application/json
 - **Real-time Monitoring**: SSE streams for live progress updates
 - **Audit Trail**: Complete history of sync operations
 
+---
+
+## Admin Security (Dev)
+
+To protect `/api/admin/**` endpoints locally, configure an admin token via environment variables. The backend reads either the Spring property `portfolio.admin.token` or the environment variable `PORTFOLIO_ADMIN_TOKEN`.
+
+Recommended for development:
+
+- Do not commit secrets. Keep them in `.env` (already gitignored) or export them in your shell.
+
+Windows PowerShell
+```powershell
+$env:PORTFOLIO_ADMIN_SECURITY_ENABLED = "true"
+$env:PORTFOLIO_ADMIN_TOKEN = "your-admin-token"
+./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
+```
+
+macOS/Linux
+```bash
+export PORTFOLIO_ADMIN_SECURITY_ENABLED=true
+export PORTFOLIO_ADMIN_TOKEN=your-admin-token
+./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
+```
+
+Alternatively, copy `src/main/resources/application-dev.properties.sample` to `src/main/resources/application-dev.properties` and set the properties locally (do not commit the file with your token).
+
 ### 🔧 **Migration & Data Management**
 - **Repository Linkage**: Automated migration tools for data consistency
 - **Project Completion Tracking**: Progress monitoring with statistics
@@ -370,4 +396,3 @@ Content-Type: application/json
 ## 📄 **License**
 
 **Created by Bernard Orozco** - MIT License
-
