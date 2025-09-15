@@ -28,7 +28,7 @@ public class SyncMonitorAdminController {
     /**
      * Fetch sync logs. When an offset is provided, only logs with id greater than offset are returned.
      */
-    @GetMapping("/log")
+    @GetMapping({"/log", "/log/"})
     public ResponseEntity<List<AdminSyncLogEntry>> getLogs(@RequestParam(name = "offset", required = false) Long offset) {
         List<SyncMonitorService.LogEntry> entries =
                 offset == null ? syncMonitorService.getAllLogs() : syncMonitorService.getLogsSince(offset);

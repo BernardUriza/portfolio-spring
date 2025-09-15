@@ -30,7 +30,7 @@ public class AdminSecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
                 // Public admin endpoints (read-only)
-                .requestMatchers("/api/admin/sync-config/status").permitAll()
+                .requestMatchers("/api/admin/sync-config/status", "/api/admin/sync-config/status/").permitAll()
                 .requestMatchers("/api/admin/factory-reset/audit").permitAll()
 
                 // Protected admin endpoints (require token)

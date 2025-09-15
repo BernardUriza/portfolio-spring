@@ -11,7 +11,10 @@ import jakarta.validation.constraints.Min;
 import java.time.Instant;
 
 @Entity
-@Table(name = "sync_config")
+@Table(name = "sync_config",
+       uniqueConstraints = {
+           @UniqueConstraint(name = "uk_sync_config_singleton", columnNames = {"singleton_key"})
+       })
 @Data
 @Builder
 @NoArgsConstructor
@@ -44,10 +47,17 @@ public class SyncConfigJpaEntity {
     @Column(name = "updated_by", nullable = false)
     @Builder.Default
     private String updatedBy = "admin";
+
+    @Column(name = "singleton_key", nullable = false, length = 1)
+    @Builder.Default
+    private String singletonKey = "X";
     
     @PrePersist
     @PreUpdate
     public void updateTimestamp() {
         this.updatedAt = Instant.now();
+        if (this.singletonKey == null || this.singletonKey.isBlank()) {
+            this.singletonKey = "X";
+        }
     }
 }

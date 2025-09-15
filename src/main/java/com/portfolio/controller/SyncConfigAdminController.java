@@ -59,9 +59,15 @@ public class SyncConfigAdminController {
         }
     }
     
-    @GetMapping("/status")
+    @GetMapping({"/status", "/status/"})
     public ResponseEntity<Map<String, Object>> getSyncStatus() {
-        SyncConfigDto cfg = syncConfigService.getOrCreate();
+        SyncConfigDto cfg;
+        try {
+            cfg = syncConfigService.getOrCreate();
+        } catch (RuntimeException ex) {
+            log.warn("Sync status first attempt failed ({}). Retrying once...", ex.getClass().getSimpleName());
+            cfg = syncConfigService.getOrCreate();
+        }
         return ResponseEntity.ok(Map.of(
             "enabled", cfg.getEnabled(),
             "intervalHours", cfg.getIntervalHours(),
@@ -71,7 +77,7 @@ public class SyncConfigAdminController {
         ));
     }
 
-    @PutMapping
+    @PutMapping({"", "/"})
     @RequiresFeature("scheduled_sync")
     @RateLimit(type = RateLimitingService.RateLimitType.SYNC_OPERATIONS)
     public ResponseEntity<Map<String, Object>> updateSyncConfig(@Valid @RequestBody SyncConfigUpdateDto update) {

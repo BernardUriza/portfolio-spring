@@ -7,6 +7,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.dao.DataIntegrityViolationException;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.Instant;
 
@@ -16,13 +20,12 @@ import java.time.Instant;
 public class SyncConfigService {
     
     private final SyncConfigJpaRepository syncConfigRepository;
+    @PersistenceContext
+    private EntityManager entityManager;
+    private final TransactionTemplate transactionTemplate;
     
-    @Transactional(readOnly = true)
     public SyncConfigDto getOrCreate() {
-        SyncConfigJpaEntity entity = syncConfigRepository.findFirstByOrderByIdAsc()
-                .orElseGet(this::createDefaultConfig);
-        
-        return mapToDto(entity);
+        return mapToDto(getOrCreateEntity());
     }
     
     @Transactional
@@ -30,8 +33,7 @@ public class SyncConfigService {
         log.info("Updating sync config: enabled={}, intervalHours={}, updatedBy={}", 
                 enabled, intervalHours, updatedBy);
         
-        SyncConfigJpaEntity entity = syncConfigRepository.findFirstByOrderByIdAsc()
-                .orElseGet(this::createDefaultConfig);
+        SyncConfigJpaEntity entity = getOrCreateEntity();
         
         entity.setEnabled(enabled);
         entity.setIntervalHours(intervalHours);
@@ -51,8 +53,7 @@ public class SyncConfigService {
     
     @Transactional
     public void updateLastRun(Instant lastRunAt) {
-        SyncConfigJpaEntity entity = syncConfigRepository.findFirstByOrderByIdAsc()
-                .orElseGet(this::createDefaultConfig);
+        SyncConfigJpaEntity entity = getOrCreateEntity();
         
         entity.setLastRunAt(lastRunAt);
         syncConfigRepository.save(entity);
@@ -60,8 +61,7 @@ public class SyncConfigService {
     
     @Transactional
     public void updateNextRun(Instant nextRunAt) {
-        SyncConfigJpaEntity entity = syncConfigRepository.findFirstByOrderByIdAsc()
-                .orElseGet(this::createDefaultConfig);
+        SyncConfigJpaEntity entity = getOrCreateEntity();
         
         entity.setNextRunAt(nextRunAt);
         syncConfigRepository.save(entity);
@@ -69,15 +69,14 @@ public class SyncConfigService {
     
     private SyncConfigJpaEntity createDefaultConfig() {
         log.info("Creating default sync configuration");
-        
         SyncConfigJpaEntity defaultConfig = SyncConfigJpaEntity.builder()
                 .enabled(false)
                 .intervalHours(6)
                 .updatedBy("system")
                 .updatedAt(Instant.now())
+                .singletonKey("X")
                 .build();
-        
-        return syncConfigRepository.save(defaultConfig);
+        return syncConfigRepository.saveAndFlush(defaultConfig);
     }
     
     private SyncConfigDto mapToDto(SyncConfigJpaEntity entity) {
@@ -89,5 +88,39 @@ public class SyncConfigService {
                 .updatedAt(entity.getUpdatedAt())
                 .updatedBy(entity.getUpdatedBy())
                 .build();
+    }
+
+    public SyncConfigJpaEntity getOrCreateEntity() {
+        // First, try to lock the singleton row inside a transaction
+        SyncConfigJpaEntity locked = transactionTemplate.execute(status ->
+                syncConfigRepository.lockSingleton().orElse(null)
+        );
+        if (locked != null) return locked;
+
+        // Not found: try to create in a new transaction
+        SyncConfigJpaEntity created = tryCreateDefaultInNewTransaction();
+        if (created != null) return created;
+
+        // Collision: fetch existing in a transaction
+        return transactionTemplate.execute(status ->
+                syncConfigRepository.findBySingletonKey("X")
+                        .orElseGet(() -> syncConfigRepository.findFirstByOrderByIdAsc()
+                                .orElseThrow(() -> new IllegalStateException("sync_config singleton not found after constraint collision")))
+        );
+    }
+
+    private SyncConfigJpaEntity tryCreateDefaultInNewTransaction() {
+        try {
+            return transactionTemplate.execute(status -> {
+                try {
+                    return createDefaultConfig();
+                } catch (DataIntegrityViolationException e) {
+                    status.setRollbackOnly();
+                    return null;
+                }
+            });
+        } catch (Exception e) {
+            return null;
+        }
     }
 }

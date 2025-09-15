@@ -31,7 +31,7 @@ public class AdminSecurityController {
     /**
      * Get security status and feature flags overview
      */
-    @GetMapping("/status")
+    @GetMapping({"/status", "/status/"})
     @RequiresFeature("admin_endpoints")
     @RateLimit(type = RateLimitingService.RateLimitType.ADMIN_ENDPOINTS)
     public ResponseEntity<Map<String, Object>> getSecurityStatus() {
