@@ -38,6 +38,7 @@ public class AdminSecurityConfig {
                 .anyRequest().authenticated()
             )
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .requestCache(cache -> cache.disable())
             .csrf(csrf -> csrf.disable())
             .formLogin(form -> form.disable())
             .httpBasic(basic -> basic.disable())
@@ -68,10 +69,17 @@ public class AdminSecurityConfig {
                 .anyRequest().permitAll()
             )
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .requestCache(cache -> cache.disable())
             .csrf(csrf -> csrf.disable())
             .formLogin(form -> form.disable())
             .httpBasic(basic -> basic.disable())
             .logout(logout -> logout.disable())
+            .exceptionHandling(ex -> ex.authenticationEntryPoint((req, res, e) -> {
+                // For any unexpected auth challenge outside admin, do not redirect to /login
+                res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                res.setContentType("application/json");
+                res.getWriter().write("{\"error\":\"Unauthorized\"}");
+            }))
             // H2 console: replace deprecated frameOptions() with new API
             .headers(h -> h.frameOptions(f -> f.sameOrigin()))
             .build();
