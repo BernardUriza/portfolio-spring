@@ -15,35 +15,25 @@ public class ProjectCompleteness {
     
     public static ProjectCompleteness calculate(PortfolioProject project) {
         List<String> missing = new ArrayList<>();
-        int completedFields = 0;
-        int totalFields = 4; // Description, LiveDemo, Skills, Experiences
         
         // Description - 40% weight
         if (!project.isDescriptionComplete()) {
             missing.add("Description");
-        } else {
-            completedFields++;
         }
         
         // Live Demo URL - 20% weight  
         if (!project.isLiveDemoComplete()) {
             missing.add("Live Demo");
-        } else {
-            completedFields++;
         }
         
         // Skills - 20% weight
         if (!project.hasSkills()) {
             missing.add("Skills");
-        } else {
-            completedFields++;
         }
         
         // Experiences - 20% weight
         if (!project.hasExperiences()) {
             missing.add("Experiences");
-        } else {
-            completedFields++;
         }
         
         // Calculate weighted score

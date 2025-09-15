@@ -4,7 +4,6 @@
  */
 package com.portfolio.controller;
 
-import com.portfolio.model.JourneySession;
 import com.portfolio.adapter.out.persistence.jpa.PortfolioProjectJpaRepository;
 import com.portfolio.service.JourneySessionService;
 import com.portfolio.service.ClaudeNarrationService;
@@ -13,12 +12,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;

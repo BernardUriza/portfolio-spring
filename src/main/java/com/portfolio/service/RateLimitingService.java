@@ -30,7 +30,7 @@ public class RateLimitingService {
         
         String key = buildKey(clientId, type);
         int maxRequests = getMaxRequestsForType(type);
-        ChronoUnit timeUnit = getTimeUnitForType(type);
+        // Determine allowed requests and window for type
         
         RateLimitEntry entry = rateLimitCache.computeIfAbsent(key, k -> new RateLimitEntry());
         
@@ -142,13 +142,6 @@ public class RateLimitingService {
             case FACTORY_RESET -> featureFlagService.getFactoryResetRateLimit();
             case SYNC_OPERATIONS -> featureFlagService.getSyncOperationsRateLimit();
             case AI_CURATION -> featureFlagService.getAiCurationRateLimit();
-        };
-    }
-    
-    private ChronoUnit getTimeUnitForType(RateLimitType type) {
-        return switch (type) {
-            case ADMIN_ENDPOINTS, SYNC_OPERATIONS, AI_CURATION -> ChronoUnit.MINUTES;
-            case FACTORY_RESET -> ChronoUnit.HOURS;
         };
     }
     

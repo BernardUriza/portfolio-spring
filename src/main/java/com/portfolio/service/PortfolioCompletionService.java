@@ -78,7 +78,6 @@ public class PortfolioCompletionService {
     
     private Double calculateBasicInfoScore(PortfolioProjectJpaEntity portfolio) {
         double score = 0.0;
-        int totalFields = 2;
         
         if (isNotEmpty(portfolio.getTitle())) {
             score += 0.5; // Title is 50% of basic info
@@ -106,7 +105,6 @@ public class PortfolioCompletionService {
     }
     
     private Double calculateMetadataScore(PortfolioProjectJpaEntity portfolio) {
-        double score = 0.0;
         int filledFields = 0;
         int totalFields = 4;
         

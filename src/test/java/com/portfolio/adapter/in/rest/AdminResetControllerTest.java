@@ -1,6 +1,5 @@
 package com.portfolio.adapter.in.rest;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.portfolio.adapter.in.rest.mapper.ResetAuditRestMapper;
 import com.portfolio.core.domain.admin.ResetAudit;
 import com.portfolio.core.domain.admin.ResetStatus;
@@ -8,7 +7,7 @@ import com.portfolio.service.FactoryResetService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
@@ -34,13 +33,10 @@ class AdminResetControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper objectMapper;
-
-    @MockBean
+    @MockitoBean
     private FactoryResetService factoryResetService;
 
-    @MockBean
+    @MockitoBean
     private ResetAuditRestMapper resetAuditMapper;
 
     @Test
@@ -253,10 +249,10 @@ class AdminResetControllerDisabledTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @MockitoBean
     private FactoryResetService factoryResetService;
 
-    @MockBean
+    @MockitoBean
     private ResetAuditRestMapper resetAuditMapper;
 
     @Test

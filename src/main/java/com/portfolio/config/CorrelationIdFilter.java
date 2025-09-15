@@ -19,7 +19,6 @@ public class CorrelationIdFilter implements Filter {
     private static final String CORRELATION_ID_HEADER = "X-Correlation-ID";
     private static final String CORRELATION_ID_MDC_KEY = "correlationId";
     private static final String REQUEST_ID_MDC_KEY = "requestId";
-    private static final String USER_ID_MDC_KEY = "userId";
     private static final String REQUEST_URI_MDC_KEY = "requestUri";
     private static final String REQUEST_METHOD_MDC_KEY = "requestMethod";
     private static final String CLIENT_IP_MDC_KEY = "clientIp";

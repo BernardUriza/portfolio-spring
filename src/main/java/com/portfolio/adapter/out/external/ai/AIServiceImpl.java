@@ -10,7 +10,6 @@ import io.github.resilience4j.retry.annotation.Retry;
 import io.github.resilience4j.timelimiter.annotation.TimeLimiter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.DependsOn;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -337,6 +336,7 @@ public class AIServiceImpl {
     /**
      * Fallback method for Claude API calls
      */
+    @SuppressWarnings("unused")
     private String callClaudeApiFallback(String prompt, Exception ex) {
         log.warn("Claude API fallback triggered due to: {}", ex.getMessage());
         

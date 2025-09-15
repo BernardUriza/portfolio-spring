@@ -1,6 +1,7 @@
 package com.portfolio.config;
 
 import com.portfolio.security.AdminTokenAuthenticationFilter;
+import jakarta.servlet.http.HttpServletResponse; // <-- Jakarta, not javax
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -17,9 +18,9 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @RequiredArgsConstructor
 @ConditionalOnProperty(name = "portfolio.admin.security.enabled", havingValue = "true", matchIfMissing = true)
 public class AdminSecurityConfig {
-    
+
     private final AdminTokenAuthenticationFilter adminTokenAuthenticationFilter;
-    
+
     @Bean
     @Order(1)
     public SecurityFilterChain adminSecurityFilterChain(HttpSecurity http) throws Exception {
@@ -31,7 +32,7 @@ public class AdminSecurityConfig {
                 // Public admin endpoints (read-only)
                 .requestMatchers("/api/admin/sync-config/status").permitAll()
                 .requestMatchers("/api/admin/factory-reset/audit").permitAll()
-                
+
                 // Protected admin endpoints (require token)
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
@@ -41,17 +42,15 @@ public class AdminSecurityConfig {
             .formLogin(form -> form.disable())
             .httpBasic(basic -> basic.disable())
             .logout(logout -> logout.disable())
-            .exceptionHandling(ex -> ex
-                .authenticationEntryPoint((req, res, e) -> {
-                    res.setStatus(javax.servlet.http.HttpServletResponse.SC_UNAUTHORIZED);
-                    res.setContentType("application/json");
-                    res.getWriter().write("{\"error\":\"Unauthorized\",\"message\":\"Valid admin token required\"}");
-                })
-            )
+            .exceptionHandling(ex -> ex.authenticationEntryPoint((req, res, e) -> {
+                res.setStatus(HttpServletResponse.SC_UNAUTHORIZED); // <-- fixed
+                res.setContentType("application/json");
+                res.getWriter().write("{\"error\":\"Unauthorized\",\"message\":\"Valid admin token required\"}");
+            }))
             .addFilterBefore(adminTokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
             .build();
     }
-    
+
     @Bean
     @Order(2)
     public SecurityFilterChain publicSecurityFilterChain(HttpSecurity http) throws Exception {
@@ -73,7 +72,8 @@ public class AdminSecurityConfig {
             .formLogin(form -> form.disable())
             .httpBasic(basic -> basic.disable())
             .logout(logout -> logout.disable())
-            .headers(headers -> headers.frameOptions().disable()) // For H2 console
+            // H2 console: replace deprecated frameOptions() with new API
+            .headers(h -> h.frameOptions(f -> f.sameOrigin()))
             .build();
     }
 }

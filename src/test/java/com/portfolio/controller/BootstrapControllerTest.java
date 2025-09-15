@@ -36,9 +36,9 @@ public class BootstrapControllerTest {
             bootstrapController.syncIfEmpty();
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertNotNull(response.getBody());
-        assertTrue(response.getBody().triggered());
-        assertEquals("portfolio-empty", response.getBody().reason());
+        BootstrapSyncService.BootstrapSyncResult body1 = java.util.Objects.requireNonNull(response.getBody());
+        assertTrue(body1.triggered());
+        assertEquals("portfolio-empty", body1.reason());
         
         verify(bootstrapSyncService).maybeTrigger();
     }
@@ -54,9 +54,9 @@ public class BootstrapControllerTest {
             bootstrapController.syncIfEmpty();
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertNotNull(response.getBody());
-        assertFalse(response.getBody().triggered());
-        assertEquals("portfolio-has-projects", response.getBody().reason());
+        BootstrapSyncService.BootstrapSyncResult body2 = java.util.Objects.requireNonNull(response.getBody());
+        assertFalse(body2.triggered());
+        assertEquals("portfolio-has-projects", body2.reason());
         
         verify(bootstrapSyncService).maybeTrigger();
     }
@@ -72,9 +72,9 @@ public class BootstrapControllerTest {
             bootstrapController.syncIfEmpty();
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertNotNull(response.getBody());
-        assertFalse(response.getBody().triggered());
-        assertEquals("cooldown-active", response.getBody().reason());
+        BootstrapSyncService.BootstrapSyncResult body3 = java.util.Objects.requireNonNull(response.getBody());
+        assertFalse(body3.triggered());
+        assertEquals("cooldown-active", body3.reason());
         
         verify(bootstrapSyncService).maybeTrigger();
     }
@@ -90,9 +90,9 @@ public class BootstrapControllerTest {
             bootstrapController.syncIfEmpty();
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertNotNull(response.getBody());
-        assertFalse(response.getBody().triggered());
-        assertEquals("sync-in-progress", response.getBody().reason());
+        BootstrapSyncService.BootstrapSyncResult body4 = java.util.Objects.requireNonNull(response.getBody());
+        assertFalse(body4.triggered());
+        assertEquals("sync-in-progress", body4.reason());
         
         verify(bootstrapSyncService).maybeTrigger();
     }

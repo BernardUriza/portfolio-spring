@@ -38,7 +38,9 @@ public class ClaudeTokenBudgetService {
     private Counter tokenUsageCounter;
     private Counter warnThresholdCounter;
     private Counter budgetExceededCounter;
+    @SuppressWarnings("unused")
     private Gauge remainingTokensGauge;
+    @SuppressWarnings("unused")
     private Gauge usagePercentageGauge;
     
     @PostConstruct

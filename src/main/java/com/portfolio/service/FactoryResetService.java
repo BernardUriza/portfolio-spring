@@ -5,7 +5,6 @@ import com.portfolio.core.application.usecase.FactoryResetUseCase;
 import com.portfolio.repository.ContactMessageRepository;
 import com.portfolio.repository.VisitorInsightRepository;
 import com.portfolio.core.domain.admin.ResetAudit;
-import com.portfolio.core.domain.admin.ResetStatus;
 import jakarta.annotation.PostConstruct;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Query;
@@ -22,8 +21,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 
 @Slf4j
 @Service
@@ -51,7 +48,6 @@ public class FactoryResetService implements FactoryResetUseCase {
     
     // SSE emitters for streaming progress
     private final Map<String, SseEmitter> sseEmitters = new ConcurrentHashMap<>();
-    private final ScheduledExecutorService scheduledExecutor = Executors.newScheduledThreadPool(2);
     
     private boolean isPostgres;
     private boolean isH2;

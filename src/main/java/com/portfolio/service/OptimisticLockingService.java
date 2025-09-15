@@ -123,9 +123,10 @@ public class OptimisticLockingService {
     public VersionConflictInfo extractVersionConflict(Exception e) {
         if (e instanceof ObjectOptimisticLockingFailureException) {
             ObjectOptimisticLockingFailureException ole = (ObjectOptimisticLockingFailureException) e;
+            Object id = ole.getIdentifier();
             return new VersionConflictInfo(
                 ole.getPersistentClassName(),
-                ole.getIdentifier() != null ? ole.getIdentifier().toString() : null,
+                id != null ? id.toString() : null,
                 null, // Expected version not easily extractable
                 null  // Actual version not easily extractable
             );

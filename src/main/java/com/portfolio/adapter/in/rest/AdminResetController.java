@@ -7,7 +7,6 @@ import com.portfolio.core.domain.admin.ResetAudit;
 import com.portfolio.service.FactoryResetService;
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
-import io.github.bucket4j.Bucket4j;
 import io.github.bucket4j.Refill;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -148,7 +147,7 @@ public class AdminResetController {
     private Bucket createNewBucket(String clientIp) {
         // 1 request per 10 minutes
         Bandwidth limit = Bandwidth.classic(1, Refill.intervally(1, Duration.ofMinutes(10)));
-        return Bucket4j.builder()
+        return Bucket.builder()
             .addLimit(limit)
             .build();
     }

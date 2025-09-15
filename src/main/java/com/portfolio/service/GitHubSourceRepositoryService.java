@@ -449,13 +449,11 @@ public class GitHubSourceRepositoryService {
             return full_name != null && full_name.matches("^[^/]+/[^/]+$");
         }
         
-        @SuppressWarnings("unused")
         public String getOwner() {
             if (!hasValidFullName()) return null;
             return full_name.split("/")[0];
         }
         
-        @SuppressWarnings("unused")
         public String getRepoName() {
             if (!hasValidFullName()) return null;
             return full_name.split("/")[1];

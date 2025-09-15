@@ -4,8 +4,6 @@
  */
 package com.portfolio.dto;
 
-import java.time.LocalDateTime;
-
 public class SessionResponse {
     private String sessionId;
     private String expiresAt;
