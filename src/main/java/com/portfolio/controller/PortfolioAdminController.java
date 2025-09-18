@@ -4,11 +4,12 @@ import com.portfolio.adapter.out.persistence.jpa.PortfolioProjectJpaEntity;
 import com.portfolio.adapter.out.persistence.jpa.PortfolioProjectJpaRepository;
 import com.portfolio.adapter.out.persistence.jpa.SourceRepositoryJpaRepository;
 import com.portfolio.core.domain.project.LinkType;
+import com.portfolio.core.domain.project.PortfolioProject;
 import com.portfolio.service.PortfolioCompletionService;
 import com.portfolio.service.PortfolioService;
 import com.portfolio.service.SyncSchedulerService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -24,15 +25,25 @@ import java.util.HashMap;
  */
 @RestController
 @RequestMapping("/api/admin/portfolio")
-@RequiredArgsConstructor
-@Slf4j
 public class PortfolioAdminController {
-
+    private static final Logger log = LoggerFactory.getLogger(PortfolioAdminController.class);
     private final PortfolioProjectJpaRepository portfolioRepository;
     private final PortfolioCompletionService completionService;
     private final PortfolioService portfolioService;
     private final SyncSchedulerService syncSchedulerService;
     private final SourceRepositoryJpaRepository sourceRepositoryRepository;
+
+    public PortfolioAdminController(PortfolioProjectJpaRepository portfolioRepository,
+                                    PortfolioCompletionService completionService,
+                                    PortfolioService portfolioService,
+                                    SyncSchedulerService syncSchedulerService,
+                                    SourceRepositoryJpaRepository sourceRepositoryRepository) {
+        this.portfolioRepository = portfolioRepository;
+        this.completionService = completionService;
+        this.portfolioService = portfolioService;
+        this.syncSchedulerService = syncSchedulerService;
+        this.sourceRepositoryRepository = sourceRepositoryRepository;
+    }
 
     // DTOs to avoid Map.of generic inference and null constraints
     public record AdminPortfolioItem(
@@ -125,7 +136,7 @@ public class PortfolioAdminController {
             @RequestBody Map<String, Object> payload) {
         try {
             Long sourceRepositoryId = Long.valueOf(payload.get("repositoryId").toString());
-            var result = portfolioService.linkToSourceRepository(id, sourceRepositoryId, LinkType.MANUAL);
+            PortfolioProject result = portfolioService.linkToSourceRepository(id, sourceRepositoryId, LinkType.MANUAL);
             Map<String, Object> resp = new HashMap<>();
             resp.put("status", "success");
             resp.put("projectId", result.getId());
@@ -144,7 +155,7 @@ public class PortfolioAdminController {
     @DeleteMapping("/{id}/link-repo")
     public ResponseEntity<Map<String, Object>> unlinkSource(@PathVariable Long id) {
         try {
-            var result = portfolioService.unlinkFromSourceRepository(id);
+            PortfolioProject result = portfolioService.unlinkFromSourceRepository(id);
             Map<String, Object> resp = new HashMap<>();
             resp.put("status", "success");
             resp.put("projectId", result.getId());

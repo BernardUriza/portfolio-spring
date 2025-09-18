@@ -5,9 +5,6 @@
 package com.portfolio.model;
 
 import jakarta.persistence.*;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -15,9 +12,6 @@ import java.util.ArrayList;
 
 @Entity
 @Table(name = "visitor_insights")
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class VisitorInsight {
     
     @Id
@@ -68,5 +62,115 @@ public class VisitorInsight {
         if (startedAt != null && endedAt != null) {
             durationSeconds = (int) java.time.Duration.between(startedAt, endedAt).getSeconds();
         }
+    }
+
+    // Default constructor
+    public VisitorInsight() {
+    }
+
+    // All args constructor
+    public VisitorInsight(Long id, String sessionId, LocalDateTime startedAt, LocalDateTime endedAt,
+                          Integer durationSeconds, Integer pagesVisited, List<String> projectsViewed,
+                          String actions, String aiConclusion, Long contactMessageId, LocalDateTime createdAt) {
+        this.id = id;
+        this.sessionId = sessionId;
+        this.startedAt = startedAt;
+        this.endedAt = endedAt;
+        this.durationSeconds = durationSeconds;
+        this.pagesVisited = pagesVisited != null ? pagesVisited : 0;
+        this.projectsViewed = projectsViewed != null ? projectsViewed : new ArrayList<>();
+        this.actions = actions;
+        this.aiConclusion = aiConclusion;
+        this.contactMessageId = contactMessageId;
+        this.createdAt = createdAt;
+    }
+
+    // Getters and Setters
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getSessionId() {
+        return sessionId;
+    }
+
+    public void setSessionId(String sessionId) {
+        this.sessionId = sessionId;
+    }
+
+    public LocalDateTime getStartedAt() {
+        return startedAt;
+    }
+
+    public void setStartedAt(LocalDateTime startedAt) {
+        this.startedAt = startedAt;
+    }
+
+    public LocalDateTime getEndedAt() {
+        return endedAt;
+    }
+
+    public void setEndedAt(LocalDateTime endedAt) {
+        this.endedAt = endedAt;
+    }
+
+    public Integer getDurationSeconds() {
+        return durationSeconds;
+    }
+
+    public void setDurationSeconds(Integer durationSeconds) {
+        this.durationSeconds = durationSeconds;
+    }
+
+    public Integer getPagesVisited() {
+        return pagesVisited;
+    }
+
+    public void setPagesVisited(Integer pagesVisited) {
+        this.pagesVisited = pagesVisited != null ? pagesVisited : 0;
+    }
+
+    public List<String> getProjectsViewed() {
+        return projectsViewed;
+    }
+
+    public void setProjectsViewed(List<String> projectsViewed) {
+        this.projectsViewed = projectsViewed != null ? projectsViewed : new ArrayList<>();
+    }
+
+    public String getActions() {
+        return actions;
+    }
+
+    public void setActions(String actions) {
+        this.actions = actions;
+    }
+
+    public String getAiConclusion() {
+        return aiConclusion;
+    }
+
+    public void setAiConclusion(String aiConclusion) {
+        this.aiConclusion = aiConclusion;
+    }
+
+    public Long getContactMessageId() {
+        return contactMessageId;
+    }
+
+    public void setContactMessageId(Long contactMessageId) {
+        this.contactMessageId = contactMessageId;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
     }
 }

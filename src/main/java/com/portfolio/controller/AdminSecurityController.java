@@ -4,8 +4,6 @@ import com.portfolio.aspect.RateLimit;
 import com.portfolio.aspect.RequiresFeature;
 import com.portfolio.service.FeatureFlagService;
 import com.portfolio.service.RateLimitingService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,12 +13,17 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/admin/security")
-@RequiredArgsConstructor
-@Slf4j
 public class AdminSecurityController {
-    
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(AdminSecurityController.class);
+
     private final FeatureFlagService featureFlagService;
     private final RateLimitingService rateLimitingService;
+
+    public AdminSecurityController(FeatureFlagService featureFlagService,
+                                   RateLimitingService rateLimitingService) {
+        this.featureFlagService = featureFlagService;
+        this.rateLimitingService = rateLimitingService;
+    }
     
     @Value("${portfolio.admin.security.enabled:${PORTFOLIO_ADMIN_SECURITY_ENABLED:true}}")
     private boolean securityEnabled;

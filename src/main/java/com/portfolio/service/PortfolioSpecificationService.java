@@ -2,8 +2,8 @@ package com.portfolio.service;
 
 import com.portfolio.adapter.out.persistence.jpa.PortfolioProjectJpaEntity;
 import com.portfolio.adapter.out.persistence.jpa.PortfolioProjectJpaRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -17,12 +17,19 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-@Slf4j
+/**
+ * Creado por Bernard Orozco
+ */
 @Service
-@RequiredArgsConstructor
 public class PortfolioSpecificationService {
-    
+
+    private static final Logger log = LoggerFactory.getLogger(PortfolioSpecificationService.class);
+
     private final PortfolioProjectJpaRepository portfolioProjectRepository;
+
+    public PortfolioSpecificationService(PortfolioProjectJpaRepository portfolioProjectRepository) {
+        this.portfolioProjectRepository = portfolioProjectRepository;
+    }
     
     /**
      * Search portfolio projects with dynamic criteria

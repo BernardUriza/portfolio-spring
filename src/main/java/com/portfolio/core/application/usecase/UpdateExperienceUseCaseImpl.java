@@ -4,16 +4,21 @@ import com.portfolio.core.domain.experience.Experience;
 import com.portfolio.core.domain.experience.ExperienceType;
 import com.portfolio.core.port.in.UpdateExperienceUseCase;
 import com.portfolio.core.port.out.ExperienceRepositoryPort;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 
+/**
+ * Creado por Bernard Orozco
+ */
 @Component
-@RequiredArgsConstructor
 public class UpdateExperienceUseCaseImpl implements UpdateExperienceUseCase {
-    
+
     private final ExperienceRepositoryPort experienceRepository;
+
+    public UpdateExperienceUseCaseImpl(ExperienceRepositoryPort experienceRepository) {
+        this.experienceRepository = experienceRepository;
+    }
     
     @Override
     public Experience updateExperience(Long id, String jobTitle, String companyName, 

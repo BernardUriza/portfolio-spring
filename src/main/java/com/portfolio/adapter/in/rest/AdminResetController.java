@@ -9,8 +9,8 @@ import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
 import io.github.bucket4j.Refill;
 import jakarta.servlet.http.HttpServletRequest;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,13 +22,12 @@ import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
-@Slf4j
 @RestController
 @RequestMapping("/api/admin")
-@RequiredArgsConstructor
 @CrossOrigin(origins = {"http://localhost:4200"}, allowedHeaders = "*")
 public class AdminResetController {
-    
+    private static final Logger log = LoggerFactory.getLogger(AdminResetController.class);
+
     private final FactoryResetService factoryResetService;
     private final ResetAuditRestMapper resetAuditMapper;
     
@@ -40,6 +39,12 @@ public class AdminResetController {
     
     // Rate limiting: 1 request per 10 minutes per IP
     private final ConcurrentHashMap<String, Bucket> rateLimitBuckets = new ConcurrentHashMap<>();
+
+    public AdminResetController(FactoryResetService factoryResetService,
+                                ResetAuditRestMapper resetAuditMapper) {
+        this.factoryResetService = factoryResetService;
+        this.resetAuditMapper = resetAuditMapper;
+    }
     
     @PostMapping("/factory-reset")
     public ResponseEntity<FactoryResetResponseDto> startFactoryReset(

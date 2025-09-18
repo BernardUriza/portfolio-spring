@@ -1,8 +1,8 @@
 package com.portfolio.service;
 
 import com.portfolio.adapter.out.persistence.jpa.PortfolioProjectJpaRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -14,14 +14,22 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * Bootstrap sync service to trigger initial portfolio sync when empty.
  * Prevents spamming by implementing cooldown and single-flight pattern.
+ *
+ * Creado por Bernard Orozco
  */
-@Slf4j
 @Service
-@RequiredArgsConstructor
 public class BootstrapSyncService {
-    
+
+    private static final Logger log = LoggerFactory.getLogger(BootstrapSyncService.class);
+
     private final PortfolioProjectJpaRepository portfolioProjectRepository;
     private final SyncSchedulerService syncSchedulerService;
+
+    public BootstrapSyncService(PortfolioProjectJpaRepository portfolioProjectRepository,
+                               SyncSchedulerService syncSchedulerService) {
+        this.portfolioProjectRepository = portfolioProjectRepository;
+        this.syncSchedulerService = syncSchedulerService;
+    }
     
     private final AtomicBoolean inFlight = new AtomicBoolean(false);
     private volatile Instant lastAttempt = Instant.EPOCH;

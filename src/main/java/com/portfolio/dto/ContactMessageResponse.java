@@ -4,14 +4,36 @@
  */
 package com.portfolio.dto;
 
-import lombok.Data;
-import lombok.AllArgsConstructor;
-
 import java.time.LocalDateTime;
 
-@Data
-@AllArgsConstructor
 public class ContactMessageResponse {
     private Long id;
     private LocalDateTime createdAt;
+
+    // Default constructor
+    public ContactMessageResponse() {
+    }
+
+    // All args constructor
+    public ContactMessageResponse(Long id, LocalDateTime createdAt) {
+        this.id = id;
+        this.createdAt = createdAt;
+    }
+
+    // Getters and Setters
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
 }

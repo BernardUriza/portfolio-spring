@@ -4,8 +4,8 @@ import com.portfolio.adapter.out.persistence.jpa.SourceRepositoryJpaEntity;
 import com.portfolio.adapter.out.persistence.jpa.SourceRepositoryJpaRepository;
 import com.portfolio.service.GitHubSourceRepositoryService;
 import com.portfolio.service.SyncSchedulerService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -19,13 +19,19 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/admin/source-repositories")
-@RequiredArgsConstructor
-@Slf4j
 public class SourceRepositoryAdminController {
-    
+    private static final Logger log = LoggerFactory.getLogger(SourceRepositoryAdminController.class);
     private final SourceRepositoryJpaRepository sourceRepositoryRepository;
     private final GitHubSourceRepositoryService gitHubSourceRepositoryService;
     private final SyncSchedulerService syncSchedulerService;
+
+    public SourceRepositoryAdminController(SourceRepositoryJpaRepository sourceRepositoryRepository,
+                                           GitHubSourceRepositoryService gitHubSourceRepositoryService,
+                                           SyncSchedulerService syncSchedulerService) {
+        this.sourceRepositoryRepository = sourceRepositoryRepository;
+        this.gitHubSourceRepositoryService = gitHubSourceRepositoryService;
+        this.syncSchedulerService = syncSchedulerService;
+    }
     
     /**
      * Get all source repositories with pagination and filtering

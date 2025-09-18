@@ -6,7 +6,6 @@ import com.portfolio.adapter.out.persistence.jpa.ExperienceJpaRepository;
 import com.portfolio.core.domain.experience.Experience;
 import com.portfolio.core.domain.experience.ExperienceType;
 import com.portfolio.core.port.out.ExperienceRepositoryPort;
-import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
@@ -16,11 +15,15 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Component
-@RequiredArgsConstructor
 public class ExperienceRepositoryAdapter implements ExperienceRepositoryPort {
-    
     private final ExperienceJpaRepository jpaRepository;
     private final ExperienceJpaMapper mapper;
+
+    public ExperienceRepositoryAdapter(ExperienceJpaRepository jpaRepository,
+                                       ExperienceJpaMapper mapper) {
+        this.jpaRepository = jpaRepository;
+        this.mapper = mapper;
+    }
     
     @Override
     public Experience save(Experience experience) {

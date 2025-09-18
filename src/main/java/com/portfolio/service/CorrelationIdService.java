@@ -1,6 +1,7 @@
 package com.portfolio.service;
 
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.stereotype.Service;
 
@@ -9,10 +10,14 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.function.Supplier;
 
-@Slf4j
+/**
+ * Creado por Bernard Orozco
+ */
 @Service
 public class CorrelationIdService {
-    
+
+    private static final Logger log = LoggerFactory.getLogger(CorrelationIdService.class);
+
     private static final String CORRELATION_ID_KEY = "correlationId";
     private static final String REQUEST_ID_KEY = "requestId";
     

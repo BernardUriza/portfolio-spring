@@ -1,8 +1,8 @@
 package com.portfolio.controller;
 
 import com.portfolio.service.SyncMonitorService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,11 +14,15 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/api/admin/sync")
-@RequiredArgsConstructor
-@Slf4j
 public class SyncMonitorAdminController {
+    private static final Logger log = LoggerFactory.getLogger(SyncMonitorAdminController.class);
 
     private final SyncMonitorService syncMonitorService;
+
+    public SyncMonitorAdminController(SyncMonitorService syncMonitorService) {
+        this.syncMonitorService = syncMonitorService;
+        log.debug("SyncMonitorAdminController initialized");
+    }
 
     private static final DateTimeFormatter ISO = DateTimeFormatter.ISO_DATE_TIME;
 

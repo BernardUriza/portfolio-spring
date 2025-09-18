@@ -1,8 +1,7 @@
 package com.portfolio.service;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -15,11 +14,10 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
-@Slf4j
 @Service
-@RequiredArgsConstructor
 public class SyncMonitorService {
-    
+    private static final Logger log = LoggerFactory.getLogger(SyncMonitorService.class);
+
     private static final int MAX_LOG_ENTRIES = 1000;
     private static final long SYNC_INTERVAL_SECONDS = 300; // 5 minutes
     
@@ -27,20 +25,23 @@ public class SyncMonitorService {
     private final List<Consumer<LogEntry>> sseListeners = new CopyOnWriteArrayList<>();
     private final AtomicLong logIdCounter = new AtomicLong(0);
     
-    @Getter
     private volatile LocalDateTime lastSyncTime = LocalDateTime.now();
     
-    @Getter
     private volatile boolean syncInProgress = false;
     
-    @Getter
     private volatile int totalGitHubProjects = 0;
     
-    @Getter
     private volatile int totalDatabaseProjects = 0;
     
-    @Getter
     private volatile List<UnsyncedProject> unsyncedProjects = new LinkedList<>();
+
+    public SyncMonitorService() {}
+
+    public LocalDateTime getLastSyncTime() { return lastSyncTime; }
+    public boolean isSyncInProgress() { return syncInProgress; }
+    public int getTotalGitHubProjects() { return totalGitHubProjects; }
+    public int getTotalDatabaseProjects() { return totalDatabaseProjects; }
+    public List<UnsyncedProject> getUnsyncedProjects() { return unsyncedProjects; }
     
     public void markSyncStarted() {
         this.syncInProgress = true;
@@ -137,7 +138,6 @@ public class SyncMonitorService {
         }
     }
     
-    @Getter
     public static class LogEntry {
         private final long id;
         private final LocalDateTime timestamp;
@@ -150,9 +150,13 @@ public class SyncMonitorService {
             this.level = level;
             this.message = message;
         }
+
+        public long getId() { return id; }
+        public LocalDateTime getTimestamp() { return timestamp; }
+        public String getLevel() { return level; }
+        public String getMessage() { return message; }
     }
     
-    @Getter
     public static class UnsyncedProject {
         private final String id;
         private final String name;
@@ -163,5 +167,9 @@ public class SyncMonitorService {
             this.name = name;
             this.reason = reason;
         }
+
+        public String getId() { return id; }
+        public String getName() { return name; }
+        public String getReason() { return reason; }
     }
 }

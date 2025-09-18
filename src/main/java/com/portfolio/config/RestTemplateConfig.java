@@ -3,7 +3,8 @@ package com.portfolio.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.databind.DeserializationFeature;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -12,9 +13,13 @@ import org.springframework.web.client.RestTemplate;
 
 import java.time.Duration;
 
-@Slf4j
+/**
+ * Creado por Bernard Orozco
+ */
 @Configuration
 public class RestTemplateConfig {
+
+    private static final Logger log = LoggerFactory.getLogger(RestTemplateConfig.class);
 
     @Bean
     public RestTemplate restTemplate(RestTemplateBuilder builder) {

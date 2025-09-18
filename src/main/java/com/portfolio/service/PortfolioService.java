@@ -9,8 +9,8 @@ import com.portfolio.core.domain.project.LinkType;
 import com.portfolio.core.domain.project.ProjectStatus;
 import com.portfolio.core.domain.project.ProjectType;
 import com.portfolio.core.port.out.AIServicePort;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,17 +19,30 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-@Slf4j
 @Service
-@RequiredArgsConstructor
 public class PortfolioService {
-    
+    private static final Logger log = LoggerFactory.getLogger(PortfolioService.class);
+
     public final PortfolioProjectJpaRepository portfolioProjectRepository;
     private final SourceRepositoryJpaRepository sourceRepositoryRepository;
     private final AIServicePort aiService;
     private final SyncMonitorService syncMonitorService;
     private final OptimisticLockingService optimisticLockingService;
     private final AuditTrailService auditTrailService;
+
+    public PortfolioService(PortfolioProjectJpaRepository portfolioProjectRepository,
+                            SourceRepositoryJpaRepository sourceRepositoryRepository,
+                            AIServicePort aiService,
+                            SyncMonitorService syncMonitorService,
+                            OptimisticLockingService optimisticLockingService,
+                            AuditTrailService auditTrailService) {
+        this.portfolioProjectRepository = portfolioProjectRepository;
+        this.sourceRepositoryRepository = sourceRepositoryRepository;
+        this.aiService = aiService;
+        this.syncMonitorService = syncMonitorService;
+        this.optimisticLockingService = optimisticLockingService;
+        this.auditTrailService = auditTrailService;
+    }
     
     /**
      * Curate portfolio project from source repository using Claude AI
@@ -128,7 +141,7 @@ public class PortfolioService {
                                                                     SourceRepositoryJpaEntity source,
                                                                     AIServicePort.ClaudeAnalysisResult analysis) {
         // Update only non-protected fields
-        PortfolioProjectJpaEntity.PortfolioProjectJpaEntityBuilder builder = existing.toBuilder();
+        PortfolioProjectJpaEntity.Builder builder = new PortfolioProjectJpaEntity.Builder(existing);
         
         // Always update title (no protection for title)
         builder.title(analysis.project.name);
@@ -289,8 +302,8 @@ public class PortfolioService {
     private PortfolioProjectJpaEntity.LinkTypeJpa convertLinkType(LinkType linkType) {
         if (linkType == null) return null;
         return switch (linkType) {
-            case AUTO -> PortfolioProjectJpaEntity.LinkTypeJpa.AUTO;
-            case MANUAL -> PortfolioProjectJpaEntity.LinkTypeJpa.MANUAL;
+            case LinkType.AUTO -> PortfolioProjectJpaEntity.LinkTypeJpa.AUTO;
+            case LinkType.MANUAL -> PortfolioProjectJpaEntity.LinkTypeJpa.MANUAL;
         };
     }
     

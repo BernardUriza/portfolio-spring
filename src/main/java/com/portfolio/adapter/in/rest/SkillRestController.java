@@ -12,8 +12,8 @@ import com.portfolio.core.port.in.UpdateSkillUseCase;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -25,15 +25,24 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/skills")
-@RequiredArgsConstructor
 @Tag(name = "Skills API", description = "Clean hexagonal architecture skills management")
-@Slf4j
 public class SkillRestController {
-    
+    private static final Logger log = LoggerFactory.getLogger(SkillRestController.class);
+
     private final CreateSkillUseCase createSkillUseCase;
     private final GetSkillsUseCase getSkillsUseCase;
     private final UpdateSkillUseCase updateSkillUseCase;
     private final SkillRestMapper restMapper;
+
+    public SkillRestController(CreateSkillUseCase createSkillUseCase,
+                               GetSkillsUseCase getSkillsUseCase,
+                               UpdateSkillUseCase updateSkillUseCase,
+                               SkillRestMapper restMapper) {
+        this.createSkillUseCase = createSkillUseCase;
+        this.getSkillsUseCase = getSkillsUseCase;
+        this.updateSkillUseCase = updateSkillUseCase;
+        this.restMapper = restMapper;
+    }
     
     @GetMapping
     @Operation(summary = "Get all skills with pagination")

@@ -1,9 +1,6 @@
 package com.portfolio.core.domain.experience;
 
 import com.portfolio.core.domain.shared.DomainEntity;
-import lombok.Builder;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -13,11 +10,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-@Data
-@Builder(toBuilder = true)
-@EqualsAndHashCode(callSuper = true)
 public class Experience extends DomainEntity {
-    
     private final Long id;
     private final String jobTitle;
     private final String companyName;
@@ -28,15 +21,51 @@ public class Experience extends DomainEntity {
     private final LocalDate startDate;
     private final LocalDate endDate;
     private final Boolean isCurrentPosition;
-    @Builder.Default
-    private final List<String> achievements = new ArrayList<>();
-    @Builder.Default
-    private final List<String> technologies = new ArrayList<>();
-    @Builder.Default
-    private final Set<Long> skillIds = new HashSet<>();
+    private final List<String> achievements;
+    private final List<String> technologies;
+    private final Set<Long> skillIds;
     private final String companyLogoUrl;
     private final LocalDateTime createdAt;
     private final LocalDateTime updatedAt;
+
+    private Experience(Builder b) {
+        this.id = b.id;
+        this.jobTitle = b.jobTitle;
+        this.companyName = b.companyName;
+        this.companyUrl = b.companyUrl;
+        this.location = b.location;
+        this.type = b.type;
+        this.description = b.description;
+        this.startDate = b.startDate;
+        this.endDate = b.endDate;
+        this.isCurrentPosition = b.isCurrentPosition;
+        this.achievements = b.achievements != null ? b.achievements : new ArrayList<>();
+        this.technologies = b.technologies != null ? b.technologies : new ArrayList<>();
+        this.skillIds = b.skillIds != null ? b.skillIds : new HashSet<>();
+        this.companyLogoUrl = b.companyLogoUrl;
+        this.createdAt = b.createdAt;
+        this.updatedAt = b.updatedAt;
+    }
+
+    public static Builder builder() { return new Builder(); }
+    public Builder toBuilder() { return new Builder(this); }
+
+    public Long getId() { return id; }
+    public String getJobTitle() { return jobTitle; }
+    public String getCompanyName() { return companyName; }
+    public String getCompanyUrl() { return companyUrl; }
+    public String getLocation() { return location; }
+    public ExperienceType getType() { return type; }
+    public String getDescription() { return description; }
+    public LocalDate getStartDate() { return startDate; }
+    public LocalDate getEndDate() { return endDate; }
+    public Boolean getIsCurrentPosition() { return isCurrentPosition; }
+    public List<String> getAchievements() { return achievements; }
+    public List<String> getTechnologies() { return technologies; }
+    public Set<Long> getSkillIds() { return skillIds; }
+    public String getCompanyLogoUrl() { return companyLogoUrl; }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
     
     public static Experience create(String jobTitle, String companyName, ExperienceType type, 
                                   String description, LocalDate startDate) {
@@ -228,5 +257,61 @@ public class Experience extends DomainEntity {
         if (endDate != null && endDate.isAfter(LocalDate.now())) {
             throw new IllegalArgumentException("End date cannot be in the future");
         }
+    }
+
+    public static final class Builder {
+        private Long id;
+        private String jobTitle;
+        private String companyName;
+        private String companyUrl;
+        private String location;
+        private ExperienceType type;
+        private String description;
+        private LocalDate startDate;
+        private LocalDate endDate;
+        private Boolean isCurrentPosition;
+        private List<String> achievements;
+        private List<String> technologies;
+        private Set<Long> skillIds;
+        private String companyLogoUrl;
+        private LocalDateTime createdAt;
+        private LocalDateTime updatedAt;
+
+        public Builder() {}
+        public Builder(Experience e) {
+            this.id = e.id;
+            this.jobTitle = e.jobTitle;
+            this.companyName = e.companyName;
+            this.companyUrl = e.companyUrl;
+            this.location = e.location;
+            this.type = e.type;
+            this.description = e.description;
+            this.startDate = e.startDate;
+            this.endDate = e.endDate;
+            this.isCurrentPosition = e.isCurrentPosition;
+            this.achievements = e.achievements;
+            this.technologies = e.technologies;
+            this.skillIds = e.skillIds;
+            this.companyLogoUrl = e.companyLogoUrl;
+            this.createdAt = e.createdAt;
+            this.updatedAt = e.updatedAt;
+        }
+        public Builder id(Long id) { this.id = id; return this; }
+        public Builder jobTitle(String jobTitle) { this.jobTitle = jobTitle; return this; }
+        public Builder companyName(String companyName) { this.companyName = companyName; return this; }
+        public Builder companyUrl(String companyUrl) { this.companyUrl = companyUrl; return this; }
+        public Builder location(String location) { this.location = location; return this; }
+        public Builder type(ExperienceType type) { this.type = type; return this; }
+        public Builder description(String description) { this.description = description; return this; }
+        public Builder startDate(LocalDate startDate) { this.startDate = startDate; return this; }
+        public Builder endDate(LocalDate endDate) { this.endDate = endDate; return this; }
+        public Builder isCurrentPosition(Boolean isCurrentPosition) { this.isCurrentPosition = isCurrentPosition; return this; }
+        public Builder achievements(List<String> achievements) { this.achievements = achievements; return this; }
+        public Builder technologies(List<String> technologies) { this.technologies = technologies; return this; }
+        public Builder skillIds(Set<Long> skillIds) { this.skillIds = skillIds; return this; }
+        public Builder companyLogoUrl(String companyLogoUrl) { this.companyLogoUrl = companyLogoUrl; return this; }
+        public Builder createdAt(LocalDateTime createdAt) { this.createdAt = createdAt; return this; }
+        public Builder updatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; return this; }
+        public Experience build() { return new Experience(this); }
     }
 }

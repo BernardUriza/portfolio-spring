@@ -7,8 +7,8 @@ import com.portfolio.service.SyncConfigService;
 import com.portfolio.dto.SyncConfigDto;
 import com.portfolio.dto.SyncConfigUpdateDto;
 import com.portfolio.service.SyncSchedulerService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
@@ -22,12 +22,17 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/api/admin/sync-config")
-@RequiredArgsConstructor
-@Slf4j
 public class SyncConfigAdminController {
-    
+    private static final Logger log = LoggerFactory.getLogger(SyncConfigAdminController.class);
+
     private final SyncSchedulerService syncSchedulerService;
     private final SyncConfigService syncConfigService;
+
+    public SyncConfigAdminController(SyncSchedulerService syncSchedulerService,
+                                     SyncConfigService syncConfigService) {
+        this.syncSchedulerService = syncSchedulerService;
+        this.syncConfigService = syncConfigService;
+    }
     
     @PostMapping("/run-now")
     @RequiresFeature("manual_sync")

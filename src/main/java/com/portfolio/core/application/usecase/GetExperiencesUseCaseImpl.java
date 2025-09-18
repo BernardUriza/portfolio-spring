@@ -4,17 +4,22 @@ import com.portfolio.core.domain.experience.Experience;
 import com.portfolio.core.domain.experience.ExperienceType;
 import com.portfolio.core.port.in.GetExperiencesUseCase;
 import com.portfolio.core.port.out.ExperienceRepositoryPort;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Creado por Bernard Orozco
+ */
 @Component
-@RequiredArgsConstructor
 public class GetExperiencesUseCaseImpl implements GetExperiencesUseCase {
-    
+
     private final ExperienceRepositoryPort experienceRepository;
+
+    public GetExperiencesUseCaseImpl(ExperienceRepositoryPort experienceRepository) {
+        this.experienceRepository = experienceRepository;
+    }
     
     @Override
     public List<Experience> getAllExperiences() {

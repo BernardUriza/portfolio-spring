@@ -4,20 +4,27 @@ import com.portfolio.adapter.out.persistence.jpa.PortfolioProjectJpaEntity;
 import com.portfolio.adapter.out.persistence.jpa.SourceRepositoryJpaEntity;
 import com.portfolio.adapter.out.persistence.jpa.SourceRepositoryJpaRepository;
 import com.portfolio.dto.PortfolioCompletionDto;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
-@Slf4j
+/**
+ * Creado por Bernard Orozco
+ */
 @Service
-@RequiredArgsConstructor
 public class PortfolioCompletionService {
-    
+
+    private static final Logger log = LoggerFactory.getLogger(PortfolioCompletionService.class);
+
     private final SourceRepositoryJpaRepository sourceRepositoryRepository;
+
+    public PortfolioCompletionService(SourceRepositoryJpaRepository sourceRepositoryRepository) {
+        this.sourceRepositoryRepository = sourceRepositoryRepository;
+    }
     
     @Cacheable(value = "portfolio-completion", key = "#portfolio.id + '_' + #portfolio.updatedAt?.toString()")
     public PortfolioCompletionDto calculateCompletion(PortfolioProjectJpaEntity portfolio) {

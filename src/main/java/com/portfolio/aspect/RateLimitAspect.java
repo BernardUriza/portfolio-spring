@@ -2,8 +2,8 @@ package com.portfolio.aspect;
 
 import com.portfolio.service.RateLimitingService;
 import jakarta.servlet.http.HttpServletRequest;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -15,13 +15,15 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.util.Map;
 
-@Slf4j
 @Aspect
 @Component
-@RequiredArgsConstructor
 public class RateLimitAspect {
-    
+    private static final Logger log = LoggerFactory.getLogger(RateLimitAspect.class);
     private final RateLimitingService rateLimitingService;
+
+    public RateLimitAspect(RateLimitingService rateLimitingService) {
+        this.rateLimitingService = rateLimitingService;
+    }
     
     @Around("@annotation(rateLimit)")
     public Object enforceRateLimit(ProceedingJoinPoint joinPoint, RateLimit rateLimit) throws Throwable {

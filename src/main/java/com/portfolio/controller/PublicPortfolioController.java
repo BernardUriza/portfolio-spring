@@ -5,8 +5,8 @@ import com.portfolio.adapter.out.persistence.jpa.PortfolioProjectJpaRepository;
 import com.portfolio.service.BootstrapSyncService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,14 +18,18 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/api/sync")
-@RequiredArgsConstructor
 @Tag(name = "Public Portfolio API", description = "Public endpoints for portfolio data")
 @CrossOrigin(origins = {"http://localhost:4200", "https://portfolio.bernarduriza.dev"})
-@Slf4j
 public class PublicPortfolioController {
-    
+    private static final Logger log = LoggerFactory.getLogger(PublicPortfolioController.class);
     private final PortfolioProjectJpaRepository portfolioProjectRepository;
     private final BootstrapSyncService bootstrapSyncService;
+
+    public PublicPortfolioController(PortfolioProjectJpaRepository portfolioProjectRepository,
+                                     BootstrapSyncService bootstrapSyncService) {
+        this.portfolioProjectRepository = portfolioProjectRepository;
+        this.bootstrapSyncService = bootstrapSyncService;
+    }
     
     @GetMapping("/projects")
     @Operation(

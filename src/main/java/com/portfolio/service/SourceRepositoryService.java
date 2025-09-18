@@ -3,8 +3,8 @@ package com.portfolio.service;
 import com.portfolio.adapter.out.persistence.jpa.SourceRepositoryJpaEntity;
 import com.portfolio.adapter.out.persistence.jpa.SourceRepositoryJpaRepository;
 import com.portfolio.dto.SourceRepositoryDto;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -12,13 +12,22 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-@Slf4j
+/**
+ * Creado por Bernard Orozco
+ */
 @Service
-@RequiredArgsConstructor
 public class SourceRepositoryService {
-    
+
+    private static final Logger log = LoggerFactory.getLogger(SourceRepositoryService.class);
+
     private final SourceRepositoryJpaRepository sourceRepositoryRepository;
     private final SyncMonitorService syncMonitorService;
+
+    public SourceRepositoryService(SourceRepositoryJpaRepository sourceRepositoryRepository,
+                                  SyncMonitorService syncMonitorService) {
+        this.sourceRepositoryRepository = sourceRepositoryRepository;
+        this.syncMonitorService = syncMonitorService;
+    }
     
     public List<SourceRepositoryDto> getAllSourceRepositories() {
         List<SourceRepositoryJpaEntity> entities = sourceRepositoryRepository.findAllOrderByUpdatedAtDesc();

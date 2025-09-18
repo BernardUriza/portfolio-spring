@@ -6,8 +6,8 @@ import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import io.github.resilience4j.retry.annotation.Retry;
 import io.github.resilience4j.timelimiter.annotation.TimeLimiter;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -21,14 +21,20 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.Base64;
 
-@Slf4j
 @Service
-@RequiredArgsConstructor
 public class GitHubSourceRepositoryService {
-    
+    private static final Logger log = LoggerFactory.getLogger(GitHubSourceRepositoryService.class);
     private final SourceRepositoryJpaRepository sourceRepositoryRepository;
     private final SyncMonitorService syncMonitorService;
     private final WebClient.Builder webClientBuilder;
+
+    public GitHubSourceRepositoryService(SourceRepositoryJpaRepository sourceRepositoryRepository,
+                                         SyncMonitorService syncMonitorService,
+                                         WebClient.Builder webClientBuilder) {
+        this.sourceRepositoryRepository = sourceRepositoryRepository;
+        this.syncMonitorService = syncMonitorService;
+        this.webClientBuilder = webClientBuilder;
+    }
     
     @Value("${github.api.token:}")
     private String githubToken;

@@ -4,8 +4,8 @@ import com.portfolio.dto.SourceRepositoryDto;
 import com.portfolio.service.SourceRepositoryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,12 +14,14 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/source-repos")
-@RequiredArgsConstructor
 @Tag(name = "Source Repository API", description = "Raw GitHub repositories management")
-@Slf4j
 public class SourceRepositoryRestController {
-
+    private static final Logger log = LoggerFactory.getLogger(SourceRepositoryRestController.class);
     private final SourceRepositoryService sourceRepositoryService;
+
+    public SourceRepositoryRestController(SourceRepositoryService sourceRepositoryService) {
+        this.sourceRepositoryService = sourceRepositoryService;
+    }
 
     @GetMapping
     @Operation(summary = "Get all source repositories")

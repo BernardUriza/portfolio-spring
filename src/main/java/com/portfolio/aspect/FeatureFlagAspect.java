@@ -1,8 +1,8 @@
 package com.portfolio.aspect;
 
 import com.portfolio.service.FeatureFlagService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -12,13 +12,15 @@ import org.springframework.stereotype.Component;
 
 import java.util.Map;
 
-@Slf4j
 @Aspect
 @Component
-@RequiredArgsConstructor
 public class FeatureFlagAspect {
-    
+    private static final Logger log = LoggerFactory.getLogger(FeatureFlagAspect.class);
     private final FeatureFlagService featureFlagService;
+
+    public FeatureFlagAspect(FeatureFlagService featureFlagService) {
+        this.featureFlagService = featureFlagService;
+    }
     
     @Around("@annotation(requiresFeature)")
     public Object checkFeatureFlag(ProceedingJoinPoint joinPoint, RequiresFeature requiresFeature) throws Throwable {

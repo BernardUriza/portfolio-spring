@@ -1,7 +1,7 @@
 package com.portfolio.service;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
@@ -9,12 +9,19 @@ import org.springframework.stereotype.Service;
 import jakarta.persistence.OptimisticLockException;
 import java.util.function.Supplier;
 
-@Slf4j
+/**
+ * Creado por Bernard Orozco
+ */
 @Service
-@RequiredArgsConstructor
 public class OptimisticLockingService {
-    
+
+    private static final Logger log = LoggerFactory.getLogger(OptimisticLockingService.class);
+
     private final AuditTrailService auditTrailService;
+
+    public OptimisticLockingService(AuditTrailService auditTrailService) {
+        this.auditTrailService = auditTrailService;
+    }
     
     /**
      * Execute an operation with optimistic locking retry logic

@@ -2,7 +2,6 @@ package com.portfolio.config;
 
 import com.portfolio.security.AdminTokenAuthenticationFilter;
 import jakarta.servlet.http.HttpServletResponse; // <-- Jakarta, not javax
-import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,15 +14,15 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @Configuration
 @EnableWebSecurity
-@RequiredArgsConstructor
 @ConditionalOnProperty(name = "portfolio.admin.security.enabled", havingValue = "true", matchIfMissing = true)
 public class AdminSecurityConfig {
 
-    private final AdminTokenAuthenticationFilter adminTokenAuthenticationFilter;
-
     @Bean
     @Order(1)
-    public SecurityFilterChain adminSecurityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain adminSecurityFilterChain(
+            HttpSecurity http,
+            AdminTokenAuthenticationFilter adminTokenAuthenticationFilter
+    ) throws Exception {
         return http
             .cors(cors -> {})
             .securityMatcher("/api/admin/**")

@@ -3,13 +3,18 @@ package com.portfolio.config;
 import jakarta.annotation.PostConstruct;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-@Slf4j
+/**
+ * Creado por Bernard Orozco
+ */
 @Component
 public class SyncConfigSingletonMigration {
+
+    private static final Logger log = LoggerFactory.getLogger(SyncConfigSingletonMigration.class);
 
     @PersistenceContext
     private EntityManager em;

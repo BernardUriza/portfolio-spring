@@ -3,26 +3,27 @@ package com.portfolio.service;
 import com.portfolio.adapter.out.persistence.jpa.SyncConfigJpaEntity;
 import com.portfolio.adapter.out.persistence.jpa.SyncConfigJpaRepository;
 import com.portfolio.dto.SyncConfigDto;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.dao.DataIntegrityViolationException;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.Instant;
 
-@Slf4j
 @Service
-@RequiredArgsConstructor
 public class SyncConfigService {
-    
+    private static final Logger log = LoggerFactory.getLogger(SyncConfigService.class);
+
     private final SyncConfigJpaRepository syncConfigRepository;
-    @PersistenceContext
-    private EntityManager entityManager;
     private final TransactionTemplate transactionTemplate;
+
+    public SyncConfigService(SyncConfigJpaRepository syncConfigRepository,
+                             TransactionTemplate transactionTemplate) {
+        this.syncConfigRepository = syncConfigRepository;
+        this.transactionTemplate = transactionTemplate;
+    }
     
     public SyncConfigDto getOrCreate() {
         return mapToDto(getOrCreateEntity());
@@ -69,25 +70,17 @@ public class SyncConfigService {
     
     private SyncConfigJpaEntity createDefaultConfig() {
         log.info("Creating default sync configuration");
-        SyncConfigJpaEntity defaultConfig = SyncConfigJpaEntity.builder()
-                .enabled(false)
-                .intervalHours(6)
-                .updatedBy("system")
-                .updatedAt(Instant.now())
-                .singletonKey("X")
-                .build();
+        SyncConfigJpaEntity defaultConfig = new SyncConfigJpaEntity();
+        defaultConfig.setEnabled(false);
+        defaultConfig.setIntervalHours(6);
+        defaultConfig.setUpdatedBy("system");
+        defaultConfig.setUpdatedAt(Instant.now());
+        defaultConfig.setSingletonKey("X");
         return syncConfigRepository.saveAndFlush(defaultConfig);
     }
     
     private SyncConfigDto mapToDto(SyncConfigJpaEntity entity) {
-        return SyncConfigDto.builder()
-                .enabled(entity.getEnabled())
-                .intervalHours(entity.getIntervalHours())
-                .lastRunAt(entity.getLastRunAt())
-                .nextRunAt(entity.getNextRunAt())
-                .updatedAt(entity.getUpdatedAt())
-                .updatedBy(entity.getUpdatedBy())
-                .build();
+        return SyncConfigDto.of(entity);
     }
 
     public SyncConfigJpaEntity getOrCreateEntity() {

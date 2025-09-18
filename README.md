@@ -1,398 +1,366 @@
+# Portfolio Backend API
 
-# Portfolio Management System
+**Spring Boot REST API for Portfolio Management**
 
-**Created by Bernard Orozco**
-
-Sophisticated portfolio management backend built with **Java 21** and **Spring Boot 3.5.0**, featuring hexagonal architecture, GitHub API integration, AI-powered semantic analysis, and dynamic sync capabilities. This system automatically transforms GitHub starred repositories into portfolio content using Claude AI, providing intelligent project categorization and content generation.
+A robust RESTful API built with Java 21 and Spring Boot 3.5.0 that powers portfolio applications with project management, skills tracking, experience documentation, and GitHub integration capabilities.
 
 ---
 
-## 🚀 **Core Technologies**
-- **Java 21** with modern language features
-- **Spring Boot 3.5.0** with reactive WebFlux support
-- **Hexagonal Architecture** with clean domain separation
-- **Spring Data JPA** with Hibernate ORM
-- **H2 (development)** / **PostgreSQL (production)**
-- **GitHub API Integration** for repository synchronization
-- **Anthropic Claude API** for AI-powered content generation
-- **MapStruct** for efficient DTO mapping
-- **Lombok** for boilerplate reduction
+## 📖 **Overview**
+
+This backend service provides a comprehensive API for managing professional portfolios. It features automatic GitHub repository synchronization, AI-powered content generation, and dynamic configuration capabilities. Built following clean architecture principles with production-ready features like rate limiting, audit trails, and real-time updates via SSE.
+
+### **Tech Stack**
+- **Java 21** with Spring Boot 3.5.0
+- **Spring Data JPA** with Hibernate
+- **H2 Database** (development) / **PostgreSQL** (production)
+- **GitHub API** integration
+- **Anthropic Claude API** for AI features
 - **Server-Sent Events (SSE)** for real-time updates
-- **Bucket4j** for rate limiting
-- **Spring Dotenv** for environment configuration
-- **Maven** with annotation processors
-- **JUnit 5 + Mockito** for comprehensive testing
+- **Maven** build system
 
 ---
 
-## 📦 **Installation & Local Setup**
+## 🚀 **Getting Started**
 
-### 1️⃣ Clone and Setup
+### **Prerequisites**
+- Java 21 or higher
+- Maven 3.8+
+- Git
+
+### **Quick Start**
+
+1. Clone the repository:
 ```bash
 git clone https://github.com/BernardUriza/portfolio-backend.git
 cd portfolio-backend
 ```
 
-### 2️⃣ Environment Configuration
-Copy `.env.example` to `.env` and configure:
+2. Copy environment configuration:
 ```bash
 cp .env.example .env
 ```
 
-Essential environment variables:
+3. Configure your `.env` file:
 ```properties
-# GitHub Integration
+# Required
 GITHUB_USERNAME=your-github-username
 GITHUB_TOKEN=your-github-personal-access-token
 
-# AI Integration
+# Optional AI features
 ANTHROPIC_API_KEY=your-claude-api-key
 
-# Admin Features
-ENABLE_FACTORY_RESET=true
-ADMIN_RESET_TOKEN=your-secure-admin-token
+# Admin features
+ENABLE_FACTORY_RESET=false
+ADMIN_RESET_TOKEN=your-secure-token
 ```
 
-### 3️⃣ Run Application
+4. Run the application:
 ```bash
 ./mvnw spring-boot:run
 ```
 
-**Services available at:**
-- 🌐 **API**: [http://localhost:8080](http://localhost:8080)
-- 🗄️ **H2 Console**: [http://localhost:8080/h2-console](http://localhost:8080/h2-console)
-  - JDBC URL: `jdbc:h2:mem:testdb`
-  - Username: `sa`
-  - Password: _(empty)_
-- 📖 **Swagger UI**: [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
+The API will be available at: **http://localhost:8080**
 
 ---
 
-## 🏗️ **System Architecture**
+## ⚙️ **Configuration**
 
-### Hexagonal Architecture Implementation
-```
-├── Core Domain Layer
-│   ├── Entities: Project, Skill, Experience
-│   ├── Use Cases: Create, Update, Get, Generate Content
-│   └── Domain Services: Business Logic
-├── Application Layer  
-│   ├── Port Interfaces (in/out)
-│   └── Use Case Implementations
-└── Infrastructure Layer
-    ├── REST Controllers (Adapters In)
-    ├── JPA Repositories (Adapters Out)
-    ├── External APIs (GitHub, Claude)
-    └── Configuration & Security
-```
+### **Application Profiles**
 
-### Key Features
-- **🔄 GitHub Sync**: Automatic starred repository synchronization
-- **🤖 AI Integration**: Claude-powered content generation and semantic analysis
-- **⚡ Dynamic Scheduling**: Configurable sync intervals (1-168 hours)
-- **🔒 Factory Reset**: Secure database cleanup with SSE progress streaming
-- **📊 Rate Limiting**: GitHub API rate limit monitoring and management
-- **🎯 Migration Tools**: Repository linkage and project completion tracking
-- **📈 Real-time Updates**: Server-Sent Events for live progress monitoring
+- `default` - Production configuration
+- `dev` - Development with H2 console enabled
+- `test` - Testing configuration
 
----
-
-## 🔑 **API Endpoints**
-
-### 📁 **Projects (Hexagonal Architecture)**
-
-| Method   | Endpoint                        | Description                          |
-| -------- | ------------------------------- | ------------------------------------ |
-| `GET`    | `/api/projects`                 | Get projects with pagination support |
-| `POST`   | `/api/projects`                 | Create new project                   |
-| `PUT`    | `/api/projects/{id}`            | Update existing project              |
-| `GET`    | `/api/projects/languages`       | Get available programming languages  |
-| `GET`    | `/api/projects/by-language`     | Filter projects by language          |
-| `POST`   | `/api/projects/{id}/generate-content` | AI-generated project content |
-
-### 🛠 **Skills Management**
-
-| Method   | Endpoint           | Description                    |
-| -------- | ------------------ | ------------------------------ |
-| `GET`    | `/api/skills`      | List all skills with pagination |
-| `POST`   | `/api/skills`      | Create new skill               |
-| `PUT`    | `/api/skills/{id}` | Update skill                   |
-| `DELETE` | `/api/skills/{id}` | Delete skill                   |
-
-### 💼 **Experience Tracking**
-
-| Method   | Endpoint               | Description                     |
-| -------- | ---------------------- | ------------------------------- |
-| `GET`    | `/api/experience`      | List work experiences           |
-| `POST`   | `/api/experience`      | Create new experience           |
-| `PUT`    | `/api/experience/{id}` | Update experience               |
-| `DELETE` | `/api/experience/{id}` | Delete experience               |
-
----
-
-### 🔄 **GitHub Integration & Sync Management**
-
-| Method | Endpoint | Description |
-| ------ | -------- | ----------- |
-| `POST` | `/api/sync/manual` | Trigger manual GitHub sync |
-| `GET`  | `/api/sync/status` | Get current sync status |
-| `GET`  | `/api/sync/progress/{jobId}` | SSE stream for sync progress |
-| `GET`  | `/api/sync/rate-limit` | GitHub API rate limit status |
-
-### ⚙️ **Dynamic Sync Configuration**
-
-| Method | Endpoint | Description |
-| ------ | -------- | ----------- |
-| `GET`  | `/api/admin/sync-config` | Get current sync configuration |
-| `PUT`  | `/api/admin/sync-config` | Update sync settings (interval, enabled) |
-| `GET`  | `/api/admin/sync-config/status` | Real-time sync status and timing |
-| `POST` | `/api/admin/sync-config/run-now` | Trigger immediate sync execution |
-
-### 🎯 **Project Completion & Migration**
-
-| Method | Endpoint | Description |
-| ------ | -------- | ----------- |
-| `GET`  | `/api/admin/project-completion` | Get completion statistics |
-| `POST` | `/api/admin/project-completion/migrate` | Run repository linkage migration |
-
----
-
-### 🚨 **Factory Reset (Admin)**
-
-| Método | Endpoint | Descripción |
-| ------ | -------- | ----------- |
-| `POST` | `/api/admin/factory-reset` | Iniciar reset completo de la base de datos |
-| `GET`  | `/api/admin/factory-reset/stream/{jobId}` | Stream SSE del progreso del reset |
-| `GET`  | `/api/admin/factory-reset/audit?limit=20` | Historial de resets ejecutados |
-
-**⚠️ IMPORTANTE**: Esta funcionalidad es destructiva y elimina TODOS los datos del sistema.
-
-#### Configuración requerida:
-
-```properties
-# Factory Reset Configuration
-app.admin.factory-reset.enabled=${ENABLE_FACTORY_RESET:false}
-app.admin.factory-reset.token=${ADMIN_RESET_TOKEN:tu-token-secreto}
-```
-
-#### Variables de entorno:
-
-- `ENABLE_FACTORY_RESET=true` - Habilita la funcionalidad de factory reset
-- `ADMIN_RESET_TOKEN=your-secure-token` - Token de seguridad para autorización
-
-#### Ejemplo de uso:
-
+Run with specific profile:
 ```bash
-# 1. Iniciar factory reset
+./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
+```
+
+### **Database Access**
+
+H2 Console (dev only): **http://localhost:8080/h2-console**
+- JDBC URL: `jdbc:h2:mem:testdb`
+- Username: `sa`
+- Password: _(empty)_
+
+### **Environment Variables**
+
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `GITHUB_USERNAME` | Your GitHub username | Yes |
+| `GITHUB_TOKEN` | GitHub Personal Access Token | Yes |
+| `ANTHROPIC_API_KEY` | Claude API key for AI features | No |
+| `ENABLE_FACTORY_RESET` | Enable admin reset functionality | No |
+| `ADMIN_RESET_TOKEN` | Security token for admin operations | No |
+
+---
+
+## 🔗 **API Endpoints**
+
+### **Projects**
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/projects` | List all projects with pagination |
+| GET | `/api/projects/{id}` | Get project by ID |
+| POST | `/api/projects` | Create new project |
+| PUT | `/api/projects/{id}` | Update project |
+| DELETE | `/api/projects/{id}` | Delete project |
+| GET | `/api/projects/languages` | Get available languages |
+| GET | `/api/projects/by-language` | Filter projects by language |
+
+**Example Request:**
+```bash
+curl -X POST http://localhost:8080/api/projects \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Portfolio Website",
+    "description": "Professional portfolio showcase",
+    "link": "https://github.com/user/portfolio",
+    "createdDate": "2024-01-15"
+  }'
+```
+
+### **Skills**
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/skills` | List all skills |
+| POST | `/api/skills` | Create new skill |
+| PUT | `/api/skills/{id}` | Update skill |
+| DELETE | `/api/skills/{id}` | Delete skill |
+
+**Example Request:**
+```bash
+curl -X POST http://localhost:8080/api/skills \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Spring Boot",
+    "category": "BACKEND",
+    "level": "EXPERT"
+  }'
+```
+
+### **Experience**
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/experience` | List all experiences |
+| POST | `/api/experience` | Create new experience |
+| PUT | `/api/experience/{id}` | Update experience |
+| DELETE | `/api/experience/{id}` | Delete experience |
+
+### **GitHub Sync**
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/sync/manual` | Trigger manual sync |
+| GET | `/api/sync/status` | Get sync status |
+| GET | `/api/sync/progress/{jobId}` | SSE sync progress stream |
+| GET | `/api/sync/rate-limit` | GitHub API rate limit |
+
+### **Admin Operations**
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/admin/sync-config` | Get sync configuration |
+| PUT | `/api/admin/sync-config` | Update sync settings |
+| POST | `/api/admin/sync-config/run-now` | Trigger immediate sync |
+| POST | `/api/admin/factory-reset` | Reset database (requires token) |
+| GET | `/api/admin/factory-reset/audit` | View reset history |
+
+---
+
+## 🔑 **Authentication & Security**
+
+### **Admin Endpoints Protection**
+
+Admin endpoints require authentication token in header:
+```bash
 curl -X POST http://localhost:8080/api/admin/factory-reset \
   -H "X-Admin-Reset-Token: your-secure-token" \
-  -H "X-Admin-Confirm: DELETE" \
-  -H "Content-Type: application/json"
-
-# Respuesta:
-# {
-#   "jobId": "uuid-del-trabajo",
-#   "message": "Factory reset started successfully",
-#   "streamUrl": "/api/admin/factory-reset/stream/uuid-del-trabajo"
-# }
-
-# 2. Monitorear progreso (Server-Sent Events)
-curl -N http://localhost:8080/api/admin/factory-reset/stream/uuid-del-trabajo
-
-# 3. Ver historial de resets
-curl http://localhost:8080/api/admin/factory-reset/audit?limit=10
+  -H "X-Admin-Confirm: DELETE"
 ```
 
-#### Características de seguridad:
+### **Rate Limiting**
 
-- ✅ **Token de autorización** obligatorio (`X-Admin-Reset-Token`)
-- ✅ **Confirmación doble** (`X-Admin-Confirm: DELETE`)
-- ✅ **Rate limiting** - 1 intento cada 10 minutos por IP
-- ✅ **Gate global** - Debe estar habilitado explícitamente
-- ✅ **Auditoría completa** - Logs de todos los intentos
-- ✅ **IP tracking** - Rastreo de origen de las peticiones
-- ✅ **Prevención de concurrencia** - Solo un reset a la vez
+- GitHub API sync: Respects GitHub rate limits
+- Factory reset: 1 attempt per 10 minutes per IP
+- Automatic retry with exponential backoff
 
-#### Estrategias por base de datos:
+### **CORS Configuration**
 
-- **PostgreSQL**: `TRUNCATE` con `RESTART IDENTITY CASCADE`
-- **H2 (desarrollo)**: `deleteAllInBatch()` + reset de secuencias
-
-#### Stream de progreso (SSE):
-
-```javascript
-// Frontend JavaScript ejemplo
-const eventSource = new EventSource('/api/admin/factory-reset/stream/job-id');
-eventSource.addEventListener('reset-progress', function(event) {
-    const data = JSON.parse(event.data);
-    console.log(`${data.type}: ${data.message}`);
-});
-```
-
-#### Estados de audit:
-
-- `STARTED` - Reset en progreso
-- `COMPLETED` - Reset completado exitosamente  
-- `FAILED` - Reset falló con error
+Default CORS allows:
+- Origin: `http://localhost:4200` (Angular dev server)
+- Methods: GET, POST, PUT, DELETE, OPTIONS
+- Headers: Content-Type, Authorization
 
 ---
 
-## 🏛️ **Hexagonal Architecture Deep Dive**
+## 📦 **Deployment**
 
-### Domain-Driven Design Implementation
-
-**Core Domain Layer (`com.portfolio.core`):**
-```java
-├── domain/
-│   ├── project/Project.java (Aggregate Root)
-│   ├── skill/Skill.java (Entity)  
-│   └── experience/Experience.java (Entity)
-├── port/in/ (Use Case Interfaces)
-│   ├── CreateProjectUseCase.java
-│   ├── GetProjectsUseCase.java  
-│   └── GenerateProjectContentUseCase.java
-└── port/out/ (Repository Interfaces)
-    ├── ProjectRepository.java
-    ├── GitHubApiPort.java
-    └── AIServicePort.java
-```
-
-**Application Layer (`com.portfolio.application`):**
-- Use Case implementations with business logic
-- Domain service orchestration
-- Cross-cutting concerns (validation, transactions)
-
-**Infrastructure Layer (`com.portfolio.adapter`):**
-- **IN**: REST controllers, DTO mappers (MapStruct)
-- **OUT**: JPA repositories, external API adapters
-- Configuration and security implementations
-
-### Request Flow Architecture
-1. **REST Controller** receives and validates requests
-2. **MapStruct Mappers** transform DTOs ↔ Domain entities
-3. **Use Case** orchestrates business logic
-4. **Domain Services** apply business rules
-5. **Repository Adapters** persist/retrieve data
-6. **External Adapters** integrate with GitHub/Claude APIs
-
-### AI Integration Workflow
-```mermaid
-graph LR
-    A[GitHub Sync] --> B[Repository Data]
-    B --> C[Claude API]
-    C --> D[Semantic Analysis]
-    D --> E[Content Generation]
-    E --> F[Domain Entities]
-    F --> G[Database Persistence]
-```
-
----
-
-## ✅ **Pruebas**
-
-Se incluyen tests unitarios y de integración para los controladores principales usando:
-
-* **JUnit 5**
-* **Mockito**
-* **Spring Boot Test**
-
-Puedes ejecutarlos con:
+### **Building for Production**
 
 ```bash
-./mvnw clean test
+# Clean build
+./mvnw clean package
+
+# Run JAR
+java -jar target/portfolio-backend-1.0.0.jar
+```
+
+### **Docker Deployment**
+
+```dockerfile
+FROM openjdk:21-slim
+COPY target/*.jar app.jar
+ENTRYPOINT ["java","-jar","/app.jar"]
+```
+
+Build and run:
+```bash
+docker build -t portfolio-backend .
+docker run -p 8080:8080 --env-file .env portfolio-backend
+```
+
+### **Environment-Specific Configuration**
+
+Production requires PostgreSQL configuration:
+```properties
+spring.datasource.url=${DATABASE_URL}
+spring.datasource.username=${DB_USERNAME}
+spring.datasource.password=${DB_PASSWORD}
 ```
 
 ---
 
-## 🧪 **Postman / API Clients**
+## 🧪 **Testing**
 
-Puedes importar las colecciones desde un archivo JSON o crear peticiones tipo:
+Run all tests:
+```bash
+./mvnw test
+```
 
-```http
-POST http://localhost:8080/api/projects
-Content-Type: application/json
+Run specific test class:
+```bash
+./mvnw test -Dtest=ProjectControllerTest
+```
 
+Generate coverage report:
+```bash
+./mvnw jacoco:report
+```
+
+---
+
+## 📚 **API Documentation**
+
+### **Swagger UI**
+Available at: **http://localhost:8080/swagger-ui.html** (when configured)
+
+### **Response Format**
+
+Success Response:
+```json
 {
-  "title": "New Project",
-  "description": "API integration",
-  "link": "https://github.com",
-  "createdDate": "2025-06-14"
+  "data": { ... },
+  "message": "Success",
+  "timestamp": "2024-01-15T10:30:00Z"
 }
 ```
 
-⚡ *Recomendado:* Agrupa todas las peticiones bajo una colección `Portfolio API` en Postman.
-
----
-
-## 🚀 **Advanced Features**
-
-### 🤖 **AI-Powered Content Generation**
-- **Semantic Repository Analysis**: Claude AI processes GitHub repos to extract meaningful insights
-- **Intelligent Categorization**: Automatic classification into Skills, Experiences, and Projects
-- **Content Enhancement**: AI-generated descriptions and technical summaries
-- **Change Detection**: Only processes repos with significant updates (description, language, topics)
-
-### ⚡ **Dynamic Sync System**
-- **Configurable Intervals**: 1-168 hours with runtime reconfiguration
-- **Concurrency Protection**: Prevents overlapping executions
-- **Real-time Monitoring**: SSE streams for live progress updates
-- **Audit Trail**: Complete history of sync operations
-
----
-
-## Admin Security (Dev)
-
-To protect `/api/admin/**` endpoints locally, configure an admin token via environment variables. The backend reads either the Spring property `portfolio.admin.token` or the environment variable `PORTFOLIO_ADMIN_TOKEN`.
-
-Recommended for development:
-
-- Do not commit secrets. Keep them in `.env` (already gitignored) or export them in your shell.
-
-Windows PowerShell
-```powershell
-$env:PORTFOLIO_ADMIN_SECURITY_ENABLED = "true"
-$env:PORTFOLIO_ADMIN_TOKEN = "your-admin-token"
-./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
+Error Response:
+```json
+{
+  "error": "Validation failed",
+  "message": "Title is required",
+  "path": "/api/projects",
+  "timestamp": "2024-01-15T10:30:00Z"
+}
 ```
 
-macOS/Linux
+### **Pagination**
+
+Paginated endpoints support:
+- `page`: Page number (0-indexed)
+- `size`: Items per page
+- `sort`: Sort field and direction (e.g., `title,desc`)
+
+Example:
+```
+GET /api/projects?page=0&size=10&sort=createdDate,desc
+```
+
+---
+
+## 🛠️ **Development Tools**
+
+### **Useful Maven Commands**
+
 ```bash
-export PORTFOLIO_ADMIN_SECURITY_ENABLED=true
-export PORTFOLIO_ADMIN_TOKEN=your-admin-token
-./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
+# Skip tests
+./mvnw clean install -DskipTests
+
+# Update dependencies
+./mvnw versions:display-dependency-updates
+
+# Clean build
+./mvnw clean compile
 ```
 
-Alternatively, copy `src/main/resources/application-dev.properties.sample` to `src/main/resources/application-dev.properties` and set the properties locally (do not commit the file with your token).
+### **IDE Setup**
 
-### 🔧 **Migration & Data Management**
-- **Repository Linkage**: Automated migration tools for data consistency
-- **Project Completion Tracking**: Progress monitoring with statistics
-- **Factory Reset**: Secure, audited database cleanup with SSE streaming
-- **Rate Limiting**: GitHub API quota management and monitoring
+1. Import as Maven project
+2. Install Lombok plugin
+3. Enable annotation processing
+4. Set Java 21 as SDK
 
-### 🏗️ **Production-Ready Features**
-- **Environment Configuration**: `.env` support with Spring Dotenv
-- **Database Flexibility**: H2 (development) / PostgreSQL (production)
-- **Comprehensive Testing**: Unit and integration tests with high coverage
-- **Security**: Token-based authentication, rate limiting, input validation
-- **Monitoring**: Detailed logging, error handling, and audit trails
+### **Database Migrations**
+
+Flyway migrations location: `src/main/resources/db/migration/`
 
 ---
 
-## 🎯 **Development Velocity Achievement**
+## 🐛 **Troubleshooting**
 
-**Created by Bernard Orozco** - This system demonstrates 15-20x acceleration over traditional development estimates through:
+### **Common Issues**
 
-- **AI-First Architecture**: Claude integration for intelligent content generation
-- **Clean Architecture**: Hexagonal design for maintainability and testability  
-- **Modern Java**: Java 21 features with Spring Boot 3.5.0
-- **Automated Workflows**: GitHub sync, content generation, and data migration
-- **Real-time Features**: SSE streaming for live updates and monitoring
+**Port already in use:**
+```bash
+# Change port in application.properties
+server.port=8081
+```
 
-*Traditional estimate: 12-16 weeks | Actual delivery: 1 week with Claude Code assistance*
+**GitHub rate limit exceeded:**
+- Check limits: `GET /api/sync/rate-limit`
+- Wait for reset or use different token
+
+**Database connection issues:**
+- Verify DATABASE_URL format
+- Check credentials
+- Ensure database is running
 
 ---
 
 ## 📄 **License**
 
-**Created by Bernard Orozco** - MIT License
+MIT License - Created by Bernard Orozco
+
+---
+
+## 🤝 **Contributing**
+
+1. Fork the repository
+2. Create feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit changes (`git commit -m 'Add AmazingFeature'`)
+4. Push to branch (`git push origin feature/AmazingFeature`)
+5. Open Pull Request
+
+---
+
+## 📞 **Support**
+
+For issues and questions:
+- GitHub Issues: [portfolio-backend/issues](https://github.com/BernardUriza/portfolio-backend/issues)
+- Documentation: See `/docs` folder

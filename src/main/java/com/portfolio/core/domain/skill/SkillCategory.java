@@ -1,8 +1,5 @@
 package com.portfolio.core.domain.skill;
 
-import lombok.Getter;
-
-@Getter
 public enum SkillCategory {
     PROGRAMMING_LANGUAGE("Programming Language"),
     FRAMEWORK("Framework"),
@@ -22,6 +19,7 @@ public enum SkillCategory {
     SkillCategory(String displayName) {
         this.displayName = displayName;
     }
+    public String getDisplayName() { return displayName; }
     
     public static SkillCategory fromDisplayName(String displayName) {
         for (SkillCategory category : values()) {

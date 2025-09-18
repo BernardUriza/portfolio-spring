@@ -3,8 +3,8 @@ package com.portfolio.service;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -16,12 +16,19 @@ import java.time.LocalTime;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-@Slf4j
+/**
+ * Creado por Bernard Orozco
+ */
 @Service
-@RequiredArgsConstructor
 public class ClaudeTokenBudgetService {
-    
+
+    private static final Logger log = LoggerFactory.getLogger(ClaudeTokenBudgetService.class);
+
     private final MeterRegistry meterRegistry;
+
+    public ClaudeTokenBudgetService(MeterRegistry meterRegistry) {
+        this.meterRegistry = meterRegistry;
+    }
     
     @Value("${portfolio.ai.claude.daily-token-budget:100000}")
     private int dailyTokenBudget;
@@ -238,8 +245,6 @@ public class ClaudeTokenBudgetService {
         public int getRemainingTokens() { return Math.max(0, dailyBudget - currentUsage); }
     }
     
-    @lombok.Builder
-    @lombok.Data
     public static class BudgetStatus {
         private int dailyBudget;
         private int currentUsage;
@@ -249,5 +254,105 @@ public class ClaudeTokenBudgetService {
         private boolean budgetExceeded;
         private LocalDate resetDate;
         private LocalDateTime nextResetTime;
+
+        public BudgetStatus() {}
+
+        public BudgetStatus(int dailyBudget, int currentUsage, int remainingTokens, double usagePercentage,
+                           boolean warnThresholdExceeded, boolean budgetExceeded, LocalDate resetDate,
+                           LocalDateTime nextResetTime) {
+            this.dailyBudget = dailyBudget;
+            this.currentUsage = currentUsage;
+            this.remainingTokens = remainingTokens;
+            this.usagePercentage = usagePercentage;
+            this.warnThresholdExceeded = warnThresholdExceeded;
+            this.budgetExceeded = budgetExceeded;
+            this.resetDate = resetDate;
+            this.nextResetTime = nextResetTime;
+        }
+
+        public static Builder builder() {
+            return new Builder();
+        }
+
+        public static class Builder {
+            private int dailyBudget;
+            private int currentUsage;
+            private int remainingTokens;
+            private double usagePercentage;
+            private boolean warnThresholdExceeded;
+            private boolean budgetExceeded;
+            private LocalDate resetDate;
+            private LocalDateTime nextResetTime;
+
+            public Builder dailyBudget(int dailyBudget) {
+                this.dailyBudget = dailyBudget;
+                return this;
+            }
+
+            public Builder currentUsage(int currentUsage) {
+                this.currentUsage = currentUsage;
+                return this;
+            }
+
+            public Builder remainingTokens(int remainingTokens) {
+                this.remainingTokens = remainingTokens;
+                return this;
+            }
+
+            public Builder usagePercentage(double usagePercentage) {
+                this.usagePercentage = usagePercentage;
+                return this;
+            }
+
+            public Builder warnThresholdExceeded(boolean warnThresholdExceeded) {
+                this.warnThresholdExceeded = warnThresholdExceeded;
+                return this;
+            }
+
+            public Builder budgetExceeded(boolean budgetExceeded) {
+                this.budgetExceeded = budgetExceeded;
+                return this;
+            }
+
+            public Builder resetDate(LocalDate resetDate) {
+                this.resetDate = resetDate;
+                return this;
+            }
+
+            public Builder nextResetTime(LocalDateTime nextResetTime) {
+                this.nextResetTime = nextResetTime;
+                return this;
+            }
+
+            public BudgetStatus build() {
+                return new BudgetStatus(dailyBudget, currentUsage, remainingTokens, usagePercentage,
+                                       warnThresholdExceeded, budgetExceeded, resetDate, nextResetTime);
+            }
+        }
+
+        // Getters and setters
+        public int getDailyBudget() { return dailyBudget; }
+        public void setDailyBudget(int dailyBudget) { this.dailyBudget = dailyBudget; }
+
+        public int getCurrentUsage() { return currentUsage; }
+        public void setCurrentUsage(int currentUsage) { this.currentUsage = currentUsage; }
+
+        public int getRemainingTokens() { return remainingTokens; }
+        public void setRemainingTokens(int remainingTokens) { this.remainingTokens = remainingTokens; }
+
+        public double getUsagePercentage() { return usagePercentage; }
+        public void setUsagePercentage(double usagePercentage) { this.usagePercentage = usagePercentage; }
+
+        public boolean isWarnThresholdExceeded() { return warnThresholdExceeded; }
+        public void setWarnThresholdExceeded(boolean warnThresholdExceeded) { this.warnThresholdExceeded = warnThresholdExceeded; }
+
+        public boolean isBudgetExceeded() { return budgetExceeded; }
+        public void setBudgetExceeded(boolean budgetExceeded) { this.budgetExceeded = budgetExceeded; }
+
+        public LocalDate getResetDate() { return resetDate; }
+        public void setResetDate(LocalDate resetDate) { this.resetDate = resetDate; }
+
+        public LocalDateTime getNextResetTime() { return nextResetTime; }
+        public void setNextResetTime(LocalDateTime nextResetTime) { this.nextResetTime = nextResetTime; }
     }
 }

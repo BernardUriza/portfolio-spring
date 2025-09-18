@@ -4,16 +4,21 @@ import com.portfolio.core.domain.experience.Experience;
 import com.portfolio.core.domain.experience.ExperienceType;
 import com.portfolio.core.port.in.CreateExperienceUseCase;
 import com.portfolio.core.port.out.ExperienceRepositoryPort;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 
+/**
+ * Creado por Bernard Orozco
+ */
 @Component
-@RequiredArgsConstructor
 public class CreateExperienceUseCaseImpl implements CreateExperienceUseCase {
-    
+
     private final ExperienceRepositoryPort experienceRepository;
+
+    public CreateExperienceUseCaseImpl(ExperienceRepositoryPort experienceRepository) {
+        this.experienceRepository = experienceRepository;
+    }
     
     @Override
     public Experience createExperience(String jobTitle, String companyName, ExperienceType type, 

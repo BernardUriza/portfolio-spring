@@ -5,14 +5,19 @@ import com.portfolio.core.domain.skill.SkillCategory;
 import com.portfolio.core.domain.skill.SkillLevel;
 import com.portfolio.core.port.in.CreateSkillUseCase;
 import com.portfolio.core.port.out.SkillRepositoryPort;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+/**
+ * Creado por Bernard Orozco
+ */
 @Component
-@RequiredArgsConstructor
 public class CreateSkillUseCaseImpl implements CreateSkillUseCase {
-    
+
     private final SkillRepositoryPort skillRepository;
+
+    public CreateSkillUseCaseImpl(SkillRepositoryPort skillRepository) {
+        this.skillRepository = skillRepository;
+    }
     
     @Override
     public Skill createSkill(String name, String description, SkillCategory category, SkillLevel level) {

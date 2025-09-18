@@ -6,8 +6,8 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,13 +17,15 @@ import org.springframework.web.bind.annotation.*;
  */
 @RestController
 @RequestMapping("/api/bootstrap")
-@RequiredArgsConstructor
 @Tag(name = "Bootstrap API", description = "Bootstrap sync operations for empty portfolio")
 @CrossOrigin(origins = {"http://localhost:4200", "https://portfolio.bernarduriza.dev"})
-@Slf4j
 public class BootstrapController {
-    
+    private static final Logger log = LoggerFactory.getLogger(BootstrapController.class);
     private final BootstrapSyncService bootstrapSyncService;
+
+    public BootstrapController(BootstrapSyncService bootstrapSyncService) {
+        this.bootstrapSyncService = bootstrapSyncService;
+    }
     
     @PostMapping("/sync-if-empty")
     @Operation(

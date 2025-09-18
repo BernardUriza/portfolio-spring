@@ -1,27 +1,44 @@
 package com.portfolio.controller;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import lombok.extern.slf4j.Slf4j;
-import lombok.Data;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Date;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
+/**
+ * Creado por Bernard Orozco
+ */
 @RestController
 @ConditionalOnProperty(name = "app.ai.enabled", havingValue = "true")
 @RequestMapping("/api/chat")
 @CrossOrigin(origins = {"http://localhost:4200", "https://bernardowiredu.com"})
-@Slf4j
 public class ChatContextController {
 
-    @Data
+    private static final Logger log = LoggerFactory.getLogger(ChatContextController.class);
+
     public static class ContextRequest {
         private String section;
         private String projectId;
         private String action;
         private Object userContext;
+
+        public ContextRequest() {}
+
+        public String getSection() { return section; }
+        public void setSection(String section) { this.section = section; }
+
+        public String getProjectId() { return projectId; }
+        public void setProjectId(String projectId) { this.projectId = projectId; }
+
+        public String getAction() { return action; }
+        public void setAction(String action) { this.action = action; }
+
+        public Object getUserContext() { return userContext; }
+        public void setUserContext(Object userContext) { this.userContext = userContext; }
     }
 
     @PostMapping("/context")

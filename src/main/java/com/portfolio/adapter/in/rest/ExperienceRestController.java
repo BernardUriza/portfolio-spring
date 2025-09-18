@@ -8,7 +8,6 @@ import com.portfolio.core.port.in.CreateExperienceUseCase;
 import com.portfolio.core.port.in.GetExperiencesUseCase;
 import com.portfolio.core.port.in.UpdateExperienceUseCase;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,13 +18,22 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/experiences")
 @CrossOrigin(origins = "${app.cors.allowed-origins}")
-@RequiredArgsConstructor
 public class ExperienceRestController {
-    
+
     private final CreateExperienceUseCase createExperienceUseCase;
     private final GetExperiencesUseCase getExperiencesUseCase;
     private final UpdateExperienceUseCase updateExperienceUseCase;
     private final ExperienceRestMapper mapper;
+
+    public ExperienceRestController(CreateExperienceUseCase createExperienceUseCase,
+                                    GetExperiencesUseCase getExperiencesUseCase,
+                                    UpdateExperienceUseCase updateExperienceUseCase,
+                                    ExperienceRestMapper mapper) {
+        this.createExperienceUseCase = createExperienceUseCase;
+        this.getExperiencesUseCase = getExperiencesUseCase;
+        this.updateExperienceUseCase = updateExperienceUseCase;
+        this.mapper = mapper;
+    }
     
     @PostMapping
     public ResponseEntity<ExperienceRestDto> createExperience(@Valid @RequestBody ExperienceRestDto experienceDto) {

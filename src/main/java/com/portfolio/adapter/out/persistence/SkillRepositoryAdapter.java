@@ -7,7 +7,6 @@ import com.portfolio.core.domain.skill.Skill;
 import com.portfolio.core.domain.skill.SkillCategory;
 import com.portfolio.core.domain.skill.SkillLevel;
 import com.portfolio.core.port.out.SkillRepositoryPort;
-import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
@@ -17,11 +16,15 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Component
-@RequiredArgsConstructor
 public class SkillRepositoryAdapter implements SkillRepositoryPort {
     
     private final SkillJpaRepository jpaRepository;
     private final SkillJpaMapper mapper;
+
+    public SkillRepositoryAdapter(SkillJpaRepository jpaRepository, SkillJpaMapper mapper) {
+        this.jpaRepository = jpaRepository;
+        this.mapper = mapper;
+    }
     
     @Override
     public Skill save(Skill skill) {

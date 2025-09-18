@@ -1,3 +1,7 @@
+/**
+ * Creado por Bernard Orozco
+ * Service for factory reset operations
+ */
 package com.portfolio.service;
 
 import com.portfolio.adapter.out.persistence.jpa.*;
@@ -8,8 +12,8 @@ import com.portfolio.core.domain.admin.ResetAudit;
 import jakarta.annotation.PostConstruct;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Query;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Async;
@@ -22,10 +26,10 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-@Slf4j
 @Service
-@RequiredArgsConstructor
 public class FactoryResetService implements FactoryResetUseCase {
+
+    private static final Logger log = LoggerFactory.getLogger(FactoryResetService.class);
     
     private final ResetAuditJpaRepository resetAuditRepository;
     private final ResetAuditJpaMapper resetAuditMapper;
@@ -51,6 +55,27 @@ public class FactoryResetService implements FactoryResetUseCase {
     
     private boolean isPostgres;
     private boolean isH2;
+
+    // Constructor for all final fields
+    public FactoryResetService(ResetAuditJpaRepository resetAuditRepository,
+                               ResetAuditJpaMapper resetAuditMapper,
+                               EntityManager entityManager,
+                               PortfolioProjectJpaRepository portfolioProjectRepository,
+                               SkillJpaRepository skillRepository,
+                               ExperienceJpaRepository experienceRepository,
+                               SourceRepositoryJpaRepository sourceRepositoryRepository,
+                               ContactMessageRepository contactMessageRepository,
+                               VisitorInsightRepository visitorInsightRepository) {
+        this.resetAuditRepository = resetAuditRepository;
+        this.resetAuditMapper = resetAuditMapper;
+        this.entityManager = entityManager;
+        this.portfolioProjectRepository = portfolioProjectRepository;
+        this.skillRepository = skillRepository;
+        this.experienceRepository = experienceRepository;
+        this.sourceRepositoryRepository = sourceRepositoryRepository;
+        this.contactMessageRepository = contactMessageRepository;
+        this.visitorInsightRepository = visitorInsightRepository;
+    }
     
     @PostConstruct
     public void init() {

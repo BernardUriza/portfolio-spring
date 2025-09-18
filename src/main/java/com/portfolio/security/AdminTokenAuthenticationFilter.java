@@ -4,8 +4,8 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -18,16 +18,21 @@ import java.io.IOException;
 import java.util.List;
 import jakarta.annotation.PostConstruct;
 
-@Slf4j
+/**
+ * Creado por Bernard Orozco
+ */
 @Component
-@RequiredArgsConstructor
 public class AdminTokenAuthenticationFilter extends OncePerRequestFilter {
-    
+
+    private static final Logger log = LoggerFactory.getLogger(AdminTokenAuthenticationFilter.class);
+
     @Value("${portfolio.admin.token:${PORTFOLIO_ADMIN_TOKEN:}}")
     private String adminToken;
-    
+
     @Value("${portfolio.admin.security.enabled:${PORTFOLIO_ADMIN_SECURITY_ENABLED:true}}")
     private boolean securityEnabled;
+
+    public AdminTokenAuthenticationFilter() {}
     
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, 

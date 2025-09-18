@@ -1,19 +1,21 @@
 package com.portfolio.adapter.out.external.ai;
 
 import com.portfolio.core.port.out.AIServicePort;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Component
-@RequiredArgsConstructor
-@Slf4j
 public class AIServiceAdapter implements AIServicePort {
-    
+    private static final Logger log = LoggerFactory.getLogger(AIServiceAdapter.class);
     private final AIServiceImpl aiService;
+
+    public AIServiceAdapter(AIServiceImpl aiService) {
+        this.aiService = aiService;
+    }
     
     @Override
     public String generateProjectSummary(String title, String description, String technologies) {

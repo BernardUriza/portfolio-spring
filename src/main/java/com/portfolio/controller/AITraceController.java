@@ -1,16 +1,21 @@
 package com.portfolio.controller;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import lombok.extern.slf4j.Slf4j;
 import java.util.Map;
 import java.util.HashMap;
 
+/**
+ * Creado por Bernard Orozco
+ */
 @RestController
 @RequestMapping("/api/ai")
 @CrossOrigin(origins = {"http://localhost:4200", "https://bernardowiredu.com"})
-@Slf4j
 public class AITraceController {
+
+    private static final Logger log = LoggerFactory.getLogger(AITraceController.class);
 
     @PostMapping("/trace")
     public ResponseEntity<Map<String, String>> trace(@RequestBody Map<String, String> payload) {

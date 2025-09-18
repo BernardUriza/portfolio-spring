@@ -5,17 +5,22 @@ import com.portfolio.core.domain.skill.SkillCategory;
 import com.portfolio.core.domain.skill.SkillLevel;
 import com.portfolio.core.port.in.GetSkillsUseCase;
 import com.portfolio.core.port.out.SkillRepositoryPort;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Creado por Bernard Orozco
+ */
 @Component
-@RequiredArgsConstructor
 public class GetSkillsUseCaseImpl implements GetSkillsUseCase {
-    
+
     private final SkillRepositoryPort skillRepository;
+
+    public GetSkillsUseCaseImpl(SkillRepositoryPort skillRepository) {
+        this.skillRepository = skillRepository;
+    }
     
     @Override
     public List<Skill> getAllSkills() {

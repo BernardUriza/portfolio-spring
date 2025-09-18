@@ -1,8 +1,5 @@
 package com.portfolio.core.domain.skill;
 
-import lombok.Getter;
-
-@Getter
 public enum SkillLevel {
     BEGINNER("Beginner", 1),
     INTERMEDIATE("Intermediate", 2),
@@ -16,6 +13,8 @@ public enum SkillLevel {
         this.displayName = displayName;
         this.numericValue = numericValue;
     }
+    public String getDisplayName() { return displayName; }
+    public int getNumericValue() { return numericValue; }
     
     public static SkillLevel fromDisplayName(String displayName) {
         for (SkillLevel level : values()) {

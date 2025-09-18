@@ -1,3 +1,8 @@
+/**
+ * Creado por Bernard Orozco
+ * Two-phase sync scheduler service implementing the new domain pipeline.
+ * Phase 1: Source ingest → Phase 2: Portfolio curation
+ */
 package com.portfolio.service;
 
 import com.portfolio.adapter.out.persistence.jpa.SourceRepositoryJpaEntity;
@@ -5,21 +10,17 @@ import com.portfolio.adapter.out.persistence.jpa.SourceRepositoryJpaRepository;
 import com.portfolio.adapter.out.persistence.jpa.PortfolioProjectJpaEntity;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
- * Two-phase sync scheduler service implementing the new domain pipeline.
- * Phase 1: Source ingest → Phase 2: Portfolio curation
- */
-@Slf4j
 @Service
-@RequiredArgsConstructor
 public class SyncSchedulerService {
+
+    private static final Logger log = LoggerFactory.getLogger(SyncSchedulerService.class);
     
     private final GitHubSourceRepositoryService gitHubSourceRepositoryService;
     private final PortfolioService portfolioService;
@@ -28,6 +29,19 @@ public class SyncSchedulerService {
     private final MeterRegistry meterRegistry;
     
     private final AtomicBoolean syncInProgress = new AtomicBoolean(false);
+
+    // Constructor for all final fields
+    public SyncSchedulerService(GitHubSourceRepositoryService gitHubSourceRepositoryService,
+                                PortfolioService portfolioService,
+                                SourceRepositoryJpaRepository sourceRepositoryRepository,
+                                SyncMonitorService syncMonitorService,
+                                MeterRegistry meterRegistry) {
+        this.gitHubSourceRepositoryService = gitHubSourceRepositoryService;
+        this.portfolioService = portfolioService;
+        this.sourceRepositoryRepository = sourceRepositoryRepository;
+        this.syncMonitorService = syncMonitorService;
+        this.meterRegistry = meterRegistry;
+    }
     
     /**
      * Execute complete two-phase sync pipeline:

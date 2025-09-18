@@ -20,7 +20,10 @@
       "Bash(curl:*)",
       "Bash(./mvnw spring-boot:run:*)",
       "Bash(ng serve:*)",
-      "Bash(timeout:*)"
+      "Bash(timeout:*)",
+      "Bash(findstr:*)",
+      "Bash(find:*)",
+      "Bash(./mvnw:*)"
     ],
     "deny": [],
     "ask": []
