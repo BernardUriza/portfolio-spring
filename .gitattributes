@@ -1,2 +1,9 @@
+# Ensure proper line endings
 /mvnw text eol=lf
+*.sh text eol=lf
 *.cmd text eol=crlf
+*.bat text eol=crlf
+
+# Shell scripts must have LF endings for Linux/Docker
+render-entrypoint.sh text eol=lf
+render-start.sh text eol=lf

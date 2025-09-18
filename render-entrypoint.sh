@@ -1,57 +1,84 @@
-#!/bin/sh
-set -e
+#!/usr/bin/env bash
+set -euo pipefail
 
-echo "Starting Spring Boot application on Render..."
+echo "=== Starting Spring Boot application on Render ==="
 echo "PORT: ${PORT:-8080}"
-echo "Profile: ${SPRING_PROFILES_ACTIVE:-render}"
+echo "SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-render}"
 
-# Convert DATABASE_URL to JDBC format if present
-if [ -n "$DATABASE_URL" ]; then
-    echo "Converting DATABASE_URL to JDBC format..."
+# Render provides DATABASE_URL in format: postgres://user:pass@host:5432/dbname
+if [[ -n "${DATABASE_URL:-}" ]]; then
+  echo "DATABASE_URL detected, converting to Spring format..."
 
-    # Extract components from DATABASE_URL
-    # Format: postgres://user:pass@host:port/database?params
+  proto="$(echo "$DATABASE_URL" | sed -E 's|:.*$||')" # "postgres" or "postgresql"
 
-    # Remove postgres:// or postgresql:// prefix
-    DB_URL_NO_SCHEME=$(echo "$DATABASE_URL" | sed -E 's|^postgres(ql)?://||')
-
+  if [[ "$proto" != "postgres" && "$proto" != "postgresql" ]]; then
+    echo "WARNING: DATABASE_URL does not look like postgres: $DATABASE_URL"
+  else
     # Extract user:pass
-    USER_PASS=$(echo "$DB_URL_NO_SCHEME" | sed -E 's|@.*||')
-    DB_USER=$(echo "$USER_PASS" | cut -d: -f1)
-    DB_PASS=$(echo "$USER_PASS" | cut -d: -f2)
+    creds="$(echo "$DATABASE_URL" | sed -E 's|^[a-z]+://([^@]+)@.*$|\1|')"
+    DB_USER="${creds%%:*}"
+    DB_PASS="${creds#*:}"
 
-    # Extract host:port/database?params
-    HOST_PORT_DB=$(echo "$DB_URL_NO_SCHEME" | sed -E 's|^[^@]+@||')
+    # Extract host:port/db?params
+    hostportdb="$(echo "$DATABASE_URL" | sed -E 's|^[a-z]+://[^@]+@([^?]+).*$|\1|')"
 
-    # Build JDBC URL
-    export JDBC_DATABASE_URL="jdbc:postgresql://${HOST_PORT_DB}"
+    # Split host:port from /db
+    hostport="${hostportdb%/*}"
+    dbname="${hostportdb#*/}"
 
-    # Set individual components for Spring
-    export SPRING_DATASOURCE_URL="${JDBC_DATABASE_URL}"
-    export SPRING_DATASOURCE_USERNAME="${DB_USER}"
-    export SPRING_DATASOURCE_PASSWORD="${DB_PASS}"
+    # Split host from :port
+    DB_HOST="${hostport%:*}"
+    DB_PORT="${hostport#*:}"
 
-    echo "Database configured: ${JDBC_DATABASE_URL%%\?*}" # Hide params for security
-    echo "Database user: ${DB_USER}"
+    # Handle query parameters (like ?sslmode=require)
+    params=""
+    if [[ "$DATABASE_URL" == *"?"* ]]; then
+      params="?$(echo "$DATABASE_URL" | sed -E 's|^[^?]+\?||')"
+    fi
+
+    # Build JDBC URL with SSL mode
+    export SPRING_DATASOURCE_URL="jdbc:postgresql://${DB_HOST}:${DB_PORT}/${dbname}${params}"
+    export SPRING_DATASOURCE_USERNAME="$DB_USER"
+    export SPRING_DATASOURCE_PASSWORD="$DB_PASS"
+
+    echo "Database configured:"
+    echo "  Host: ${DB_HOST}"
+    echo "  Port: ${DB_PORT}"
+    echo "  Database: ${dbname}"
+    echo "  User: ${DB_USER}"
+    echo "  SSL/Params: ${params:-none}"
+  fi
+else
+  echo "WARNING: DATABASE_URL not set. Database connection may fail."
 fi
 
-# Set JVM options for Render (512MB free tier)
-JAVA_OPTS="${JAVA_OPTS:--Xmx400m -Xms128m}"
-JAVA_OPTS="${JAVA_OPTS} -XX:MaxRAMPercentage=75"
-JAVA_OPTS="${JAVA_OPTS} -XX:+ExitOnOutOfMemoryError"
-JAVA_OPTS="${JAVA_OPTS} -Djava.security.egd=file:/dev/./urandom"
+# Hikari: don't fail fast if DB is not ready yet
+export SPRING_DATASOURCE_HIKARI_INITIALIZATION_FAIL_TIMEOUT=0
+export SPRING_DATASOURCE_HIKARI_CONNECTION_TIMEOUT=30000
+export SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE=4
+export SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE=1
+
+# Bind to PORT provided by Render
+export SERVER_PORT="${PORT:-8080}"
 
 # Set Spring profile
-JAVA_OPTS="${JAVA_OPTS} -Dspring.profiles.active=${SPRING_PROFILES_ACTIVE:-render}"
+export SPRING_PROFILES_ACTIVE="${SPRING_PROFILES_ACTIVE:-render}"
 
-# Set server port (critical for Render)
-JAVA_OPTS="${JAVA_OPTS} -Dserver.port=${PORT:-8080}"
+# JVM options for Render free tier (512MB)
+JAVA_OPTS=""
+JAVA_OPTS="$JAVA_OPTS -XX:MaxRAMPercentage=75"
+JAVA_OPTS="$JAVA_OPTS -XX:+ExitOnOutOfMemoryError"
+JAVA_OPTS="$JAVA_OPTS -Dserver.port=$SERVER_PORT"
+JAVA_OPTS="$JAVA_OPTS -Dspring.profiles.active=$SPRING_PROFILES_ACTIVE"
+JAVA_OPTS="$JAVA_OPTS -Djava.security.egd=file:/dev/./urandom"
 
-# Add health check endpoint
-JAVA_OPTS="${JAVA_OPTS} -Dmanagement.endpoints.web.exposure.include=health"
-JAVA_OPTS="${JAVA_OPTS} -Dmanagement.endpoint.health.show-details=always"
+# Health check endpoint
+JAVA_OPTS="$JAVA_OPTS -Dmanagement.endpoints.web.exposure.include=health,info"
+JAVA_OPTS="$JAVA_OPTS -Dmanagement.endpoint.health.probes.enabled=true"
 
-echo "Starting with JAVA_OPTS: ${JAVA_OPTS}"
+echo "Starting application with:"
+echo "  JAVA_OPTS: $JAVA_OPTS"
+echo "  JAR: /app/app.jar"
 
 # Start the application
-exec java ${JAVA_OPTS} -jar /app/app.jar
+exec java $JAVA_OPTS -jar /app/app.jar
