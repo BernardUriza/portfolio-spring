@@ -23,7 +23,10 @@
       "Bash(timeout:*)",
       "Bash(findstr:*)",
       "Bash(find:*)",
-      "Bash(./mvnw:*)"
+      "Bash(./mvnw:*)",
+      "Bash(python:*)",
+      "Bash(npm start)",
+      "Bash(cat:*)"
     ],
     "deny": [],
     "ask": []

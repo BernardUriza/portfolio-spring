@@ -74,7 +74,7 @@ public class PortfolioAdminController {
     /**
      * Return paginated portfolio projects with completion metrics for Admin table.
      */
-    @GetMapping("/completion")
+    @GetMapping({"/completion", "/completion/"})
     public ResponseEntity<Map<String, Object>> getPortfolioCompletion(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {

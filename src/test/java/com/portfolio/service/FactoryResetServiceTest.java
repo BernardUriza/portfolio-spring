@@ -260,12 +260,22 @@ class FactoryResetServiceTest {
         // Given
         String jobId = "test-job-id";
 
+        // Inject the mocked repositories into the service
+        ReflectionTestUtils.setField(factoryResetService, "sourceRepositoryRepository", sourceRepositoryRepository);
+        ReflectionTestUtils.setField(factoryResetService, "projectRepository", projectRepository);
+        ReflectionTestUtils.setField(factoryResetService, "experienceRepository", experienceRepository);
+        ReflectionTestUtils.setField(factoryResetService, "skillRepository", skillRepository);
+
+        // Mock the native query for resetting auto increment
+        Query mockQuery = mock(Query.class);
+        when(entityManager.createNativeQuery(anyString())).thenReturn(mockQuery);
+
         // When
         int result = factoryResetService.performH2Reset(jobId);
 
         // Then
         assertThat(result).isEqualTo(4);
-        
+
         verify(sourceRepositoryRepository).deleteAllInBatch();
         verify(projectRepository).deleteAllInBatch();
         verify(experienceRepository).deleteAllInBatch();

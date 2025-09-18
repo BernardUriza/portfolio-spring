@@ -22,6 +22,16 @@ for /f "tokens=5" %%a in ('netstat -aon ^| findstr ":4200 "') do (
 echo Ports cleared!
 timeout /t 2 /nobreak >nul
 
+REM Initialize sync_config if needed (Creado por Bernard Orozco)
+echo Checking sync_config table...
+set PGPASSWORD=ADMIN
+"C:\Program Files\PostgreSQL\17\bin\psql" -U postgres -d portfolio_db -h localhost -p 5432 -t -c "SELECT COUNT(*) FROM sync_config WHERE singleton_key = 'X';" 2>nul | findstr /r "^[ ]*0[ ]*$" >nul
+if %errorlevel%==0 (
+    echo Initializing sync_config...
+    "C:\Program Files\PostgreSQL\17\bin\psql" -U postgres -d portfolio_db -h localhost -p 5432 -c "INSERT INTO sync_config (singleton_key, enabled, interval_hours, updated_by, updated_at) VALUES ('X', false, 6, 'system', CURRENT_TIMESTAMP);" >nul 2>&1
+    echo Sync config initialized!
+)
+
 REM Start Backend
 echo Starting Backend (Spring Boot)...
 cd /d "C:\Users\Bernard\Documents\GitHub\portfolio-backend"

@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
+import java.util.HashMap;
 
 /**
  * Sync configuration admin controller (enable/disable + interval + status)
@@ -66,27 +67,30 @@ public class SyncConfigAdminController {
     
     @GetMapping({"/status", "/status/"})
     public ResponseEntity<Map<String, Object>> getSyncStatus() {
-        SyncConfigDto cfg;
         try {
-            cfg = syncConfigService.getOrCreate();
+            SyncConfigDto cfg = syncConfigService.getOrCreate();
+            // Use HashMap to avoid NPE with null values (Map.of doesn't accept nulls)
+            Map<String, Object> response = new HashMap<>();
+            response.put("enabled", cfg.getEnabled() != null ? cfg.getEnabled() : false);
+            response.put("intervalHours", cfg.getIntervalHours() != null ? cfg.getIntervalHours() : 6);
+            response.put("lastRunAt", cfg.getLastRunAt() != null ? cfg.getLastRunAt().toString() : null);
+            response.put("nextRunAt", cfg.getNextRunAt() != null ? cfg.getNextRunAt().toString() : null);
+            response.put("running", syncSchedulerService.isSyncInProgress());
+
+            log.info("Sync status retrieved successfully: enabled={}, intervalHours={}",
+                    response.get("enabled"), response.get("intervalHours"));
+            return ResponseEntity.ok(response);
         } catch (Exception ex) {
-            log.warn("Sync status failed, returning default empty state. Error: {}", ex.getMessage());
-            // Return default empty state when no config exists
-            return ResponseEntity.ok(Map.of(
-                "enabled", false,
-                "intervalHours", 6,
-                "lastRunAt", (Object) null,
-                "nextRunAt", (Object) null,
-                "running", false
-            ));
+            log.warn("Sync status failed, returning default empty state. Error: {}", ex.getMessage(), ex);
+            // Return default empty state when no config exists or any error occurs
+            Map<String, Object> defaultResponse = new HashMap<>();
+            defaultResponse.put("enabled", false);
+            defaultResponse.put("intervalHours", 6);
+            defaultResponse.put("lastRunAt", null);
+            defaultResponse.put("nextRunAt", null);
+            defaultResponse.put("running", false);
+            return ResponseEntity.ok(defaultResponse);
         }
-        return ResponseEntity.ok(Map.of(
-            "enabled", cfg.getEnabled(),
-            "intervalHours", cfg.getIntervalHours(),
-            "lastRunAt", cfg.getLastRunAt() != null ? cfg.getLastRunAt().toString() : null,
-            "nextRunAt", cfg.getNextRunAt() != null ? cfg.getNextRunAt().toString() : null,
-            "running", syncSchedulerService.isSyncInProgress()
-        ));
     }
 
     @PutMapping({"", "/"})

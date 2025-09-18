@@ -26,7 +26,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(AdminResetController.class)
 @TestPropertySource(properties = {
         "app.admin.factory-reset.enabled=true",
-        "app.admin.factory-reset.token=test-token"
+        "app.admin.factory-reset.token=test-token",
+        "portfolio.admin.token=admin-test-token",
+        "portfolio.admin.security.enabled=true"
 })
 class AdminResetControllerTest {
 
@@ -56,6 +58,7 @@ class AdminResetControllerTest {
 
         // When & Then
         mockMvc.perform(post("/api/admin/factory-reset")
+                .header("X-Admin-Token", "admin-test-token")
                 .header("X-Admin-Reset-Token", "test-token")
                 .header("X-Admin-Confirm", "DELETE")
                 .contentType(MediaType.APPLICATION_JSON))
@@ -95,6 +98,7 @@ class AdminResetControllerTest {
     void startFactoryReset_WithInvalidConfirmHeader_ShouldReturn400() throws Exception {
         // When & Then
         mockMvc.perform(post("/api/admin/factory-reset")
+                .header("X-Admin-Token", "admin-test-token")
                 .header("X-Admin-Reset-Token", "test-token")
                 .header("X-Admin-Confirm", "INVALID")
                 .contentType(MediaType.APPLICATION_JSON))
@@ -107,6 +111,7 @@ class AdminResetControllerTest {
     void startFactoryReset_WithMissingConfirmHeader_ShouldReturn400() throws Exception {
         // When & Then
         mockMvc.perform(post("/api/admin/factory-reset")
+                .header("X-Admin-Token", "admin-test-token")
                 .header("X-Admin-Reset-Token", "test-token")
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest());
@@ -126,6 +131,7 @@ class AdminResetControllerTest {
 
         // When & Then
         mockMvc.perform(post("/api/admin/factory-reset")
+                .header("X-Admin-Token", "admin-test-token")
                 .header("X-Admin-Reset-Token", "test-token")
                 .header("X-Admin-Confirm", "DELETE")
                 .contentType(MediaType.APPLICATION_JSON))
@@ -152,6 +158,7 @@ class AdminResetControllerTest {
 
         // First request should succeed
         mockMvc.perform(post("/api/admin/factory-reset")
+                .header("X-Admin-Token", "admin-test-token")
                 .header("X-Admin-Reset-Token", "test-token")
                 .header("X-Admin-Confirm", "DELETE")
                 .contentType(MediaType.APPLICATION_JSON))
@@ -159,6 +166,7 @@ class AdminResetControllerTest {
 
         // Second request should be rate limited
         mockMvc.perform(post("/api/admin/factory-reset")
+                .header("X-Admin-Token", "admin-test-token")
                 .header("X-Admin-Reset-Token", "test-token")
                 .header("X-Admin-Confirm", "DELETE")
                 .contentType(MediaType.APPLICATION_JSON))
@@ -180,7 +188,8 @@ class AdminResetControllerTest {
         when(factoryResetService.streamResetProgress(jobId)).thenReturn(mockEmitter);
 
         // When & Then
-        mockMvc.perform(get("/api/admin/factory-reset/stream/" + jobId))
+        mockMvc.perform(get("/api/admin/factory-reset/stream/" + jobId)
+                .header("X-Admin-Token", "admin-test-token"))
                 .andExpect(status().isOk())
                 .andExpect(header().string("Content-Type", "text/event-stream;charset=UTF-8"));
 
@@ -195,7 +204,8 @@ class AdminResetControllerTest {
         when(factoryResetService.getResetAuditByJobId(jobId)).thenReturn(null);
 
         // When & Then
-        mockMvc.perform(get("/api/admin/factory-reset/stream/" + jobId))
+        mockMvc.perform(get("/api/admin/factory-reset/stream/" + jobId)
+                .header("X-Admin-Token", "admin-test-token"))
                 .andExpect(status().isNotFound());
 
         verify(factoryResetService).getResetAuditByJobId(jobId);
@@ -218,7 +228,8 @@ class AdminResetControllerTest {
         when(factoryResetService.getResetHistory(20)).thenReturn(List.of(audit1, audit2));
 
         // When & Then
-        mockMvc.perform(get("/api/admin/factory-reset/audit"))
+        mockMvc.perform(get("/api/admin/factory-reset/audit")
+                .header("X-Admin-Token", "admin-test-token"))
                 .andExpect(status().isOk());
 
         verify(factoryResetService).getResetHistory(20);
@@ -233,6 +244,7 @@ class AdminResetControllerTest {
 
         // When & Then
         mockMvc.perform(get("/api/admin/factory-reset/audit")
+                .header("X-Admin-Token", "admin-test-token")
                 .param("limit", String.valueOf(customLimit)))
                 .andExpect(status().isOk());
 
@@ -242,7 +254,9 @@ class AdminResetControllerTest {
 
 @WebMvcTest(AdminResetController.class)
 @TestPropertySource(properties = {
-        "app.admin.factory-reset.enabled=false"
+        "app.admin.factory-reset.enabled=false",
+        "portfolio.admin.token=admin-test-token",
+        "portfolio.admin.security.enabled=true"
 })
 class AdminResetControllerDisabledTest {
 
@@ -259,6 +273,7 @@ class AdminResetControllerDisabledTest {
     void startFactoryReset_WhenDisabled_ShouldReturn404() throws Exception {
         // When & Then
         mockMvc.perform(post("/api/admin/factory-reset")
+                .header("X-Admin-Token", "admin-test-token")
                 .header("X-Admin-Reset-Token", "any-token")
                 .header("X-Admin-Confirm", "DELETE")
                 .contentType(MediaType.APPLICATION_JSON))
@@ -270,7 +285,8 @@ class AdminResetControllerDisabledTest {
     @Test
     void streamFactoryResetProgress_WhenDisabled_ShouldReturn404() throws Exception {
         // When & Then
-        mockMvc.perform(get("/api/admin/factory-reset/stream/any-job-id"))
+        mockMvc.perform(get("/api/admin/factory-reset/stream/any-job-id")
+                .header("X-Admin-Token", "admin-test-token"))
                 .andExpect(status().isNotFound());
 
         verify(factoryResetService, never()).streamResetProgress(any());
@@ -279,7 +295,8 @@ class AdminResetControllerDisabledTest {
     @Test
     void getFactoryResetAudit_WhenDisabled_ShouldReturn404() throws Exception {
         // When & Then
-        mockMvc.perform(get("/api/admin/factory-reset/audit"))
+        mockMvc.perform(get("/api/admin/factory-reset/audit")
+                .header("X-Admin-Token", "admin-test-token"))
                 .andExpect(status().isNotFound());
 
         verify(factoryResetService, never()).getResetHistory(any(Integer.class));

@@ -69,14 +69,22 @@ public class SyncConfigService {
     }
     
     private SyncConfigJpaEntity createDefaultConfig() {
-        log.info("Creating default sync configuration");
+        log.info("Creating default sync configuration with singleton_key='X'");
         SyncConfigJpaEntity defaultConfig = new SyncConfigJpaEntity();
         defaultConfig.setEnabled(false);
-        defaultConfig.setIntervalHours(6);
+        defaultConfig.setIntervalHours(24); // Default to 24 hours
         defaultConfig.setUpdatedBy("system");
         defaultConfig.setUpdatedAt(Instant.now());
         defaultConfig.setSingletonKey("X");
-        return syncConfigRepository.saveAndFlush(defaultConfig);
+
+        try {
+            return syncConfigRepository.saveAndFlush(defaultConfig);
+        } catch (DataIntegrityViolationException e) {
+            // If constraint violation (already exists), fetch it
+            log.info("Sync config already exists, fetching existing record");
+            return syncConfigRepository.findBySingletonKey("X")
+                    .orElseThrow(() -> new IllegalStateException("Failed to create or fetch sync config"));
+        }
     }
     
     private SyncConfigDto mapToDto(SyncConfigJpaEntity entity) {
@@ -98,7 +106,11 @@ public class SyncConfigService {
         return transactionTemplate.execute(status ->
                 syncConfigRepository.findBySingletonKey("X")
                         .orElseGet(() -> syncConfigRepository.findFirstByOrderByIdAsc()
-                                .orElseThrow(() -> new IllegalStateException("sync_config singleton not found after constraint collision")))
+                                .orElseGet(() -> {
+                                    // Last resort: create a default config
+                                    log.warn("sync_config table empty, creating default configuration");
+                                    return createDefaultConfig();
+                                }))
         );
     }
 
