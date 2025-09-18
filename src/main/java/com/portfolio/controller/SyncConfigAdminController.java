@@ -69,9 +69,16 @@ public class SyncConfigAdminController {
         SyncConfigDto cfg;
         try {
             cfg = syncConfigService.getOrCreate();
-        } catch (RuntimeException ex) {
-            log.warn("Sync status first attempt failed ({}). Retrying once...", ex.getClass().getSimpleName());
-            cfg = syncConfigService.getOrCreate();
+        } catch (Exception ex) {
+            log.warn("Sync status failed, returning default empty state. Error: {}", ex.getMessage());
+            // Return default empty state when no config exists
+            return ResponseEntity.ok(Map.of(
+                "enabled", false,
+                "intervalHours", 6,
+                "lastRunAt", (Object) null,
+                "nextRunAt", (Object) null,
+                "running", false
+            ));
         }
         return ResponseEntity.ok(Map.of(
             "enabled", cfg.getEnabled(),
