@@ -120,6 +120,13 @@
 			<version>4.0.0</version>
 		</dependency>
 
+		<!-- Spring Boot DevTools for Hot Reload -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-devtools</artifactId>
+			<optional>true</optional>
+		</dependency>
+
 		<!-- Swagger / OpenAPI (Spring Boot 3.x compatible) -->
 		<dependency>
 			<groupId>org.springdoc</groupId>

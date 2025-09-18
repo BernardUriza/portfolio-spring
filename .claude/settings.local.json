@@ -30,7 +30,8 @@
       "Bash(dir:*)",
       "Bash(npm --version)",
       "WebSearch",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(npm cache clean:*)"
     ],
     "deny": [],
     "ask": []
