@@ -37,6 +37,7 @@ services:
 
 databases:
   - name: portfolio-db
-    databaseName: portfolio
+    databaseName: portfolio_db
     user: portfolio_user
     plan: free
+    region: oregon  # Must match the web service region
