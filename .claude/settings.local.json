@@ -26,7 +26,11 @@
       "Bash(./mvnw:*)",
       "Bash(python:*)",
       "Bash(npm start)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(dir:*)",
+      "Bash(npm --version)",
+      "WebSearch",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": []
