@@ -1,0 +1,41 @@
+services:
+  - type: web
+    name: portfolio-backend
+    runtime: docker
+    repo: https://github.com/BernardUriza/portfolio-spring.git
+    branch: main
+    dockerfilePath: ./Dockerfile
+    plan: free
+    region: oregon
+    envVars:
+      - key: PORT
+        value: 8080
+      - key: SPRING_PROFILES_ACTIVE
+        value: render
+      - key: SPRING_DATASOURCE_URL
+        fromDatabase:
+          name: portfolio-db
+          property: connectionString
+      - key: SPRING_DATASOURCE_USERNAME
+        fromDatabase:
+          name: portfolio-db
+          property: user
+      - key: SPRING_DATASOURCE_PASSWORD
+        fromDatabase:
+          name: portfolio-db
+          property: password
+      - key: SPRING_JPA_DATABASE_PLATFORM
+        value: org.hibernate.dialect.PostgreSQLDialect
+      - key: SPRING_JPA_HIBERNATE_DDL_AUTO
+        value: update
+      - key: APP_CORS_ALLOWED_ORIGINS
+        value: https://localhost:4200,https://*.netlify.app
+      - key: PORTFOLIO_ADMIN_TOKEN
+        value: 6Erh5Jlw7hHWvtlkXLbPm3MbZ0d9m7ps6WpU5AqT0grYx29ETYTI2c5h2e3z7bh1
+    healthCheckPath: /actuator/health
+
+databases:
+  - name: portfolio-db
+    databaseName: portfolio
+    user: portfolio_user
+    plan: free
