@@ -8,30 +8,31 @@ services:
     plan: free
     region: oregon
     envVars:
-      - key: PORT
-        value: 8080
+      # Port configuration - Render will inject this
+      # No need to hardcode, let Render handle it
       - key: SPRING_PROFILES_ACTIVE
         value: render
-      - key: SPRING_DATASOURCE_URL
+      # Database URL - Render provides DATABASE_URL automatically
+      # We need to convert it to JDBC format
+      - key: DATABASE_URL
         fromDatabase:
           name: portfolio-db
           property: connectionString
-      - key: SPRING_DATASOURCE_USERNAME
-        fromDatabase:
-          name: portfolio-db
-          property: user
-      - key: SPRING_DATASOURCE_PASSWORD
-        fromDatabase:
-          name: portfolio-db
-          property: password
+      # These will use the DATABASE_URL via application-render.properties
+      # No need to set them explicitly since the app handles conversion
       - key: SPRING_JPA_DATABASE_PLATFORM
         value: org.hibernate.dialect.PostgreSQLDialect
       - key: SPRING_JPA_HIBERNATE_DDL_AUTO
         value: update
       - key: APP_CORS_ALLOWED_ORIGINS
         value: https://localhost:4200,https://*.netlify.app
-      - key: PORTFOLIO_ADMIN_TOKEN
-        value: 6Erh5Jlw7hHWvtlkXLbPm3MbZ0d9m7ps6WpU5AqT0grYx29ETYTI2c5h2e3z7bh1
+      # Admin Security - Choose one approach:
+      # Option 1: Generate secure token automatically
+      - key: ADMIN_TOKEN
+        generateValue: true
+      # Option 2: For testing only, disable security temporarily
+      # - key: APP_ADMIN_SECURITY_DISABLED
+      #   value: true
     healthCheckPath: /actuator/health
 
 databases:
