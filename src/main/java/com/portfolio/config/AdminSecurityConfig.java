@@ -1,11 +1,12 @@
 package com.portfolio.config;
 
 import com.portfolio.security.AdminTokenAuthenticationFilter;
-import jakarta.servlet.http.HttpServletResponse; // <-- Jakarta, not javax
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -24,7 +25,7 @@ public class AdminSecurityConfig {
             AdminTokenAuthenticationFilter adminTokenAuthenticationFilter
     ) throws Exception {
         return http
-            .cors(cors -> {})
+            .cors(Customizer.withDefaults())  // Usa la configuración de CorsFilter
             .securityMatcher("/api/admin/**")
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
@@ -43,7 +44,7 @@ public class AdminSecurityConfig {
             .httpBasic(basic -> basic.disable())
             .logout(logout -> logout.disable())
             .exceptionHandling(ex -> ex.authenticationEntryPoint((req, res, e) -> {
-                res.setStatus(HttpServletResponse.SC_UNAUTHORIZED); // <-- fixed
+                res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 res.setContentType("application/json");
                 res.getWriter().write("{\"error\":\"Unauthorized\",\"message\":\"Valid admin token required\"}");
             }))
@@ -55,7 +56,7 @@ public class AdminSecurityConfig {
     @Order(3)  // Lowest priority - catch all
     public SecurityFilterChain publicSecurityFilterChain(HttpSecurity http) throws Exception {
         return http
-            .cors(cors -> {})
+            .cors(Customizer.withDefaults())  // Usa la configuración de CorsFilter
             .securityMatcher("/**")
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
