@@ -26,13 +26,11 @@ services:
         value: update
       - key: APP_CORS_ALLOWED_ORIGINS
         value: https://localhost:4200,https://*.netlify.app
-      # Admin Security - Choose one approach:
-      # Option 1: Generate secure token automatically
-      - key: ADMIN_TOKEN
-        generateValue: true
-      # Option 2: For testing only, disable security temporarily
-      # - key: APP_ADMIN_SECURITY_DISABLED
-      #   value: true
+      # Admin Security - Relaxed mode for testing
+      # Security is disabled by default in render profile
+      # To enable security, set APP_ADMIN_SECURITY_ENABLED=true and provide X_ADMIN_TOKEN
+      - key: APP_ADMIN_SECURITY_ENABLED
+        value: false
     healthCheckPath: /actuator/health
 
 databases:
