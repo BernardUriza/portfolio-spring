@@ -18,7 +18,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class AdminSecurityConfig {
 
     @Bean
-    @Order(1)
+    @Order(2)  // Lower priority than public API security
     public SecurityFilterChain adminSecurityFilterChain(
             HttpSecurity http,
             AdminTokenAuthenticationFilter adminTokenAuthenticationFilter
@@ -52,7 +52,7 @@ public class AdminSecurityConfig {
     }
 
     @Bean
-    @Order(2)
+    @Order(3)  // Lowest priority - catch all
     public SecurityFilterChain publicSecurityFilterChain(HttpSecurity http) throws Exception {
         return http
             .cors(cors -> {})
