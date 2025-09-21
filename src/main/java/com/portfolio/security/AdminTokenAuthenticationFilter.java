@@ -106,8 +106,8 @@ public class AdminTokenAuthenticationFilter extends OncePerRequestFilter {
     public void logSecurityConfig() {
         if (securityEnabled) {
             if (adminToken == null || adminToken.trim().isEmpty()) {
-                // En modo render/producción, solo DEBUG para no llenar logs
-                log.debug("Admin security is ENABLED but no admin token is configured - requests will be allowed");
+                // Critical security warning
+                log.error("CRITICAL: Admin security is ENABLED but no admin token is configured - ALL requests will be DENIED");
             } else {
                 String masked = maskToken(adminToken.trim());
                 log.info("Admin security is ENABLED; admin token configured: {} (len={})", masked, adminToken.trim().length());
@@ -125,9 +125,9 @@ public class AdminTokenAuthenticationFilter extends OncePerRequestFilter {
     
     private boolean isValidAdminToken(String token) {
         if (adminToken == null || adminToken.trim().isEmpty()) {
-            // En modo render sin token, permitir acceso (modo relajado)
-            log.debug("No admin token configured - allowing access in relaxed mode");
-            return true;
+            // Security: DENY access when no admin token is configured
+            log.error("No admin token configured - denying access for security");
+            return false;
         }
         String expected = adminToken.trim();
         String provided = token == null ? "" : token.trim();
