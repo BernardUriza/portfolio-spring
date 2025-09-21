@@ -36,7 +36,7 @@ public class CorsConfig {
         config.setAllowedHeaders(Arrays.asList(
                 "Authorization", "Content-Type", "X-Requested-With",
                 "X-Admin-Token", "X-Correlation-Id", "Accept", "Origin",
-                "User-Agent", "DNT", "Cache-Control", "Pragma"
+                "User-Agent", "DNT", "Cache-Control", "Pragma", "X-Health-Check"
         ));
         config.setExposedHeaders(Arrays.asList(
                 "Location", "Link", "X-Total-Count", "X-Correlation-Id"
