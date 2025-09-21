@@ -30,7 +30,7 @@ public class PublicPortfolioController {
         this.portfolioProjectRepository = portfolioProjectRepository;
         this.bootstrapSyncService = bootstrapSyncService;
     }
-    
+
     @GetMapping("/projects")
     @Operation(
         summary = "Get all portfolio projects for public display",
