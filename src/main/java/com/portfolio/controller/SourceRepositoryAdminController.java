@@ -44,48 +44,76 @@ public class SourceRepositoryAdminController {
             @RequestParam(defaultValue = "desc") String sortDir,
             @RequestParam(required = false) String syncStatus,
             @RequestParam(required = false) String language) {
-        
-        Sort sort = Sort.by(sortDir.equalsIgnoreCase("asc") ? 
-            Sort.Direction.ASC : Sort.Direction.DESC, sortBy);
-        PageRequest pageRequest = PageRequest.of(page, size, sort);
-        
-        Page<SourceRepositoryJpaEntity> sourcePage;
-        
-        if (syncStatus != null && language != null) {
-            SourceRepositoryJpaEntity.SyncStatus status = SourceRepositoryJpaEntity.SyncStatus.valueOf(syncStatus.toUpperCase());
-            sourcePage = sourceRepositoryRepository.findBySyncStatusAndLanguage(status, language, pageRequest);
-        } else if (syncStatus != null) {
-            SourceRepositoryJpaEntity.SyncStatus status = SourceRepositoryJpaEntity.SyncStatus.valueOf(syncStatus.toUpperCase());
-            sourcePage = sourceRepositoryRepository.findBySyncStatus(status, pageRequest);
-        } else if (language != null) {
-            sourcePage = sourceRepositoryRepository.findByLanguage(language, pageRequest);
-        } else {
-            sourcePage = sourceRepositoryRepository.findAll(pageRequest);
+
+        try {
+            Sort sort = Sort.by(sortDir.equalsIgnoreCase("asc") ?
+                Sort.Direction.ASC : Sort.Direction.DESC, sortBy);
+            PageRequest pageRequest = PageRequest.of(page, size, sort);
+
+            Page<SourceRepositoryJpaEntity> sourcePage;
+
+            if (syncStatus != null && language != null) {
+                SourceRepositoryJpaEntity.SyncStatus status;
+                try {
+                    status = SourceRepositoryJpaEntity.SyncStatus.valueOf(syncStatus.toUpperCase());
+                } catch (IllegalArgumentException e) {
+                    log.error("Invalid sync status value: {}", syncStatus);
+                    return ResponseEntity.badRequest().body(Map.of(
+                        "error", "Invalid sync status",
+                        "message", "Valid values are: UNSYNCED, SYNCED, FAILED",
+                        "providedValue", syncStatus
+                    ));
+                }
+                sourcePage = sourceRepositoryRepository.findBySyncStatusAndLanguage(status, language, pageRequest);
+            } else if (syncStatus != null) {
+                SourceRepositoryJpaEntity.SyncStatus status;
+                try {
+                    status = SourceRepositoryJpaEntity.SyncStatus.valueOf(syncStatus.toUpperCase());
+                } catch (IllegalArgumentException e) {
+                    log.error("Invalid sync status value: {}", syncStatus);
+                    return ResponseEntity.badRequest().body(Map.of(
+                        "error", "Invalid sync status",
+                        "message", "Valid values are: UNSYNCED, SYNCED, FAILED",
+                        "providedValue", syncStatus
+                    ));
+                }
+                sourcePage = sourceRepositoryRepository.findBySyncStatus(status, pageRequest);
+            } else if (language != null) {
+                sourcePage = sourceRepositoryRepository.findByLanguage(language, pageRequest);
+            } else {
+                sourcePage = sourceRepositoryRepository.findAll(pageRequest);
+            }
+
+            // Calculate metrics
+            long totalRepositories = sourceRepositoryRepository.count();
+            long syncedRepositories = sourceRepositoryRepository.countBySyncStatus(SourceRepositoryJpaEntity.SyncStatus.SYNCED);
+            long unsyncedRepositories = sourceRepositoryRepository.countBySyncStatus(SourceRepositoryJpaEntity.SyncStatus.UNSYNCED);
+            long failedRepositories = sourceRepositoryRepository.countBySyncStatus(SourceRepositoryJpaEntity.SyncStatus.FAILED);
+
+            return ResponseEntity.ok(Map.of(
+                "repositories", sourcePage.getContent(),
+                "pagination", Map.of(
+                    "page", sourcePage.getNumber(),
+                    "size", sourcePage.getSize(),
+                    "totalElements", sourcePage.getTotalElements(),
+                    "totalPages", sourcePage.getTotalPages()
+                ),
+                "metrics", Map.of(
+                    "totalRepositories", totalRepositories,
+                    "syncedRepositories", syncedRepositories,
+                    "unsyncedRepositories", unsyncedRepositories,
+                    "failedRepositories", failedRepositories,
+                    "syncSuccessRate", totalRepositories > 0 ?
+                        Math.round(((double) syncedRepositories / totalRepositories) * 100.0) / 100.0 : 0.0
+                )
+            ));
+        } catch (Exception e) {
+            log.error("Error fetching source repositories", e);
+            return ResponseEntity.status(500).body(Map.of(
+                "error", "Internal server error",
+                "message", "Failed to fetch source repositories: " + e.getMessage()
+            ));
         }
-        
-        // Calculate metrics
-        long totalRepositories = sourceRepositoryRepository.count();
-        long syncedRepositories = sourceRepositoryRepository.countBySyncStatus(SourceRepositoryJpaEntity.SyncStatus.SYNCED);
-        long unsyncedRepositories = sourceRepositoryRepository.countBySyncStatus(SourceRepositoryJpaEntity.SyncStatus.UNSYNCED);
-        long failedRepositories = sourceRepositoryRepository.countBySyncStatus(SourceRepositoryJpaEntity.SyncStatus.FAILED);
-        
-        return ResponseEntity.ok(Map.of(
-            "repositories", sourcePage.getContent(),
-            "pagination", Map.of(
-                "page", sourcePage.getNumber(),
-                "size", sourcePage.getSize(),
-                "totalElements", sourcePage.getTotalElements(),
-                "totalPages", sourcePage.getTotalPages()
-            ),
-            "metrics", Map.of(
-                "totalRepositories", totalRepositories,
-                "syncedRepositories", syncedRepositories,
-                "unsyncedRepositories", unsyncedRepositories,
-                "failedRepositories", failedRepositories,
-                "syncSuccessRate", totalRepositories > 0 ? 
-                    Math.round(((double) syncedRepositories / totalRepositories) * 100.0) / 100.0 : 0.0
-            )
-        ));
     }
     
     /**
