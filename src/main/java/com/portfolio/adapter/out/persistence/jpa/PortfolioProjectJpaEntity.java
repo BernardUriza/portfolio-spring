@@ -51,23 +51,23 @@ public class PortfolioProjectJpaEntity {
     @Enumerated(EnumType.STRING)
     private ProjectTypeJpa type = ProjectTypeJpa.PERSONAL;
     
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(
         name = "portfolio_project_technologies",
         joinColumns = @JoinColumn(name = "portfolio_project_id")
     )
     @Column(name = "technology")
     private List<String> mainTechnologies = new ArrayList<>();
-    
-    @ElementCollection
+
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(
         name = "portfolio_project_skill_ids",
         joinColumns = @JoinColumn(name = "portfolio_project_id")
     )
     @Column(name = "skill_id")
     private Set<Long> skillIds = new HashSet<>();
-    
-    @ElementCollection
+
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(
         name = "portfolio_project_experience_ids",
         joinColumns = @JoinColumn(name = "portfolio_project_id")
