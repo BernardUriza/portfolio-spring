@@ -1,6 +1,7 @@
 package com.portfolio.service;
 
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -9,7 +10,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -19,10 +20,11 @@ import java.util.concurrent.atomic.AtomicLong;
  * This prevents the free tier server from going to sleep after 15 minutes of inactivity.
  * Created by Bernard Orozco
  */
-@Slf4j
 @Service
 @ConditionalOnProperty(name = "app.keepalive.enabled", havingValue = "true", matchIfMissing = false)
 public class KeepAliveService {
+
+    private static final Logger log = LoggerFactory.getLogger(KeepAliveService.class);
 
     @Value("${app.keepalive.url:}")
     private String keepAliveUrl;
