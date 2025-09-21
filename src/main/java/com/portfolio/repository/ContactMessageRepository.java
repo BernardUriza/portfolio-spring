@@ -20,13 +20,13 @@ import java.util.List;
 public interface ContactMessageRepository extends JpaRepository<ContactMessage, Long> {
     
     @Query("SELECT cm FROM ContactMessage cm WHERE " +
-           "(CAST(:status AS string) IS NULL OR cm.status = :status) AND " +
-           "(CAST(:query AS string) IS NULL OR LOWER(cm.name) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
+           "(:status IS NULL OR cm.status = :status) AND " +
+           "(:query IS NULL OR LOWER(cm.name) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
            "                   LOWER(cm.email) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
            "                   LOWER(cm.subject) LIKE LOWER(CONCAT('%', :query, '%'))) AND " +
-           "(CAST(:dateFrom AS timestamp) IS NULL OR cm.createdAt >= CAST(:dateFrom AS timestamp)) AND " +
-           "(CAST(:dateTo AS timestamp) IS NULL OR cm.createdAt <= CAST(:dateTo AS timestamp)) AND " +
-           "(CAST(:label AS string) IS NULL OR :label MEMBER OF cm.labels)")
+           "(:dateFrom IS NULL OR cm.createdAt >= :dateFrom) AND " +
+           "(:dateTo IS NULL OR cm.createdAt <= :dateTo) AND " +
+           "(:label IS NULL OR :label MEMBER OF cm.labels)")
     Page<ContactMessage> findWithFilters(
         @Param("status") MessageStatus status,
         @Param("query") String query,

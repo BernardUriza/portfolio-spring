@@ -21,12 +21,12 @@ public interface VisitorInsightRepository extends JpaRepository<VisitorInsight, 
     Optional<VisitorInsight> findBySessionId(String sessionId);
     
     @Query("SELECT vi FROM VisitorInsight vi WHERE " +
-           "(CAST(:dateFrom AS timestamp) IS NULL OR vi.startedAt >= CAST(:dateFrom AS timestamp)) AND " +
-           "(CAST(:dateTo AS timestamp) IS NULL OR vi.startedAt <= CAST(:dateTo AS timestamp)) AND " +
-           "(CAST(:minDuration AS integer) IS NULL OR vi.durationSeconds >= CAST(:minDuration AS integer)) AND " +
-           "(CAST(:hasContact AS boolean) IS NULL OR " +
-           "  (CAST(:hasContact AS boolean) = true AND vi.contactMessageId IS NOT NULL) OR " +
-           "  (CAST(:hasContact AS boolean) = false AND vi.contactMessageId IS NULL))")
+           "(:dateFrom IS NULL OR vi.startedAt >= :dateFrom) AND " +
+           "(:dateTo IS NULL OR vi.startedAt <= :dateTo) AND " +
+           "(:minDuration IS NULL OR vi.durationSeconds >= :minDuration) AND " +
+           "(:hasContact IS NULL OR " +
+           "  (:hasContact = true AND vi.contactMessageId IS NOT NULL) OR " +
+           "  (:hasContact = false AND vi.contactMessageId IS NULL))")
     Page<VisitorInsight> findWithFilters(
         @Param("dateFrom") LocalDateTime dateFrom,
         @Param("dateTo") LocalDateTime dateTo,
