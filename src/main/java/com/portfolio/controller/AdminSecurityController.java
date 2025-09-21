@@ -32,6 +32,19 @@ public class AdminSecurityController {
     private String adminToken;
     
     /**
+     * Validate admin token - used by frontend to check if token is still valid
+     * This endpoint requires authentication but NOT feature flags (to avoid circular dependency)
+     */
+    @GetMapping({"/validate", "/validate/"})
+    public ResponseEntity<Map<String, Object>> validateToken() {
+        // If this method is reached, the token is valid (filter would have rejected invalid tokens)
+        return ResponseEntity.ok(Map.of(
+            "status", "valid",
+            "timestamp", LocalDateTime.now().toString()
+        ));
+    }
+
+    /**
      * Get security status and feature flags overview
      */
     @GetMapping({"/status", "/status/"})
