@@ -31,7 +31,10 @@
       "Bash(npm --version)",
       "WebSearch",
       "Bash(git push:*)",
-      "Bash(npm cache clean:*)"
+      "Bash(npm cache clean:*)",
+      "Bash(del:*)",
+      "Bash(netstat:*)",
+      "Bash(taskkill:*)"
     ],
     "deny": [],
     "ask": []

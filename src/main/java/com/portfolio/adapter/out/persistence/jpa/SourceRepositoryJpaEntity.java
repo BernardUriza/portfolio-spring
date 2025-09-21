@@ -58,7 +58,7 @@ public class SourceRepositoryJpaEntity {
     @Column(name = "stargazers_count")
     private Integer stargazersCount;
 
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(
         name = "source_repository_topics",
         joinColumns = @JoinColumn(name = "source_repository_id")
