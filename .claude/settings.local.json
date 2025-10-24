@@ -34,7 +34,19 @@
       "Bash(npm cache clean:*)",
       "Bash(del:*)",
       "Bash(netstat:*)",
-      "Bash(taskkill:*)"
+      "Bash(taskkill:*)",
+      "Bash(pg_isready:*)",
+      "Bash(psql:*)",
+      "Read(//Users/bernardurizaorozco/Documents/portfolio-frontend/.vscode/**)",
+      "Bash(lsof:*)",
+      "Bash(xargs kill -9)",
+      "Bash(chmod:*)",
+      "Bash(./dev.sh:*)",
+      "Read(//Users/bernardurizaorozco/Documents/portfolio-frontend/**)",
+      "Bash(npm install)",
+      "Bash(./stop.sh:*)",
+      "Bash(npm test:*)",
+      "Bash(npx ng test:*)"
     ],
     "deny": [],
     "ask": []

@@ -1,0 +1,234 @@
+### Portfolio API Tests
+### Use the REST Client extension to execute these requests
+### Press Ctrl+Alt+R (or Cmd+Alt+R on Mac) to send a request
+
+@baseUrl = http://localhost:8080
+@adminToken = your-admin-token-here
+
+###############################################################################
+# HEALTH & STATUS ENDPOINTS
+###############################################################################
+
+### Health Check
+GET {{baseUrl}}/api/health HTTP/1.1
+
+### API Root Info
+GET {{baseUrl}}/api HTTP/1.1
+
+### Spring Boot Actuator Health
+GET {{baseUrl}}/actuator/health HTTP/1.1
+
+###############################################################################
+# PUBLIC PORTFOLIO ENDPOINTS
+###############################################################################
+
+### Get All Portfolio Projects
+GET {{baseUrl}}/api/sync/projects HTTP/1.1
+
+### Get Specific Project by ID
+GET {{baseUrl}}/api/sync/projects/1 HTTP/1.1
+
+### Get Project (Non-existent ID)
+GET {{baseUrl}}/api/sync/projects/999 HTTP/1.1
+
+###############################################################################
+# CONTACT MESSAGES
+###############################################################################
+
+### Create Contact Message (Valid)
+POST {{baseUrl}}/api/contact-messages HTTP/1.1
+Content-Type: application/json
+
+{
+  "name": "John Doe",
+  "email": "john.doe@example.com",
+  "subject": "Interested in collaboration",
+  "message": "Hello! I'd like to discuss a potential project collaboration."
+}
+
+### Create Contact Message (Missing Subject - Should Fail)
+POST {{baseUrl}}/api/contact-messages HTTP/1.1
+Content-Type: application/json
+
+{
+  "name": "Jane Smith",
+  "email": "jane@example.com",
+  "message": "This request is missing the subject field"
+}
+
+### Create Contact Message (Invalid Email - Should Fail)
+POST {{baseUrl}}/api/contact-messages HTTP/1.1
+Content-Type: application/json
+
+{
+  "name": "Invalid User",
+  "email": "not-an-email",
+  "subject": "Test",
+  "message": "This has an invalid email format"
+}
+
+###############################################################################
+# SYNC CONFIG ENDPOINTS (Admin)
+###############################################################################
+
+### Get Sync Config Status
+GET {{baseUrl}}/api/admin/sync-config/status HTTP/1.1
+
+### Update Sync Config (Requires Admin Token)
+PUT {{baseUrl}}/api/admin/sync-config HTTP/1.1
+Content-Type: application/json
+X-Admin-Token: {{adminToken}}
+
+{
+  "enabled": true,
+  "intervalHours": 6
+}
+
+### Trigger Manual Sync (Requires Admin Token)
+POST {{baseUrl}}/api/admin/sync-config/run-now HTTP/1.1
+X-Admin-Token: {{adminToken}}
+
+###############################################################################
+# SOURCE REPOSITORIES (Admin - Requires Token)
+###############################################################################
+
+### Get All Source Repositories
+GET {{baseUrl}}/api/admin/source-repositories HTTP/1.1
+X-Admin-Token: {{adminToken}}
+
+### Get Source Repositories with Pagination
+GET {{baseUrl}}/api/admin/source-repositories?page=0&size=10&sortBy=stargazersCount&sortDir=desc HTTP/1.1
+X-Admin-Token: {{adminToken}}
+
+### Get Source Repositories by Sync Status
+GET {{baseUrl}}/api/admin/source-repositories?syncStatus=SYNCED HTTP/1.1
+X-Admin-Token: {{adminToken}}
+
+### Get Source Repositories by Language
+GET {{baseUrl}}/api/admin/source-repositories?language=Java HTTP/1.1
+X-Admin-Token: {{adminToken}}
+
+### Get Failed Repositories
+GET {{baseUrl}}/api/admin/source-repositories/failed HTTP/1.1
+X-Admin-Token: {{adminToken}}
+
+### Get Specific Source Repository
+GET {{baseUrl}}/api/admin/source-repositories/1 HTTP/1.1
+X-Admin-Token: {{adminToken}}
+
+### Trigger Sync for Specific Repository
+POST {{baseUrl}}/api/admin/source-repositories/1/sync HTTP/1.1
+X-Admin-Token: {{adminToken}}
+
+### Trigger Source Ingestion
+POST {{baseUrl}}/api/admin/source-repositories/ingest HTTP/1.1
+X-Admin-Token: {{adminToken}}
+
+### Reset Failed Repositories
+PATCH {{baseUrl}}/api/admin/source-repositories/reset-failed HTTP/1.1
+X-Admin-Token: {{adminToken}}
+
+###############################################################################
+# PORTFOLIO ADMIN ENDPOINTS (Requires Token)
+###############################################################################
+
+### Get Portfolio Projects (Admin)
+GET {{baseUrl}}/api/admin/portfolio HTTP/1.1
+X-Admin-Token: {{adminToken}}
+
+### Get Portfolio Statistics
+GET {{baseUrl}}/api/admin/portfolio/stats HTTP/1.1
+X-Admin-Token: {{adminToken}}
+
+###############################################################################
+# AI & ANALYTICS ENDPOINTS
+###############################################################################
+
+### Create Journey Session
+POST {{baseUrl}}/api/ai/journey/session HTTP/1.1
+
+### Add Journey Events
+POST {{baseUrl}}/api/ai/journey/event HTTP/1.1
+Content-Type: application/json
+
+{
+  "sessionId": "your-session-id-here",
+  "events": [
+    {
+      "type": "page_view",
+      "page": "/projects",
+      "timestamp": "2025-10-22T12:00:00Z"
+    }
+  ]
+}
+
+###############################################################################
+# ERROR SCENARIOS FOR TESTING
+###############################################################################
+
+### Test 404 - Non-existent Endpoint
+GET {{baseUrl}}/api/non-existent-endpoint HTTP/1.1
+
+### Test 401 - Missing Admin Token
+GET {{baseUrl}}/api/admin/source-repositories HTTP/1.1
+
+### Test 400 - Malformed JSON
+POST {{baseUrl}}/api/contact-messages HTTP/1.1
+Content-Type: application/json
+
+{
+  "name": "Test",
+  "email": "test@test.com"
+  "subject": "Missing comma above"
+}
+
+###############################################################################
+# PERFORMANCE TESTING
+###############################################################################
+
+### Load Test - Multiple Requests
+# @name loadTest
+GET {{baseUrl}}/api/health HTTP/1.1
+
+###
+GET {{baseUrl}}/api/sync/projects HTTP/1.1
+
+###
+GET {{baseUrl}}/api/sync/projects/1 HTTP/1.1
+
+###
+GET {{baseUrl}}/api/sync/projects/2 HTTP/1.1
+
+###
+GET {{baseUrl}}/api/sync/projects/3 HTTP/1.1
+
+###############################################################################
+# DEVELOPMENT NOTES
+###############################################################################
+
+# To use this file:
+# 1. Install "REST Client" extension in VS Code (humao.rest-client)
+# 2. Update @baseUrl if using different port
+# 3. Set @adminToken with your actual admin token
+# 4. Click "Send Request" above any request
+# 5. View response in dedicated panel
+
+# Environment Variables:
+# - Set PORTFOLIO_ADMIN_TOKEN in your .env file
+# - Ensure Spring Boot application is running
+# - Default ports: Backend=8080, Frontend=4200
+
+# Response Status Codes:
+# 200 OK - Request successful
+# 201 Created - Resource created
+# 400 Bad Request - Invalid input
+# 401 Unauthorized - Missing/invalid token
+# 404 Not Found - Resource not found
+# 429 Too Many Requests - Rate limit exceeded
+# 500 Internal Server Error - Server error
+
+# Tips:
+# - Use Cmd+Alt+R (Mac) or Ctrl+Alt+R (Windows/Linux) to send request
+# - Responses appear in new panel to the right
+# - Click "History" to see previous requests
+# - Use {{variable}} syntax for variables defined at top

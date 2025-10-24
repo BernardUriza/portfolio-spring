@@ -1,0 +1,549 @@
+{
+	"folders": [
+		{
+			"name": "🎯 Backend (Spring Boot)",
+			"path": "."
+		},
+		{
+			"name": "⚡ Frontend (Angular)",
+			"path": "../portfolio-frontend"
+		}
+	],
+	"settings": {
+		// ==========================================
+		// 🎨 Editor Settings
+		// ==========================================
+		"editor.formatOnSave": true,
+		"editor.formatOnPaste": true,
+		"editor.codeActionsOnSave": {
+			"source.organizeImports": "explicit",
+			"source.fixAll": "explicit"
+		},
+		"editor.rulers": [80, 120],
+		"editor.bracketPairColorization.enabled": true,
+		"editor.guides.bracketPairs": "active",
+		"editor.inlineSuggest.enabled": true,
+		"editor.suggestSelection": "first",
+		"editor.tabSize": 2,
+		"editor.detectIndentation": true,
+		"editor.renderWhitespace": "boundary",
+		"editor.trimAutoWhitespace": true,
+		"files.trimTrailingWhitespace": true,
+		"files.insertFinalNewline": true,
+		"files.trimFinalNewlines": true,
+
+		// ==========================================
+		// ☕ Java & Spring Boot Settings
+		// ==========================================
+		"java.compile.nullAnalysis.mode": "automatic",
+		"java.configuration.updateBuildConfiguration": "automatic",
+		"java.saveActions.organizeImports": true,
+		"java.import.gradle.enabled": true,
+		"java.import.maven.enabled": true,
+		"java.semanticHighlighting.enabled": true,
+		"java.completion.importOrder": [
+			"java",
+			"javax",
+			"jakarta",
+			"org",
+			"com"
+		],
+		"java.format.settings.url": "",
+		"java.debug.settings.hotCodeReplace": "auto",
+		"java.jdt.ls.vmargs": "-XX:+UseParallelGC -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -Dsun.zip.disableMemoryMapping=true -Xmx2G -Xms100m",
+
+		"spring-boot.ls.problem.application-properties.enabled": true,
+		"spring-boot.ls.problem.application-yaml.enabled": true,
+
+		// ==========================================
+		// 🅰️ Angular & TypeScript Settings
+		// ==========================================
+		"typescript.updateImportsOnFileMove.enabled": "always",
+		"typescript.preferences.importModuleSpecifier": "relative",
+		"typescript.suggest.autoImports": true,
+		"typescript.format.insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces": true,
+		"typescript.format.insertSpaceAfterOpeningAndBeforeClosingTemplateStringBraces": true,
+		"typescript.tsdk": "../portfolio-frontend/node_modules/typescript/lib",
+
+		"[typescript]": {
+			"editor.defaultFormatter": "vscode.typescript-language-features",
+			"editor.tabSize": 2
+		},
+		"[javascript]": {
+			"editor.defaultFormatter": "vscode.typescript-language-features",
+			"editor.tabSize": 2
+		},
+		"[html]": {
+			"editor.defaultFormatter": "vscode.html-language-features",
+			"editor.tabSize": 2
+		},
+		"[scss]": {
+			"editor.defaultFormatter": "vscode.css-language-features",
+			"editor.tabSize": 2
+		},
+		"[css]": {
+			"editor.defaultFormatter": "vscode.css-language-features",
+			"editor.tabSize": 2
+		},
+		"[json]": {
+			"editor.defaultFormatter": "vscode.json-language-features",
+			"editor.tabSize": 2
+		},
+		"[jsonc]": {
+			"editor.defaultFormatter": "vscode.json-language-features",
+			"editor.tabSize": 2
+		},
+		"[java]": {
+			"editor.defaultFormatter": "redhat.java",
+			"editor.tabSize": 4
+		},
+		"[xml]": {
+			"editor.tabSize": 2
+		},
+		"[markdown]": {
+			"editor.wordWrap": "on",
+			"editor.quickSuggestions": {
+				"comments": "off",
+				"strings": "off",
+				"other": "off"
+			}
+		},
+
+		// ==========================================
+		// 🎨 TailwindCSS Settings
+		// ==========================================
+		"tailwindCSS.experimental.classRegex": [
+			["class:\\s*?[\"'`]([^\"'`]*).*?[\"'`]", "[\"'`]([^\"'`]*).*?[\"'`]"],
+			["[\"'`]([^\"'`]*)[\"'`]"]
+		],
+		"tailwindCSS.includeLanguages": {
+			"typescript": "javascript",
+			"typescriptreact": "javascript",
+			"html": "html"
+		},
+		"css.lint.unknownAtRules": "ignore",
+
+		// ==========================================
+		// 📁 Files & Search Settings
+		// ==========================================
+		"files.exclude": {
+			"**/.git": true,
+			"**/.DS_Store": true,
+			"**/node_modules": true,
+			"**/.angular": true,
+			"**/dist": true,
+			"**/target": true,
+			"**/.classpath": true,
+			"**/.project": true,
+			"**/.settings": true,
+			"**/.factorypath": true
+		},
+		"search.exclude": {
+			"**/node_modules": true,
+			"**/bower_components": true,
+			"**/dist": true,
+			"**/target": true,
+			"**/.angular": true,
+			"**/package-lock.json": true,
+			"**/pom.xml": false
+		},
+		"files.watcherExclude": {
+			"**/.git/objects/**": true,
+			"**/.git/subtree-cache/**": true,
+			"**/node_modules/**": true,
+			"**/target/**": true,
+			"**/.angular/**": true
+		},
+
+		// ==========================================
+		// 🔍 Terminal & Shell Settings
+		// ==========================================
+		"terminal.integrated.defaultProfile.osx": "zsh",
+		"terminal.integrated.profiles.osx": {
+			"zsh": {
+				"path": "/bin/zsh",
+				"args": ["-l"]
+			},
+			"bash": {
+				"path": "/bin/bash",
+				"args": ["-l"]
+			}
+		},
+		"terminal.integrated.fontSize": 13,
+		"terminal.integrated.fontFamily": "MesloLGS NF",
+		"terminal.integrated.scrollback": 10000,
+
+		// ==========================================
+		// 🧪 Testing Settings
+		// ==========================================
+		"java.test.config": {
+			"vmArgs": [
+				"-Dspring.profiles.active=test"
+			]
+		},
+
+		// ==========================================
+		// 🚀 Git Settings
+		// ==========================================
+		"git.autofetch": true,
+		"git.confirmSync": false,
+		"git.enableSmartCommit": true,
+		"git.postCommitCommand": "none",
+		"git.suggestSmartCommit": true,
+
+		// ==========================================
+		// 🔧 Workspace Specific
+		// ==========================================
+		"explorer.fileNesting.enabled": true,
+		"explorer.fileNesting.patterns": {
+			"*.ts": "${capture}.js, ${capture}.*.ts",
+			"*.java": "${capture}.class",
+			"*.component.ts": "${capture}.component.html, ${capture}.component.scss, ${capture}.component.spec.ts",
+			"*.service.ts": "${capture}.service.spec.ts",
+			"package.json": "package-lock.json, .npmrc, .nvmrc",
+			"pom.xml": ".mvn, mvnw, mvnw.cmd",
+			"tsconfig.json": "tsconfig.*.json",
+			"angular.json": ".editorconfig, .browserslistrc, karma.conf.js, tsconfig.json"
+		}
+	},
+	"extensions": {
+		"recommendations": [
+			// 🅰️ Angular Essentials
+			"angular.ng-template",
+			"johnpapa.angular2",
+
+			// ☕ Java & Spring Boot
+			"vscjava.vscode-java-pack",
+			"vmware.vscode-spring-boot",
+			"vscjava.vscode-spring-initializr",
+			"vscjava.vscode-spring-boot-dashboard",
+			"pivotal.vscode-boot-dev-pack",
+			"redhat.java",
+			"redhat.vscode-xml",
+			"redhat.vscode-yaml",
+
+			// 🎨 TailwindCSS & Styling
+			"bradlc.vscode-tailwindcss",
+			"stylelint.vscode-stylelint",
+
+			// 🛠️ Essential Tools
+			"esbenp.prettier-vscode",
+			"dbaeumer.vscode-eslint",
+			"editorconfig.editorconfig",
+			"christian-kohler.path-intellisense",
+			"visualstudioexptteam.vscodeintellicode",
+			"visualstudioexptteam.intellicode-api-usage-examples",
+
+			// 📦 Database & API
+			"cweijan.vscode-postgresql-client2",
+			"humao.rest-client",
+
+			// 🧪 Testing
+			"hbenl.vscode-test-explorer",
+			"cypress-io.cypress-helper",
+
+			// 📝 Documentation & Markdown
+			"yzhang.markdown-all-in-one",
+			"bierner.markdown-mermaid",
+
+			// 🎯 Git & Version Control
+			"eamodio.gitlens",
+			"donjayamanne.githistory",
+			"github.vscode-pull-request-github",
+
+			// 🚀 Productivity
+			"gruntfuggly.todo-tree",
+			"wayou.vscode-todo-highlight",
+			"aaron-bond.better-comments",
+			"naumovs.color-highlight",
+			"formulahendry.auto-rename-tag",
+			"formulahendry.auto-close-tag",
+
+			// 🐳 Docker & DevOps
+			"ms-azuretools.vscode-docker",
+
+			// 🎨 Themes & Icons (Optional)
+			"pkief.material-icon-theme",
+			"zhuangtongfa.material-theme"
+		]
+	},
+	"launch": {
+		"version": "0.2.0",
+		"configurations": [
+			// ==========================================
+			// 🅰️ Angular Frontend Debugging
+			// ==========================================
+			{
+				"name": "🅰️ Angular: Chrome",
+				"type": "chrome",
+				"request": "launch",
+				"preLaunchTask": "Frontend: Start Dev Server",
+				"url": "http://localhost:4200",
+				"webRoot": "${workspaceFolder:⚡ Frontend (Angular)}",
+				"sourceMaps": true,
+				"sourceMapPathOverrides": {
+					"webpack:/*": "${webRoot}/*",
+					"/./*": "${webRoot}/*",
+					"/src/*": "${webRoot}/*",
+					"/*": "*",
+					"/./~/*": "${webRoot}/node_modules/*"
+				}
+			},
+			{
+				"name": "🅰️ Angular: Edge",
+				"type": "msedge",
+				"request": "launch",
+				"preLaunchTask": "Frontend: Start Dev Server",
+				"url": "http://localhost:4200",
+				"webRoot": "${workspaceFolder:⚡ Frontend (Angular)}",
+				"sourceMaps": true
+			},
+			// ==========================================
+			// ☕ Spring Boot Backend Debugging
+			// ==========================================
+			{
+				"name": "☕ Spring Boot: Debug",
+				"type": "java",
+				"request": "launch",
+				"mainClass": "com.portfolio.PortfolioSpringApplication",
+				"projectName": "portfolio-spring",
+				"cwd": "${workspaceFolder:🎯 Backend (Spring Boot)}",
+				"console": "internalConsole",
+				"args": "",
+				"vmArgs": "-Dspring.profiles.active=dev -Dspring-boot.run.jvmArguments=\"-Xdebug\"",
+				"preLaunchTask": "Backend: Build Maven"
+			},
+			{
+				"name": "☕ Spring Boot: Debug (No Build)",
+				"type": "java",
+				"request": "launch",
+				"mainClass": "com.portfolio.PortfolioSpringApplication",
+				"projectName": "portfolio-spring",
+				"cwd": "${workspaceFolder:🎯 Backend (Spring Boot)}",
+				"console": "internalConsole",
+				"vmArgs": "-Dspring.profiles.active=dev"
+			},
+			// ==========================================
+			// 🚀 Full Stack Debugging
+			// ==========================================
+			{
+				"name": "🚀 Full Stack: Debug All",
+				"type": "chrome",
+				"request": "launch",
+				"url": "http://localhost:4200",
+				"webRoot": "${workspaceFolder:⚡ Frontend (Angular)}",
+				"preLaunchTask": "Full Stack: Start All",
+				"serverReadyAction": {
+					"pattern": "Tomcat started on port.*([0-9]+)",
+					"uriFormat": "http://localhost:4200",
+					"action": "debugWithChrome"
+				}
+			}
+		],
+		"compounds": [
+			{
+				"name": "🎯 Full Stack Debug (Compound)",
+				"configurations": [
+					"☕ Spring Boot: Debug (No Build)",
+					"🅰️ Angular: Chrome"
+				],
+				"stopAll": true,
+				"presentation": {
+					"hidden": false,
+					"group": "Full Stack",
+					"order": 1
+				}
+			}
+		]
+	},
+	"tasks": {
+		"version": "2.0.0",
+		"tasks": [
+			// ==========================================
+			// 🅰️ Frontend Tasks
+			// ==========================================
+			{
+				"label": "Frontend: Start Dev Server",
+				"type": "npm",
+				"script": "start",
+				"path": "../portfolio-frontend",
+				"isBackground": true,
+				"problemMatcher": {
+					"owner": "typescript",
+					"pattern": "$tsc",
+					"background": {
+						"activeOnStart": true,
+						"beginsPattern": "Application bundle generation",
+						"endsPattern": "Application bundle generation complete"
+					}
+				},
+				"presentation": {
+					"group": "frontend",
+					"reveal": "always",
+					"panel": "dedicated"
+				}
+			},
+			{
+				"label": "Frontend: Build Production",
+				"type": "npm",
+				"script": "build",
+				"path": "../portfolio-frontend",
+				"problemMatcher": "$tsc",
+				"presentation": {
+					"group": "frontend",
+					"reveal": "always"
+				}
+			},
+			{
+				"label": "Frontend: Run Tests",
+				"type": "npm",
+				"script": "test",
+				"path": "../portfolio-frontend",
+				"problemMatcher": [],
+				"presentation": {
+					"group": "test",
+					"reveal": "always"
+				}
+			},
+			// ==========================================
+			// ☕ Backend Tasks
+			// ==========================================
+			{
+				"label": "Backend: Build Maven",
+				"type": "shell",
+				"command": "./mvnw clean compile",
+				"options": {
+					"cwd": "${workspaceFolder:🎯 Backend (Spring Boot)}"
+				},
+				"problemMatcher": "$msCompile",
+				"group": {
+					"kind": "build",
+					"isDefault": true
+				},
+				"presentation": {
+					"group": "backend",
+					"reveal": "always"
+				}
+			},
+			{
+				"label": "Backend: Start Spring Boot",
+				"type": "shell",
+				"command": "./mvnw spring-boot:run",
+				"options": {
+					"cwd": "${workspaceFolder:🎯 Backend (Spring Boot)}"
+				},
+				"isBackground": true,
+				"problemMatcher": {
+					"pattern": {
+						"regexp": "^.*$"
+					},
+					"background": {
+						"activeOnStart": true,
+						"beginsPattern": "^.*Starting PortfolioSpringApplication.*",
+						"endsPattern": "^.*Started PortfolioSpringApplication.*"
+					}
+				},
+				"presentation": {
+					"group": "backend",
+					"reveal": "always",
+					"panel": "dedicated"
+				}
+			},
+			{
+				"label": "Backend: Run Tests",
+				"type": "shell",
+				"command": "./mvnw test",
+				"options": {
+					"cwd": "${workspaceFolder:🎯 Backend (Spring Boot)}"
+				},
+				"problemMatcher": "$msCompile",
+				"presentation": {
+					"group": "test",
+					"reveal": "always"
+				}
+			},
+			{
+				"label": "Backend: Clean",
+				"type": "shell",
+				"command": "./mvnw clean",
+				"options": {
+					"cwd": "${workspaceFolder:🎯 Backend (Spring Boot)}"
+				},
+				"problemMatcher": [],
+				"presentation": {
+					"group": "backend",
+					"reveal": "always"
+				}
+			},
+			{
+				"label": "Backend: Package",
+				"type": "shell",
+				"command": "./mvnw clean package -DskipTests",
+				"options": {
+					"cwd": "${workspaceFolder:🎯 Backend (Spring Boot)}"
+				},
+				"problemMatcher": "$msCompile",
+				"presentation": {
+					"group": "backend",
+					"reveal": "always"
+				}
+			},
+			// ==========================================
+			// 🚀 Full Stack Tasks
+			// ==========================================
+			{
+				"label": "Full Stack: Start All",
+				"dependsOn": [
+					"Backend: Start Spring Boot",
+					"Frontend: Start Dev Server"
+				],
+				"dependsOrder": "sequence",
+				"problemMatcher": [],
+				"presentation": {
+					"group": "fullstack",
+					"reveal": "always"
+				}
+			},
+			{
+				"label": "Full Stack: Build All",
+				"dependsOn": [
+					"Backend: Build Maven",
+					"Frontend: Build Production"
+				],
+				"problemMatcher": [],
+				"presentation": {
+					"group": "fullstack",
+					"reveal": "always"
+				}
+			},
+			{
+				"label": "Full Stack: Test All",
+				"dependsOn": [
+					"Backend: Run Tests",
+					"Frontend: Run Tests"
+				],
+				"problemMatcher": [],
+				"presentation": {
+					"group": "test",
+					"reveal": "always"
+				}
+			},
+			// ==========================================
+			// 🛠️ Utility Tasks
+			// ==========================================
+			{
+				"label": "Utility: Kill Ports (4200, 8080)",
+				"type": "shell",
+				"command": "npx kill-port 4200 8080 || echo 'Ports cleaned'",
+				"options": {
+					"cwd": "${workspaceFolder:⚡ Frontend (Angular)}"
+				},
+				"problemMatcher": [],
+				"presentation": {
+					"group": "utility",
+					"reveal": "always"
+				}
+			}
+		]
+	}
+}
