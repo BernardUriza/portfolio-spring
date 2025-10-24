@@ -203,6 +203,52 @@ GET {{baseUrl}}/api/sync/projects/2 HTTP/1.1
 GET {{baseUrl}}/api/sync/projects/3 HTTP/1.1
 
 ###############################################################################
+# PROJECT DELETE VERIFICATION (Admin - Ritual Testing)
+###############################################################################
+
+### Step 1: List all portfolio projects (get ID for testing)
+GET {{baseUrl}}/api/admin/portfolio/completion?page=0&size=20 HTTP/1.1
+X-Admin-Token: {{adminToken}}
+
+### Step 2: Get a specific project before deletion (replace {id} with actual ID)
+# @name getProjectBeforeDelete
+GET {{baseUrl}}/api/admin/portfolio/completion HTTP/1.1
+X-Admin-Token: {{adminToken}}
+
+### Step 3: DELETE project by ID (Expected: 204 No Content)
+# Replace {id} with an actual project ID from Step 1
+DELETE {{baseUrl}}/api/admin/portfolio/1 HTTP/1.1
+X-Admin-Token: {{adminToken}}
+
+### Step 4: Verify deletion - Try to get deleted project (Expected: 404 or excluded from list)
+GET {{baseUrl}}/api/admin/portfolio/completion?page=0&size=20 HTTP/1.1
+X-Admin-Token: {{adminToken}}
+
+### Step 5: Test idempotence - DELETE same project again (Expected: 404 Not Found)
+DELETE {{baseUrl}}/api/admin/portfolio/1 HTTP/1.1
+X-Admin-Token: {{adminToken}}
+
+### Step 6: Test DELETE non-existent ID (Expected: 404 Not Found)
+DELETE {{baseUrl}}/api/admin/portfolio/999999 HTTP/1.1
+X-Admin-Token: {{adminToken}}
+
+### Step 7: Test DELETE without admin token (Expected: 401 Unauthorized)
+DELETE {{baseUrl}}/api/admin/portfolio/1 HTTP/1.1
+
+###############################################################################
+# CASCADING & ORPHAN VERIFICATION
+###############################################################################
+
+### Verify no orphaned technologies (after project deletion)
+# Run direct DB query or check project count consistency
+
+### Verify no orphaned skill associations
+# Check that portfolio_project_skill_ids table is cleaned
+
+### Verify no orphaned experience associations
+# Check that portfolio_project_experience_ids table is cleaned
+
+###############################################################################
 # DEVELOPMENT NOTES
 ###############################################################################
 
@@ -221,6 +267,7 @@ GET {{baseUrl}}/api/sync/projects/3 HTTP/1.1
 # Response Status Codes:
 # 200 OK - Request successful
 # 201 Created - Resource created
+# 204 No Content - Deletion successful
 # 400 Bad Request - Invalid input
 # 401 Unauthorized - Missing/invalid token
 # 404 Not Found - Resource not found

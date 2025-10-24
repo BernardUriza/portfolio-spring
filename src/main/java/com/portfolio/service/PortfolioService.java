@@ -223,20 +223,43 @@ public class PortfolioService {
         if (portfolioOpt.isEmpty()) {
             throw new IllegalArgumentException("Portfolio project not found: " + portfolioProjectId);
         }
-        
+
         PortfolioProjectJpaEntity portfolio = portfolioOpt.get();
         PortfolioProjectJpaEntity updated = portfolio.toBuilder()
                 .sourceRepositoryId(null)
                 .linkType(null)
                 .updatedAt(LocalDateTime.now())
                 .build();
-        
+
         portfolioProjectRepository.save(updated);
-        
-        syncMonitorService.appendLog("INFO", 
+
+        syncMonitorService.appendLog("INFO",
             String.format("Unlinked portfolio project '%s' from source repository", portfolio.getTitle()));
-        
+
         return convertToDomain(updated);
+    }
+
+    /**
+     * Delete portfolio project by ID with audit trail
+     */
+    @Transactional
+    public void deleteProject(Long portfolioProjectId) {
+        Optional<PortfolioProjectJpaEntity> portfolioOpt = portfolioProjectRepository.findById(portfolioProjectId);
+        if (portfolioOpt.isEmpty()) {
+            throw new IllegalArgumentException("Portfolio project not found: " + portfolioProjectId);
+        }
+
+        PortfolioProjectJpaEntity portfolio = portfolioOpt.get();
+
+        // Audit the deletion operation before deleting
+        auditTrailService.auditDelete("PortfolioProject", portfolioProjectId, portfolio, "system");
+
+        portfolioProjectRepository.deleteById(portfolioProjectId);
+
+        syncMonitorService.appendLog("INFO",
+            String.format("Deleted portfolio project '%s' (ID: %d)", portfolio.getTitle(), portfolioProjectId));
+
+        log.info("Portfolio project deleted: {} (ID: {})", portfolio.getTitle(), portfolioProjectId);
     }
     
     /**

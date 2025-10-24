@@ -262,6 +262,21 @@ public class PortfolioAdminController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    /** Delete portfolio project by ID */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteProject(@PathVariable Long id) {
+        try {
+            portfolioService.deleteProject(id);
+            return ResponseEntity.noContent().build();
+        } catch (IllegalArgumentException e) {
+            log.warn("Portfolio project not found for deletion: {}", id);
+            return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            log.error("Failed to delete portfolio project {}: {}", id, e.getMessage(), e);
+            return ResponseEntity.status(500).build();
+        }
+    }
+
     /** Resync a single portfolio project using its linked source repository */
     @PostMapping("/{id}/resync")
     public ResponseEntity<Map<String, Object>> resyncProject(@PathVariable Long id) {
