@@ -66,7 +66,10 @@
       "Bash(mkdir:*)",
       "Bash(mv:*)",
       "Bash(trello archive-list:*)",
-      "mcp__ide__getDiagnostics"
+      "mcp__ide__getDiagnostics",
+      "Bash(for card_id in 68fd47e5d22f724008577792 68fd47f2f1fd29590d133c2a 68fd4831859a473dc668cc9c)",
+      "Bash(do)",
+      "Bash(done)"
     ],
     "deny": [],
     "ask": []
