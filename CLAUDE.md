@@ -2,6 +2,60 @@
 
 This file provides guidance to Claude Code when working with this Spring Boot backend repository.
 
+## Agile Workflow with Trello
+
+### Trello CLI Tool
+- **Path**: `/Users/bernardurizaorozco/trello-cli.py`
+- **Python**: Use `python3` command (not `python`)
+
+### Daily Workflow
+1. **Start of Day**: List available cards to work on
+   ```bash
+   python3 /Users/bernardurizaorozco/trello-cli.py boards
+   python3 /Users/bernardurizaorozco/trello-cli.py lists <board_id>
+   python3 /Users/bernardurizaorozco/trello-cli.py cards <list_id>
+   ```
+
+2. **Select a Card**: Show card details to understand the task
+   ```bash
+   python3 /Users/bernardurizaorozco/trello-cli.py show-card <card_id>
+   ```
+
+3. **Move to In Progress**: When starting work on a card
+   ```bash
+   python3 /Users/bernardurizaorozco/trello-cli.py move-card <card_id> <in_progress_list_id>
+   ```
+
+4. **Update Progress**: Add comments as you complete milestones
+   ```bash
+   python3 /Users/bernardurizaorozco/trello-cli.py add-comment <card_id> "Completed endpoint implementation"
+   ```
+
+5. **Move to Testing**: When implementation is done
+   ```bash
+   python3 /Users/bernardurizaorozco/trello-cli.py move-card <card_id> <testing_list_id>
+   ```
+
+6. **Move to Done**: After testing and verification
+   ```bash
+   python3 /Users/bernardurizaorozco/trello-cli.py move-card <card_id> <done_list_id>
+   ```
+
+### Board: AI Portfolio Sprint 1 (ID: 68fcf05e481843db13204397)
+**Key Lists**:
+- `68fcff45adca2da863178ce6` - ✅ Ready (cards ready to work on)
+- `68fcff46fa7dbc9cc069eaef` - 📝 To Do (Sprint)
+- `68fcff465168c13a1c3edf87` - ⚙️ In Progress (active work)
+- `68fcff475ac54cc9b01204af` - 🧪 Testing (testing phase)
+- `68fcff48a96dfec5ea4c4f6d` - ✅ Done (completed work)
+
+### Agile Best Practices
+- Always move cards through the workflow (Ready → In Progress → Testing → Done)
+- Add comments to document progress and decisions
+- Update card descriptions if requirements change
+- Keep only ONE card in "In Progress" at a time
+- Move cards to "Done" only after verification
+
 ## Development Commands
 
 - `./mvnw spring-boot:run` - Start Spring Boot application (port 8080)
