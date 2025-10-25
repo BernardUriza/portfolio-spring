@@ -290,6 +290,191 @@ scrape_configs:
 
 ---
 
+## 🗄️ Database Migrations (Flyway)
+
+**Phase 3 Complete**: Database schema versioning with Flyway
+
+### Overview
+
+The application uses **Flyway** for database schema migrations:
+- ✅ Automated migration on startup
+- ✅ Version-controlled schema changes
+- ✅ Baseline support for existing databases
+- ✅ Production-safe validation
+
+### Migration Files Location
+
+```
+src/main/resources/db/migration/
+├── V1__Initial_schema.sql (Baseline schema)
+└── V2__Your_next_migration.sql
+```
+
+### Naming Convention
+
+Flyway migrations follow this pattern:
+```
+V{VERSION}__{DESCRIPTION}.sql
+
+Examples:
+V1__Initial_schema.sql
+V2__Add_user_roles.sql
+V3__Update_portfolio_indexes.sql
+```
+
+### Configuration
+
+**Development** (application.properties):
+```properties
+spring.jpa.hibernate.ddl-auto=validate
+spring.flyway.enabled=true
+spring.flyway.baseline-on-migrate=true
+spring.flyway.locations=classpath:db/migration
+spring.flyway.validate-on-migrate=true
+```
+
+**Production** (application-prod.properties):
+```properties
+spring.jpa.hibernate.ddl-auto=validate
+spring.flyway.enabled=true
+spring.flyway.baseline-on-migrate=true
+spring.flyway.validate-on-migrate=true
+spring.flyway.out-of-order=false
+spring.flyway.placeholder-replacement=false
+```
+
+### Creating a New Migration
+
+1. **Create migration file**:
+```bash
+cd src/main/resources/db/migration/
+touch V2__Add_project_priority.sql
+```
+
+2. **Write SQL changes**:
+```sql
+-- V2__Add_project_priority.sql
+ALTER TABLE portfolio_projects
+ADD COLUMN priority VARCHAR(50) DEFAULT 'MEDIUM';
+
+CREATE INDEX idx_project_priority ON portfolio_projects(priority);
+```
+
+3. **Test locally**:
+```bash
+./mvnw spring-boot:run
+# Flyway will automatically run the migration
+```
+
+4. **Verify migration**:
+```sql
+SELECT version, description, installed_on, success
+FROM flyway_schema_history
+ORDER BY installed_rank;
+```
+
+### Baseline Existing Database
+
+If deploying to an existing database:
+
+```bash
+# The application automatically baselines with:
+spring.flyway.baseline-on-migrate=true
+
+# Or manually via Flyway CLI:
+flyway baseline -baselineVersion=1 -baselineDescription="Initial baseline"
+```
+
+### Migration Best Practices
+
+1. **Always write reversible migrations** (or document rollback)
+2. **Test migrations on a copy** of production data
+3. **Use transactions** (default in PostgreSQL)
+4. **Never modify existing migrations** after they've run in production
+5. **Include rollback scripts** in comments or separate files
+
+**Example with rollback**:
+```sql
+-- V2__Add_notes_column.sql
+ALTER TABLE portfolio_projects ADD COLUMN notes TEXT;
+
+-- Rollback (manual):
+-- ALTER TABLE portfolio_projects DROP COLUMN notes;
+```
+
+### Monitoring Migrations
+
+**Check migration status**:
+```bash
+# Via PostgreSQL
+psql -d portfolio_db -c "SELECT * FROM flyway_schema_history;"
+
+# Via Flyway Maven Plugin
+./mvnw flyway:info
+```
+
+**Validate migrations**:
+```bash
+./mvnw flyway:validate
+```
+
+### Production Deployment Workflow
+
+1. **Before deployment**:
+```bash
+# Backup database
+pg_dump portfolio_db > backup_$(date +%Y%m%d).sql
+
+# Validate migrations locally
+./mvnw flyway:validate
+```
+
+2. **Deploy application**:
+```bash
+# Flyway runs automatically on startup
+java -jar -Dspring.profiles.active=prod app.jar
+```
+
+3. **Verify migrations**:
+```bash
+# Check logs for Flyway messages
+grep "Flyway" logs/portfolio-backend.log
+
+# Query migration history
+psql -d portfolio_db -c "SELECT * FROM flyway_schema_history ORDER BY installed_rank DESC LIMIT 5;"
+```
+
+### Troubleshooting
+
+**Migration fails mid-execution**:
+```bash
+# Check failed migration
+SELECT * FROM flyway_schema_history WHERE success = false;
+
+# Repair Flyway state (if needed)
+./mvnw flyway:repair
+```
+
+**Schema validation fails**:
+```sql
+-- Check for schema drift
+./mvnw flyway:validate
+
+-- If drift detected, create new migration to fix
+```
+
+**Rollback a migration**:
+```bash
+# Flyway doesn't support automatic rollback
+# Must manually write and execute rollback SQL
+psql -d portfolio_db < V2__Add_notes_column_rollback.sql
+
+# Then update flyway_schema_history
+DELETE FROM flyway_schema_history WHERE version = '2';
+```
+
+---
+
 ## 💾 Database Backups
 
 ### Automated Backups
