@@ -88,14 +88,100 @@ public class PortfolioAdminController {
 
     /**
      * Return paginated portfolio projects with completion metrics for Admin table.
+     * Supports filtering by search, status, hasDescription, hasLiveDemo, protectedOnly, unlinkedOnly, linkType
      */
     @GetMapping({"/completion", "/completion/"})
     public ResponseEntity<Map<String, Object>> getPortfolioCompletion(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) Boolean hasDescription,
+            @RequestParam(required = false) Boolean hasLiveDemo,
+            @RequestParam(required = false) Boolean protectedOnly,
+            @RequestParam(required = false) Boolean unlinkedOnly,
+            @RequestParam(required = false) String linkType) {
 
         PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "updatedAt"));
-        Page<PortfolioProjectJpaEntity> result = portfolioRepository.findAll(pageable);
+
+        // Apply filters using specification pattern or manual filtering
+        Page<PortfolioProjectJpaEntity> result = portfolioRepository.findAll((root, query, cb) -> {
+            var predicates = new java.util.ArrayList<jakarta.persistence.criteria.Predicate>();
+
+            // Search filter (title or description)
+            if (search != null && !search.trim().isEmpty()) {
+                String searchPattern = "%" + search.toLowerCase() + "%";
+                predicates.add(cb.or(
+                    cb.like(cb.lower(root.get("title")), searchPattern),
+                    cb.like(cb.lower(root.get("description")), searchPattern)
+                ));
+            }
+
+            // Status filter
+            if (status != null && !status.trim().isEmpty()) {
+                try {
+                    PortfolioProjectJpaEntity.ProjectStatusJpa statusEnum =
+                        PortfolioProjectJpaEntity.ProjectStatusJpa.valueOf(status.toUpperCase());
+                    predicates.add(cb.equal(root.get("status"), statusEnum));
+                } catch (IllegalArgumentException ignored) {}
+            }
+
+            // Has description filter
+            if (hasDescription != null) {
+                if (hasDescription) {
+                    predicates.add(cb.and(
+                        cb.isNotNull(root.get("description")),
+                        cb.notEqual(root.get("description"), "")
+                    ));
+                } else {
+                    predicates.add(cb.or(
+                        cb.isNull(root.get("description")),
+                        cb.equal(root.get("description"), "")
+                    ));
+                }
+            }
+
+            // Has live demo filter
+            if (hasLiveDemo != null) {
+                if (hasLiveDemo) {
+                    predicates.add(cb.and(
+                        cb.isNotNull(root.get("link")),
+                        cb.notEqual(root.get("link"), "")
+                    ));
+                } else {
+                    predicates.add(cb.or(
+                        cb.isNull(root.get("link")),
+                        cb.equal(root.get("link"), "")
+                    ));
+                }
+            }
+
+            // Protected only filter (at least one field protected)
+            if (protectedOnly != null && protectedOnly) {
+                predicates.add(cb.or(
+                    cb.equal(root.get("protectDescription"), true),
+                    cb.equal(root.get("protectLiveDemoUrl"), true),
+                    cb.equal(root.get("protectSkills"), true),
+                    cb.equal(root.get("protectExperiences"), true)
+                ));
+            }
+
+            // Unlinked only filter
+            if (unlinkedOnly != null && unlinkedOnly) {
+                predicates.add(cb.isNull(root.get("sourceRepositoryId")));
+            }
+
+            // Link type filter
+            if (linkType != null && !linkType.trim().isEmpty()) {
+                try {
+                    PortfolioProjectJpaEntity.LinkTypeJpa linkTypeEnum =
+                        PortfolioProjectJpaEntity.LinkTypeJpa.valueOf(linkType.toUpperCase());
+                    predicates.add(cb.equal(root.get("linkType"), linkTypeEnum));
+                } catch (IllegalArgumentException ignored) {}
+            }
+
+            return cb.and(predicates.toArray(new jakarta.persistence.criteria.Predicate[0]));
+        }, pageable);
 
         List<AdminPortfolioItem> projects = result.getContent().stream()
                 .map(completionService::calculateCompletion)
@@ -214,6 +300,54 @@ public class PortfolioAdminController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    /**
+     * Protect/unprotect a single field for a portfolio project
+     * Frontend endpoint: PATCH /api/admin/portfolio/{id}/protect
+     */
+    @PatchMapping("/{id}/protect")
+    public ResponseEntity<Map<String, Object>> protectField(
+            @PathVariable Long id,
+            @RequestBody Map<String, Object> payload) {
+        String field = (String) payload.get("field");
+        Boolean protect = Boolean.parseBoolean(payload.get("protect").toString());
+
+        if (field == null) {
+            Map<String, Object> errorResp = new HashMap<>();
+            errorResp.put("status", "error");
+            errorResp.put("message", "Field name is required");
+            return ResponseEntity.badRequest().body(errorResp);
+        }
+
+        return portfolioRepository.findById(id)
+                .map(existing -> {
+                    var builder = existing.toBuilder();
+                    boolean fieldFound = true;
+                    switch (field.toLowerCase()) {
+                        case "description" -> builder.protectDescription(protect);
+                        case "livedemouri", "link", "livedemourl" -> builder.protectLiveDemoUrl(protect);
+                        case "skills" -> builder.protectSkills(protect);
+                        case "experiences" -> builder.protectExperiences(protect);
+                        default -> fieldFound = false;
+                    }
+
+                    if (!fieldFound) {
+                        Map<String, Object> errorResp = new HashMap<>();
+                        errorResp.put("status", "error");
+                        errorResp.put("message", "Unknown field: " + field);
+                        return ResponseEntity.badRequest().body(errorResp);
+                    }
+
+                    var saved = portfolioRepository.save(builder.build());
+                    Map<String, Object> resp = new HashMap<>();
+                    resp.put("status", "success");
+                    resp.put("id", saved.getId());
+                    resp.put("field", field);
+                    resp.put("protected", protect);
+                    return ResponseEntity.ok(resp);
+                })
+                .orElse(ResponseEntity.notFound().build());
+    }
+
     /** Change completion status */
     @PatchMapping("/{id}/completion-status")
     public ResponseEntity<Map<String, Object>> changeCompletionStatus(
@@ -252,6 +386,129 @@ public class PortfolioAdminController {
                     return ResponseEntity.ok(resp);
                 })
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    /**
+     * Bulk actions on multiple portfolio projects
+     * Supported actions: PROTECT_DESCRIPTION, UNPROTECT_DESCRIPTION, CHANGE_STATUS, DELETE
+     */
+    @PostMapping("/bulk")
+    public ResponseEntity<Map<String, Object>> bulkAction(@RequestBody Map<String, Object> payload) {
+        try {
+            String action = (String) payload.get("action");
+            @SuppressWarnings("unchecked")
+            List<Integer> projectIdsInt = (List<Integer>) payload.get("projectIds");
+            String value = (String) payload.get("value");
+
+            if (action == null || projectIdsInt == null || projectIdsInt.isEmpty()) {
+                Map<String, Object> errorResp = new HashMap<>();
+                errorResp.put("status", "error");
+                errorResp.put("message", "Action and projectIds are required");
+                return ResponseEntity.badRequest().body(errorResp);
+            }
+
+            // Convert Integer list to Long list
+            List<Long> projectIds = projectIdsInt.stream().map(Long::valueOf).toList();
+
+            int successCount = 0;
+            int failureCount = 0;
+            List<String> errors = new java.util.ArrayList<>();
+
+            switch (action.toUpperCase()) {
+                case "PROTECT_DESCRIPTION" -> {
+                    for (Long projectId : projectIds) {
+                        try {
+                            portfolioRepository.findById(projectId).ifPresent(project -> {
+                                var saved = portfolioRepository.save(project.toBuilder().protectDescription(true).build());
+                                log.debug("Protected description for project {}", saved.getId());
+                            });
+                            successCount++;
+                        } catch (Exception e) {
+                            failureCount++;
+                            errors.add("Project " + projectId + ": " + e.getMessage());
+                            log.error("Failed to protect description for project {}: {}", projectId, e.getMessage());
+                        }
+                    }
+                }
+                case "UNPROTECT_DESCRIPTION" -> {
+                    for (Long projectId : projectIds) {
+                        try {
+                            portfolioRepository.findById(projectId).ifPresent(project -> {
+                                var saved = portfolioRepository.save(project.toBuilder().protectDescription(false).build());
+                                log.debug("Unprotected description for project {}", saved.getId());
+                            });
+                            successCount++;
+                        } catch (Exception e) {
+                            failureCount++;
+                            errors.add("Project " + projectId + ": " + e.getMessage());
+                            log.error("Failed to unprotect description for project {}: {}", projectId, e.getMessage());
+                        }
+                    }
+                }
+                case "CHANGE_STATUS" -> {
+                    if (value == null) {
+                        Map<String, Object> errorResp = new HashMap<>();
+                        errorResp.put("status", "error");
+                        errorResp.put("message", "Value is required for CHANGE_STATUS action");
+                        return ResponseEntity.badRequest().body(errorResp);
+                    }
+                    PortfolioProjectJpaEntity.ProjectCompletionStatusJpa newStatus =
+                            PortfolioProjectJpaEntity.ProjectCompletionStatusJpa.valueOf(value.toUpperCase());
+
+                    for (Long projectId : projectIds) {
+                        try {
+                            portfolioRepository.findById(projectId).ifPresent(project -> {
+                                var saved = portfolioRepository.save(project.toBuilder().completionStatus(newStatus).build());
+                                log.debug("Changed status to {} for project {}", newStatus, saved.getId());
+                            });
+                            successCount++;
+                        } catch (Exception e) {
+                            failureCount++;
+                            errors.add("Project " + projectId + ": " + e.getMessage());
+                            log.error("Failed to change status for project {}: {}", projectId, e.getMessage());
+                        }
+                    }
+                }
+                case "DELETE" -> {
+                    for (Long projectId : projectIds) {
+                        try {
+                            portfolioService.deleteProject(projectId);
+                            successCount++;
+                            log.debug("Deleted project {}", projectId);
+                        } catch (Exception e) {
+                            failureCount++;
+                            errors.add("Project " + projectId + ": " + e.getMessage());
+                            log.error("Failed to delete project {}: {}", projectId, e.getMessage());
+                        }
+                    }
+                }
+                default -> {
+                    Map<String, Object> errorResp = new HashMap<>();
+                    errorResp.put("status", "error");
+                    errorResp.put("message", "Unknown action: " + action);
+                    return ResponseEntity.badRequest().body(errorResp);
+                }
+            }
+
+            Map<String, Object> resp = new HashMap<>();
+            resp.put("status", "success");
+            resp.put("action", action);
+            resp.put("successCount", successCount);
+            resp.put("failureCount", failureCount);
+            if (!errors.isEmpty()) {
+                resp.put("errors", errors);
+            }
+
+            log.info("Bulk action {} completed: {} succeeded, {} failed", action, successCount, failureCount);
+            return ResponseEntity.ok(resp);
+
+        } catch (Exception e) {
+            log.error("Failed to execute bulk action: {}", e.getMessage(), e);
+            Map<String, Object> errorResp = new HashMap<>();
+            errorResp.put("status", "error");
+            errorResp.put("message", e.getMessage());
+            return ResponseEntity.status(500).body(errorResp);
+        }
     }
 
     /** Minimal update endpoint for description/link */

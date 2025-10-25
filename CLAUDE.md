@@ -4,41 +4,54 @@ This file provides guidance to Claude Code when working with this Spring Boot ba
 
 ## Agile Workflow with Trello
 
-### Trello CLI Tool
-- **Path**: `/Users/bernardurizaorozco/trello-cli.py`
-- **Python**: Use `python3` command (not `python`)
+### Trello CLI Tool v2.0
+- **Executable**: `trello` (globally available via PATH)
+- **Project**: `/Users/bernardurizaorozco/Documents/trello-cli-python/`
+- **Documentation**: `~/Documents/trello-cli-python/CLAUDE_INTEGRATION.md`
+- **Backward Compatibility**: `trello-cli.py` alias works
+
+**Quick Reference:**
+```bash
+trello boards                          # List all boards
+trello lists <board_id>                # Show lists
+trello cards <list_id>                 # Show cards
+trello show-card <card_id>             # Card details
+trello move-card <card_id> <list_id>   # Move card
+trello add-comment <card_id> "text"    # Add comment
+trello add-label <card_id> "color" "name"  # Add label
+```
 
 ### Daily Workflow
 1. **Start of Day**: List available cards to work on
    ```bash
-   python3 /Users/bernardurizaorozco/trello-cli.py boards
-   python3 /Users/bernardurizaorozco/trello-cli.py lists <board_id>
-   python3 /Users/bernardurizaorozco/trello-cli.py cards <list_id>
+   trello boards
+   trello lists <board_id>
+   trello cards <list_id>
    ```
 
 2. **Select a Card**: Show card details to understand the task
    ```bash
-   python3 /Users/bernardurizaorozco/trello-cli.py show-card <card_id>
+   trello show-card <card_id>
    ```
 
 3. **Move to In Progress**: When starting work on a card
    ```bash
-   python3 /Users/bernardurizaorozco/trello-cli.py move-card <card_id> <in_progress_list_id>
+   trello move-card <card_id> <in_progress_list_id>
    ```
 
 4. **Update Progress**: Add comments as you complete milestones
    ```bash
-   python3 /Users/bernardurizaorozco/trello-cli.py add-comment <card_id> "Completed endpoint implementation"
+   trello add-comment <card_id> "Completed endpoint implementation"
    ```
 
 5. **Move to Testing**: When implementation is done
    ```bash
-   python3 /Users/bernardurizaorozco/trello-cli.py move-card <card_id> <testing_list_id>
+   trello move-card <card_id> <testing_list_id>
    ```
 
 6. **Move to Done**: After testing and verification
    ```bash
-   python3 /Users/bernardurizaorozco/trello-cli.py move-card <card_id> <done_list_id>
+   trello move-card <card_id> <done_list_id>
    ```
 
 ### Board: AI Portfolio Sprint 1 (ID: 68fcf05e481843db13204397)
