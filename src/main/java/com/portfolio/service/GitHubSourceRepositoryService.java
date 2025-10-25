@@ -27,13 +27,16 @@ public class GitHubSourceRepositoryService {
     private static final Logger log = LoggerFactory.getLogger(GitHubSourceRepositoryService.class);
     private final SourceRepositoryJpaRepository sourceRepositoryRepository;
     private final SyncMonitorService syncMonitorService;
+    private final GitHubSyncProgressService progressService;
     private final WebClient.Builder webClientBuilder;
 
     public GitHubSourceRepositoryService(SourceRepositoryJpaRepository sourceRepositoryRepository,
                                          SyncMonitorService syncMonitorService,
+                                         GitHubSyncProgressService progressService,
                                          WebClient.Builder webClientBuilder) {
         this.sourceRepositoryRepository = sourceRepositoryRepository;
         this.syncMonitorService = syncMonitorService;
+        this.progressService = progressService;
         this.webClientBuilder = webClientBuilder;
     }
     
@@ -46,30 +49,48 @@ public class GitHubSourceRepositoryService {
 
     @CacheEvict(value = {"portfolio-projects", "portfolio-overview"}, allEntries = true)
     public void syncStarredRepositories() {
+        String syncId = java.util.UUID.randomUUID().toString();
+
         if (syncMonitorService.isSyncInProgress()) {
             syncMonitorService.appendLog("WARN", "Sync already in progress, skipping");
+            progressService.markFailed(syncId, "Sync already in progress");
             return;
         }
-        
+
         if (githubUsername == null || githubUsername.trim().isEmpty()) {
             syncMonitorService.appendLog("ERROR", "GitHub username not configured - cannot sync");
+            progressService.markFailed(syncId, "GitHub username not configured");
             return;
         }
-        
+
         syncMonitorService.markSyncStarted();
-        
+        progressService.broadcastProgress(syncId, new GitHubSyncProgressService.SyncProgressEvent(
+            syncId, GitHubSyncProgressService.SyncPhase.STARTING, 0, 0, 0, 0,
+            "Starting GitHub sync for user: " + githubUsername, null
+        ));
+
         try {
             syncMonitorService.appendLog("INFO", "Starting GitHub sync for user: " + githubUsername);
-            
+
             // Step 1: Fetch starred repositories from GitHub
+            progressService.broadcastProgress(syncId, new GitHubSyncProgressService.SyncProgressEvent(
+                syncId, GitHubSyncProgressService.SyncPhase.FETCHING_REPOS, 10, 0, 0, 0,
+                "Fetching starred repositories from GitHub...", null
+            ));
+
             List<GitHubRepo> starredRepos = fetchStarredRepositories();
             if (starredRepos.isEmpty()) {
                 syncMonitorService.appendLog("WARN", "No starred repositories found for user: " + githubUsername);
                 syncMonitorService.markSyncCompleted(0, 0, Collections.emptyList());
+                progressService.markCompleted(syncId, 0, 0, 0);
                 return;
             }
-            
+
             syncMonitorService.appendLog("INFO", "Fetched " + starredRepos.size() + " starred repositories from GitHub");
+            progressService.broadcastProgress(syncId, new GitHubSyncProgressService.SyncProgressEvent(
+                syncId, GitHubSyncProgressService.SyncPhase.PROCESSING_REPOS, 30, 0, 0, 0,
+                "Processing " + starredRepos.size() + " repositories...", null
+            ));
             
             // Step 2: Update SourceRepository entities
             List<SourceRepositoryJpaEntity> existingRepositories = sourceRepositoryRepository.findAll();
@@ -81,11 +102,14 @@ public class GitHubSourceRepositoryService {
             List<SyncMonitorService.UnsyncedProject> unsyncedProjects = new ArrayList<>();
             int syncedCount = 0;
             int skippedCount = 0;
-            
-            for (GitHubRepo repo : starredRepos) {
+            int totalRepos = starredRepos.size();
+
+            for (int i = 0; i < starredRepos.size(); i++) {
+                GitHubRepo repo = starredRepos.get(i);
+
                 try {
                     SourceRepositoryJpaEntity sourceRepository;
-                    
+
                     if (existingRepoMap.containsKey(repo.id)) {
                         sourceRepository = existingRepoMap.get(repo.id);
                         updateExistingSourceRepository(sourceRepository, repo);
@@ -94,13 +118,30 @@ public class GitHubSourceRepositoryService {
                         sourceRepository = createNewSourceRepository(repo);
                         syncMonitorService.appendLog("INFO", "Created new source repository: " + repo.name);
                     }
-                    
+
                     // Fetch README if not already fetched or if repository updated significantly
                     if (shouldFetchReadme(sourceRepository, repo)) {
+                        progressService.broadcastProgress(syncId, new GitHubSyncProgressService.SyncProgressEvent(
+                            syncId, GitHubSyncProgressService.SyncPhase.FETCHING_README,
+                            30 + (int) ((i * 60.0) / totalRepos),
+                            i + 1, syncedCount, skippedCount,
+                            "Fetching README for: " + repo.name, null
+                        ));
                         fetchAndStoreReadme(sourceRepository, repo);
                     }
-                    
+
                     syncedCount++;
+
+                    // Update progress periodically
+                    if (i % 5 == 0 || i == totalRepos - 1) {
+                        int progress = 30 + (int) ((i * 60.0) / totalRepos);
+                        progressService.broadcastProgress(syncId, new GitHubSyncProgressService.SyncProgressEvent(
+                            syncId, GitHubSyncProgressService.SyncPhase.PROCESSING_REPOS,
+                            progress, i + 1, syncedCount, skippedCount,
+                            String.format("Processed %d/%d repositories", i + 1, totalRepos), null
+                        ));
+                    }
+
                 } catch (Exception e) {
                     log.error("Error syncing repo: " + repo.name, e);
                     unsyncedProjects.add(new SyncMonitorService.UnsyncedProject(
@@ -111,19 +152,22 @@ public class GitHubSourceRepositoryService {
                     skippedCount++;
                 }
             }
-            
-            syncMonitorService.appendLog("INFO", 
+
+            syncMonitorService.appendLog("INFO",
                 String.format("Sync completed: %d synced, %d skipped", syncedCount, skippedCount));
-            
+
             syncMonitorService.markSyncCompleted(
                 starredRepos.size(),
                 (int) sourceRepositoryRepository.count(),
                 unsyncedProjects
             );
-            
+
+            progressService.markCompleted(syncId, totalRepos, syncedCount, skippedCount);
+
         } catch (Exception e) {
             log.error("GitHub sync failed", e);
             syncMonitorService.markSyncFailed(e.getMessage());
+            progressService.markFailed(syncId, e.getMessage());
         }
     }
     
