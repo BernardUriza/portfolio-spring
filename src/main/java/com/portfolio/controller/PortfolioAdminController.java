@@ -2,9 +2,11 @@ package com.portfolio.controller;
 
 import com.portfolio.adapter.out.persistence.jpa.PortfolioProjectJpaEntity;
 import com.portfolio.adapter.out.persistence.jpa.PortfolioProjectJpaRepository;
+import com.portfolio.adapter.out.persistence.jpa.SourceRepositoryJpaEntity;
 import com.portfolio.adapter.out.persistence.jpa.SourceRepositoryJpaRepository;
 import com.portfolio.core.domain.project.LinkType;
 import com.portfolio.core.domain.project.PortfolioProject;
+import com.portfolio.core.port.out.AIServicePort;
 import com.portfolio.service.PortfolioCompletionService;
 import com.portfolio.service.PortfolioService;
 import com.portfolio.service.SyncSchedulerService;
@@ -32,17 +34,20 @@ public class PortfolioAdminController {
     private final PortfolioService portfolioService;
     private final SyncSchedulerService syncSchedulerService;
     private final SourceRepositoryJpaRepository sourceRepositoryRepository;
+    private final AIServicePort aiService;
 
     public PortfolioAdminController(PortfolioProjectJpaRepository portfolioRepository,
                                     PortfolioCompletionService completionService,
                                     PortfolioService portfolioService,
                                     SyncSchedulerService syncSchedulerService,
-                                    SourceRepositoryJpaRepository sourceRepositoryRepository) {
+                                    SourceRepositoryJpaRepository sourceRepositoryRepository,
+                                    AIServicePort aiService) {
         this.portfolioRepository = portfolioRepository;
         this.completionService = completionService;
         this.portfolioService = portfolioService;
         this.syncSchedulerService = syncSchedulerService;
         this.sourceRepositoryRepository = sourceRepositoryRepository;
+        this.aiService = aiService;
     }
 
     // DTOs to avoid Map.of generic inference and null constraints
@@ -70,6 +75,16 @@ public class PortfolioAdminController {
     ) {}
 
     public record Pagination(int page, int size, long totalElements, int totalPages) {}
+
+    /**
+     * Response DTO for Claude AI repository analysis.
+     * Contains AI-generated insights, repository metadata, and README content.
+     */
+    public record ClaudeAnalysisResponse(
+            String insights,
+            String repositoryName,
+            String readmeContent
+    ) {}
 
     /**
      * Return paginated portfolio projects with completion metrics for Admin table.
@@ -292,6 +307,126 @@ public class PortfolioAdminController {
             err.put("status", "error");
             err.put("message", e.getMessage());
             return ResponseEntity.status(500).body(err);
+        }
+    }
+
+    /**
+     * Analyze portfolio project repository with Claude AI.
+     * Returns AI-generated insights about the project, including README analysis and recommendations.
+     *
+     * @param id Portfolio project ID
+     * @return ClaudeAnalysisResponse with insights, repository name, and README content
+     */
+    @PostMapping("/{id}/analyze")
+    public ResponseEntity<ClaudeAnalysisResponse> analyzeWithClaude(@PathVariable Long id) {
+        log.info("Analyzing portfolio project {} with Claude AI", id);
+
+        try {
+            // 1. Get portfolio project
+            var portfolioProject = portfolioRepository.findById(id)
+                    .orElseThrow(() -> new IllegalArgumentException("Portfolio project not found: " + id));
+
+            // 2. Verify it's linked to a source repository
+            if (portfolioProject.getSourceRepositoryId() == null) {
+                log.warn("Cannot analyze project {}: not linked to a source repository", id);
+                return ResponseEntity
+                        .badRequest()
+                        .body(new ClaudeAnalysisResponse(
+                                "Error: This project is not linked to a GitHub repository. Please link it first.",
+                                null,
+                                null
+                        ));
+            }
+
+            // 3. Get source repository
+            SourceRepositoryJpaEntity sourceRepo = sourceRepositoryRepository
+                    .findById(portfolioProject.getSourceRepositoryId())
+                    .orElseThrow(() -> new IllegalArgumentException(
+                            "Source repository not found: " + portfolioProject.getSourceRepositoryId()));
+
+            // 4. Call Claude AI service for analysis
+            log.debug("Calling Claude AI to analyze repository: {}", sourceRepo.getFullName());
+            AIServicePort.ClaudeAnalysisResult analysis = aiService.analyzeRepository(
+                    sourceRepo.getName(),
+                    sourceRepo.getDescription(),
+                    sourceRepo.getReadmeMarkdown(),
+                    sourceRepo.getTopics(),
+                    sourceRepo.getLanguage()
+            );
+
+            // 5. Build AI-generated insights message
+            StringBuilder insights = new StringBuilder();
+            insights.append("🤖 Claude AI Analysis\n\n");
+            insights.append("📊 Project Overview:\n");
+            insights.append("• Name: ").append(analysis.project.name).append("\n");
+            insights.append("• Description: ").append(analysis.project.description).append("\n");
+
+            if (analysis.project.estimatedDurationWeeks != null) {
+                insights.append("• Estimated Duration: ").append(analysis.project.estimatedDurationWeeks).append(" weeks\n");
+            }
+
+            insights.append("\n🔧 Technologies:\n");
+            if (analysis.project.technologies != null && !analysis.project.technologies.isEmpty()) {
+                analysis.project.technologies.forEach(tech ->
+                    insights.append("• ").append(tech).append("\n")
+                );
+            } else {
+                insights.append("• No technologies detected\n");
+            }
+
+            insights.append("\n🎯 Skills Identified:\n");
+            if (analysis.skills != null && !analysis.skills.isEmpty()) {
+                analysis.skills.forEach(skill ->
+                    insights.append("• ").append(skill).append("\n")
+                );
+            } else {
+                insights.append("• No skills identified\n");
+            }
+
+            insights.append("\n💼 Relevant Experiences:\n");
+            if (analysis.experiences != null && !analysis.experiences.isEmpty()) {
+                analysis.experiences.forEach(exp ->
+                    insights.append("• ").append(exp).append("\n")
+                );
+            } else {
+                insights.append("• No experiences identified\n");
+            }
+
+            if (analysis.project.url != null) {
+                insights.append("\n🔗 Project URL: ").append(analysis.project.url).append("\n");
+            }
+
+            insights.append("\n💡 Recommendations:\n");
+            insights.append("• Review the identified skills and experiences for accuracy\n");
+            insights.append("• Update project description if needed\n");
+            insights.append("• Verify estimated duration aligns with project scope\n");
+
+            log.info("Successfully analyzed project {} with Claude AI", id);
+
+            return ResponseEntity.ok(new ClaudeAnalysisResponse(
+                    insights.toString(),
+                    sourceRepo.getFullName(),
+                    sourceRepo.getReadmeMarkdown()
+            ));
+
+        } catch (IllegalArgumentException e) {
+            log.error("Validation error analyzing project {}: {}", id, e.getMessage());
+            return ResponseEntity
+                    .status(404)
+                    .body(new ClaudeAnalysisResponse(
+                            "Error: " + e.getMessage(),
+                            null,
+                            null
+                    ));
+        } catch (Exception e) {
+            log.error("Failed to analyze portfolio project {} with Claude: {}", id, e.getMessage(), e);
+            return ResponseEntity
+                    .status(500)
+                    .body(new ClaudeAnalysisResponse(
+                            "Error: Failed to analyze repository with Claude AI. " + e.getMessage(),
+                            null,
+                            null
+                    ));
         }
     }
 }
