@@ -11,6 +11,7 @@ import com.portfolio.core.domain.project.ProjectType;
 import com.portfolio.core.port.out.AIServicePort;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -48,6 +49,7 @@ public class PortfolioService {
      * Curate portfolio project from source repository using Claude AI
      */
     @Transactional
+    @CacheEvict(value = {"portfolio-projects", "portfolio-completion", "portfolio-overview"}, allEntries = true)
     public PortfolioProject curateFromSource(Long sourceRepositoryId) {
         log.debug("Starting curation for source repository ID: {}", sourceRepositoryId);
         
@@ -179,6 +181,7 @@ public class PortfolioService {
      * Link existing portfolio project to source repository
      */
     @Transactional
+    @CacheEvict(value = {"portfolio-projects", "portfolio-completion", "portfolio-overview"}, allEntries = true)
     public PortfolioProject linkToSourceRepository(Long portfolioProjectId, Long sourceRepositoryId, LinkType linkType) {
         return optimisticLockingService.executeWithRetry(() -> {
             Optional<PortfolioProjectJpaEntity> portfolioOpt = portfolioProjectRepository.findById(portfolioProjectId);
@@ -218,6 +221,7 @@ public class PortfolioService {
      * Unlink portfolio project from source repository
      */
     @Transactional
+    @CacheEvict(value = {"portfolio-projects", "portfolio-completion", "portfolio-overview"}, allEntries = true)
     public PortfolioProject unlinkFromSourceRepository(Long portfolioProjectId) {
         Optional<PortfolioProjectJpaEntity> portfolioOpt = portfolioProjectRepository.findById(portfolioProjectId);
         if (portfolioOpt.isEmpty()) {
@@ -243,6 +247,7 @@ public class PortfolioService {
      * Delete portfolio project by ID with audit trail
      */
     @Transactional
+    @CacheEvict(value = {"portfolio-projects", "portfolio-completion", "portfolio-overview"}, allEntries = true)
     public void deleteProject(Long portfolioProjectId) {
         Optional<PortfolioProjectJpaEntity> portfolioOpt = portfolioProjectRepository.findById(portfolioProjectId);
         if (portfolioOpt.isEmpty()) {

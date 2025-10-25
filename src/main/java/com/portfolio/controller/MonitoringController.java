@@ -1,11 +1,14 @@
 package com.portfolio.controller;
 
+import com.github.benmanes.caffeine.cache.Cache;
 import com.portfolio.service.KeepAliveService;
 import com.portfolio.service.StartupNotificationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.caffeine.CaffeineCache;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -35,6 +38,9 @@ public class MonitoringController {
 
     @Autowired
     private StartupNotificationService startupNotificationService;
+
+    @Autowired
+    private CacheManager cacheManager;
 
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 
@@ -108,6 +114,43 @@ public class MonitoringController {
         Map<String, Object> response = new HashMap<>();
         response.put("awake", true);
         response.put("timestamp", System.currentTimeMillis());
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Get cache statistics for all configured caches
+     */
+    @GetMapping("/cache/stats")
+    public ResponseEntity<Map<String, Object>> getCacheStats() {
+        Map<String, Object> response = new HashMap<>();
+        Map<String, Map<String, Object>> cacheStats = new HashMap<>();
+
+        for (String cacheName : cacheManager.getCacheNames()) {
+            org.springframework.cache.Cache cache = cacheManager.getCache(cacheName);
+            if (cache instanceof CaffeineCache caffeineCache) {
+                Cache<Object, Object> nativeCache = caffeineCache.getNativeCache();
+                com.github.benmanes.caffeine.cache.stats.CacheStats stats = nativeCache.stats();
+
+                Map<String, Object> stat = new HashMap<>();
+                stat.put("size", nativeCache.estimatedSize());
+                stat.put("hitCount", stats.hitCount());
+                stat.put("missCount", stats.missCount());
+                stat.put("hitRate", stats.hitRate());
+                stat.put("missRate", stats.missRate());
+                stat.put("loadSuccessCount", stats.loadSuccessCount());
+                stat.put("loadFailureCount", stats.loadFailureCount());
+                stat.put("totalLoadTime", stats.totalLoadTime());
+                stat.put("evictionCount", stats.evictionCount());
+                stat.put("evictionWeight", stats.evictionWeight());
+
+                cacheStats.put(cacheName, stat);
+            }
+        }
+
+        response.put("caches", cacheStats);
+        response.put("cacheNames", cacheManager.getCacheNames());
+        response.put("timestamp", LocalDateTime.now().format(FORMATTER));
+
         return ResponseEntity.ok(response);
     }
 

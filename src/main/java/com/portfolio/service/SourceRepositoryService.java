@@ -5,6 +5,7 @@ import com.portfolio.adapter.out.persistence.jpa.SourceRepositoryJpaRepository;
 import com.portfolio.dto.SourceRepositoryDto;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,6 +43,7 @@ public class SourceRepositoryService {
     }
     
     @Transactional
+    @CacheEvict(value = {"portfolio-projects", "portfolio-overview"}, allEntries = true)
     public Optional<SourceRepositoryDto> updateRepositoryHomepage(Long id, String homepage) {
         Optional<SourceRepositoryJpaEntity> repositoryOpt = sourceRepositoryRepository.findById(id);
         
@@ -62,6 +64,7 @@ public class SourceRepositoryService {
     }
     
     @Transactional
+    @CacheEvict(value = {"portfolio-projects", "portfolio-completion", "portfolio-overview"}, allEntries = true)
     public boolean deleteSourceRepository(Long id) {
         Optional<SourceRepositoryJpaEntity> repositoryOpt = sourceRepositoryRepository.findById(id);
         
@@ -105,6 +108,7 @@ public class SourceRepositoryService {
     }
     
     @Transactional
+    @CacheEvict(value = {"portfolio-projects", "portfolio-overview"}, allEntries = true)
     public void resetAllRepositoriesToUnsynced() {
         List<SourceRepositoryJpaEntity> allRepositories = sourceRepositoryRepository.findAll();
         for (SourceRepositoryJpaEntity repository : allRepositories) {
@@ -130,6 +134,7 @@ public class SourceRepositoryService {
     }
     
     @Transactional
+    @CacheEvict(value = {"portfolio-projects", "portfolio-overview"}, allEntries = true)
     public SourceRepositoryJpaEntity save(SourceRepositoryJpaEntity entity) {
         return sourceRepositoryRepository.save(entity);
     }

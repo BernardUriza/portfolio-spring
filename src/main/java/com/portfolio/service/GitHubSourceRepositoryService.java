@@ -9,6 +9,7 @@ import io.github.resilience4j.timelimiter.annotation.TimeLimiter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
@@ -42,7 +43,8 @@ public class GitHubSourceRepositoryService {
     @Value("${github.username:BernardUriza}")
     private String githubUsername;
     
-    
+
+    @CacheEvict(value = {"portfolio-projects", "portfolio-overview"}, allEntries = true)
     public void syncStarredRepositories() {
         if (syncMonitorService.isSyncInProgress()) {
             syncMonitorService.appendLog("WARN", "Sync already in progress, skipping");
