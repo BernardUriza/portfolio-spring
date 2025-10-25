@@ -4,6 +4,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpMethod;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -58,7 +60,11 @@ public class KeepAliveService {
 
         try {
             log.debug("Sending keep-alive ping to {}", keepAliveUrl);
-            ResponseEntity<Map> response = restTemplate.getForEntity(keepAliveUrl, Map.class);
+            ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
+                    keepAliveUrl,
+                    HttpMethod.GET,
+                    null,
+                    new ParameterizedTypeReference<Map<String, Object>>() {});
 
             if (response.getStatusCode() == HttpStatus.OK) {
                 successCount.incrementAndGet();

@@ -3,10 +3,7 @@ package com.portfolio.controller;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.portfolio.service.KeepAliveService;
 import com.portfolio.service.StartupNotificationService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.caffeine.CaffeineCache;
 import org.springframework.http.ResponseEntity;
@@ -30,8 +27,6 @@ import java.util.Map;
 @RequestMapping("/api/monitoring")
 @CrossOrigin(origins = "*")
 public class MonitoringController {
-
-    private static final Logger log = LoggerFactory.getLogger(MonitoringController.class);
 
     @Autowired(required = false)
     private KeepAliveService keepAliveService;

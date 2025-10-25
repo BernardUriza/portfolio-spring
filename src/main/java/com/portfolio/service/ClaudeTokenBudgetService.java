@@ -181,7 +181,7 @@ public class ClaudeTokenBudgetService {
     /**
      * Scheduled reset at configured hour
      */
-    @Scheduled(cron = "0 0 ${portfolio.ai.claude.budget-reset-hour:0} * * *")
+    @Scheduled(cron = "${portfolio.ai.claude.budget-reset-cron:0 0 0 * * *}")
     public void scheduledReset() {
         LocalDate today = LocalDate.now();
         if (!today.equals(lastResetDate.get())) {
