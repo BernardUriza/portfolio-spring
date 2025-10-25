@@ -344,67 +344,19 @@ public class PortfolioAdminController {
                     .orElseThrow(() -> new IllegalArgumentException(
                             "Source repository not found: " + portfolioProject.getSourceRepositoryId()));
 
-            // 4. Call Claude AI service for analysis
+            // 4. Call Claude AI service for deep analysis
             log.debug("Calling Claude AI to analyze repository: {}", sourceRepo.getFullName());
-            AIServicePort.ClaudeAnalysisResult analysis = aiService.analyzeRepository(
-                    sourceRepo.getName(),
-                    sourceRepo.getDescription(),
-                    sourceRepo.getReadmeMarkdown(),
-                    sourceRepo.getTopics(),
-                    sourceRepo.getLanguage()
-            );
 
-            // 5. Build AI-generated insights message
-            StringBuilder insights = new StringBuilder();
-            insights.append("🤖 Claude AI Analysis\n\n");
-            insights.append("📊 Project Overview:\n");
-            insights.append("• Name: ").append(analysis.project.name).append("\n");
-            insights.append("• Description: ").append(analysis.project.description).append("\n");
+            // Build narrative analysis prompt
+            String systemPrompt = buildNarrativeSystemPrompt();
+            String userPrompt = buildNarrativeUserPrompt(sourceRepo, portfolioProject);
 
-            if (analysis.project.estimatedDurationWeeks != null) {
-                insights.append("• Estimated Duration: ").append(analysis.project.estimatedDurationWeeks).append(" weeks\n");
-            }
-
-            insights.append("\n🔧 Technologies:\n");
-            if (analysis.project.technologies != null && !analysis.project.technologies.isEmpty()) {
-                analysis.project.technologies.forEach(tech ->
-                    insights.append("• ").append(tech).append("\n")
-                );
-            } else {
-                insights.append("• No technologies detected\n");
-            }
-
-            insights.append("\n🎯 Skills Identified:\n");
-            if (analysis.skills != null && !analysis.skills.isEmpty()) {
-                analysis.skills.forEach(skill ->
-                    insights.append("• ").append(skill).append("\n")
-                );
-            } else {
-                insights.append("• No skills identified\n");
-            }
-
-            insights.append("\n💼 Relevant Experiences:\n");
-            if (analysis.experiences != null && !analysis.experiences.isEmpty()) {
-                analysis.experiences.forEach(exp ->
-                    insights.append("• ").append(exp).append("\n")
-                );
-            } else {
-                insights.append("• No experiences identified\n");
-            }
-
-            if (analysis.project.url != null) {
-                insights.append("\n🔗 Project URL: ").append(analysis.project.url).append("\n");
-            }
-
-            insights.append("\n💡 Recommendations:\n");
-            insights.append("• Review the identified skills and experiences for accuracy\n");
-            insights.append("• Update project description if needed\n");
-            insights.append("• Verify estimated duration aligns with project scope\n");
+            String narrativeInsights = aiService.chat(systemPrompt, userPrompt);
 
             log.info("Successfully analyzed project {} with Claude AI", id);
 
             return ResponseEntity.ok(new ClaudeAnalysisResponse(
-                    insights.toString(),
+                    narrativeInsights,
                     sourceRepo.getFullName(),
                     sourceRepo.getReadmeMarkdown()
             ));
@@ -428,5 +380,57 @@ public class PortfolioAdminController {
                             null
                     ));
         }
+    }
+
+    private String buildNarrativeSystemPrompt() {
+        return """
+            Eres un arquitecto conceptual analizando proyectos de software para Bernard Uriza Orozco.
+
+            Bernard es un sistema cognitivo en forma humana que integra ingeniería de software con filosofía,
+            ética y estética como si fueran un mismo lenguaje estructurado. Opera como un arquitecto conceptual:
+            diseña sistemas no solo para que funcionen, sino para que se comprendan a sí mismos.
+
+            Tu misión al analizar proyectos:
+            - NO generar listas mecánicas con emojis genéricos
+            - Explorar la arquitectura conceptual del proyecto
+            - Detectar patrones filosóficos en las decisiones de diseño
+            - Analizar la coherencia entre propósito, implementación y estructura
+            - Revelar el pensamiento sistémico detrás del código
+            - Combinar precisión técnica con sensibilidad poética
+            - Identificar tanto lo explícito como lo implícito en el diseño
+
+            Escribe como un arquitecto conceptual que busca coherencia entre forma, función y sentido.
+            El proyecto no es solo código - es una manifestación de pensamiento estructurado.
+            """;
+    }
+
+    private String buildNarrativeUserPrompt(SourceRepositoryJpaEntity sourceRepo, PortfolioProjectJpaEntity portfolioProject) {
+        StringBuilder prompt = new StringBuilder();
+
+        prompt.append("Analiza este repositorio GitHub con profundidad arquitectónica y filosófica:\n\n");
+
+        prompt.append("REPOSITORIO: ").append(sourceRepo.getFullName()).append("\n");
+        prompt.append("DESCRIPCIÓN: ").append(sourceRepo.getDescription() != null ? sourceRepo.getDescription() : "No description").append("\n");
+        prompt.append("LENGUAJE: ").append(sourceRepo.getLanguage() != null ? sourceRepo.getLanguage() : "Unknown").append("\n");
+        prompt.append("TOPICS: ").append(sourceRepo.getTopics() != null ? String.join(", ", sourceRepo.getTopics()) : "None").append("\n");
+        prompt.append("STARS: ").append(sourceRepo.getStargazersCount()).append("\n\n");
+
+        if (sourceRepo.getReadmeMarkdown() != null && !sourceRepo.getReadmeMarkdown().trim().isEmpty()) {
+            String truncatedReadme = sourceRepo.getReadmeMarkdown().length() > 3000
+                ? sourceRepo.getReadmeMarkdown().substring(0, 3000) + "..."
+                : sourceRepo.getReadmeMarkdown();
+            prompt.append("README:\n").append(truncatedReadme).append("\n\n");
+        }
+
+        prompt.append("Genera un análisis narrativo profundo (máximo 800 palabras) que revele:\n");
+        prompt.append("1. La arquitectura conceptual y decisiones de diseño fundamentales\n");
+        prompt.append("2. Los patrones de pensamiento sistémico evidentes en la estructura\n");
+        prompt.append("3. La coherencia (o disonancia) entre propósito declarado e implementación\n");
+        prompt.append("4. Las tecnologías como instrumentos de transformación, no solo herramientas\n");
+        prompt.append("5. Insights sobre cómo este proyecto manifiesta pensamiento estructurado\n");
+        prompt.append("6. Recomendaciones para profundizar la coherencia arquitectónica\n\n");
+        prompt.append("Escribe en español, con precisión técnica y sensibilidad poética.");
+
+        return prompt.toString();
     }
 }
