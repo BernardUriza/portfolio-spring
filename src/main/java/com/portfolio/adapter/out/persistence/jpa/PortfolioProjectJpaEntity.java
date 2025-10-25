@@ -51,7 +51,7 @@ public class PortfolioProjectJpaEntity {
     @Enumerated(EnumType.STRING)
     private ProjectTypeJpa type = ProjectTypeJpa.PERSONAL;
     
-    @ElementCollection(fetch = FetchType.EAGER)
+    @ElementCollection  // LAZY by default - avoids N+1 queries (was causing 3x N+1!)
     @CollectionTable(
         name = "portfolio_project_technologies",
         joinColumns = @JoinColumn(name = "portfolio_project_id")
@@ -59,7 +59,7 @@ public class PortfolioProjectJpaEntity {
     @Column(name = "technology")
     private List<String> mainTechnologies = new ArrayList<>();
 
-    @ElementCollection(fetch = FetchType.EAGER)
+    @ElementCollection  // LAZY by default - avoids N+1 queries
     @CollectionTable(
         name = "portfolio_project_skill_ids",
         joinColumns = @JoinColumn(name = "portfolio_project_id")
@@ -67,7 +67,7 @@ public class PortfolioProjectJpaEntity {
     @Column(name = "skill_id")
     private Set<Long> skillIds = new HashSet<>();
 
-    @ElementCollection(fetch = FetchType.EAGER)
+    @ElementCollection  // LAZY by default - avoids N+1 queries
     @CollectionTable(
         name = "portfolio_project_experience_ids",
         joinColumns = @JoinColumn(name = "portfolio_project_id")

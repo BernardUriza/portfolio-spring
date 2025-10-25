@@ -58,7 +58,7 @@ public class SourceRepositoryJpaEntity {
     @Column(name = "stargazers_count")
     private Integer stargazersCount;
 
-    @ElementCollection(fetch = FetchType.EAGER)
+    @ElementCollection  // LAZY by default - avoids N+1 queries
     @CollectionTable(
         name = "source_repository_topics",
         joinColumns = @JoinColumn(name = "source_repository_id")
