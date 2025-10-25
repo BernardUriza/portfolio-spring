@@ -213,6 +213,58 @@ ALTER DATABASE portfolio_db SET ssl TO on;
 - Unhealthy threshold: 2
 - Success threshold: 1
 
+### Application Logging
+
+**Structured Logging** (Phase 2 Complete):
+- JSON format in production (`logback-spring.xml`)
+- Correlation IDs for request tracking (`X-Correlation-ID`, `X-Request-ID`)
+- Automatic log rotation (10MB per file, 30 days retention)
+- Separate error log file for critical issues
+- MDC (Mapped Diagnostic Context) for structured data
+
+**Log Files** (Production):
+```bash
+/var/log/portfolio/portfolio-backend.log        # Main application log
+/var/log/portfolio/portfolio-backend-json.log   # JSON structured log
+/var/log/portfolio/portfolio-backend-error.log  # Error-only log
+```
+
+**Environment Variables**:
+```bash
+LOG_PATH=/var/log/portfolio    # Override default log path
+LOG_FILE=portfolio-backend     # Override log file name
+```
+
+**Request Logging**:
+- Automatic request/response logging with duration
+- Client IP detection (handles proxies/load balancers)
+- Excludes actuator, h2-console, swagger endpoints
+
+### Metrics & Monitoring
+
+**Actuator Endpoints** (Production):
+```bash
+curl http://localhost:8080/actuator/health      # Health status
+curl http://localhost:8080/actuator/metrics     # Application metrics
+curl http://localhost:8080/actuator/prometheus  # Prometheus format
+```
+
+**Key Metrics Available**:
+- HTTP request metrics (count, duration, percentiles)
+- JVM metrics (memory, threads, GC)
+- Database connection pool metrics
+- Custom business metrics
+
+**Prometheus Integration**:
+```yaml
+# prometheus.yml
+scrape_configs:
+  - job_name: 'portfolio-backend'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['localhost:8080']
+```
+
 ### Monitoring Recommendations
 
 1. **Application Performance Monitoring (APM)**:
@@ -229,6 +281,12 @@ ALTER DATABASE portfolio_db SET ssl TO on;
    - ELK Stack (Elasticsearch, Logstash, Kibana)
    - Splunk
    - CloudWatch (AWS)
+   - **Note**: Application outputs JSON logs ready for ingestion
+
+4. **Metrics & Alerting**:
+   - Prometheus + Grafana (recommended)
+   - Datadog
+   - CloudWatch Metrics (AWS)
 
 ---
 
