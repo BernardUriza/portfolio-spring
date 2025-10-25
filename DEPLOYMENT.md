@@ -188,6 +188,188 @@ ALTER DATABASE portfolio_db SET ssl TO on;
 
 ---
 
+## 🔒 Security Hardening (Phase 4 Complete)
+
+### HTTP Security Headers
+
+**Implemented Headers**:
+- ✅ **Content-Security-Policy (CSP)**: Prevents XSS attacks
+- ✅ **X-Content-Type-Options**: Prevents MIME-sniffing
+- ✅ **X-Frame-Options**: Prevents clickjacking
+- ✅ **Permissions-Policy**: Restricts browser features
+- ✅ **Referrer-Policy**: Controls referrer information
+- ✅ **Strict-Transport-Security (HSTS)**: Enforces HTTPS (when SSL enabled)
+- ✅ **X-XSS-Protection**: Additional XSS protection
+
+**Test Security Headers**:
+```bash
+curl -I https://yourdomain.com/api/health | grep -i "security\|x-content\|x-frame\|permissions"
+```
+
+**Expected Output**:
+```
+Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; ...
+X-Content-Type-Options: nosniff
+X-Frame-Options: DENY (admin) / SAMEORIGIN (public)
+Permissions-Policy: geolocation=(), microphone=(), camera=(), payment=(), ...
+Referrer-Policy: strict-origin-when-cross-origin
+Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+```
+
+### Content Security Policy (CSP)
+
+**Production CSP** (application-prod.properties):
+```properties
+app.security.csp.enabled=true
+app.security.csp.policy=default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://api.anthropic.com https://api.github.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'
+```
+
+**Customize for your frontend**:
+- Add your frontend domain to `connect-src`
+- Adjust `script-src` if using inline scripts
+- Add CDN domains to appropriate directives
+
+### HTTPS/TLS Configuration
+
+**Option 1: Reverse Proxy (Recommended)**
+Use nginx or Apache as reverse proxy for SSL termination:
+
+```nginx
+# nginx configuration
+server {
+    listen 443 ssl http2;
+    server_name yourdomain.com;
+
+    ssl_certificate /path/to/cert.pem;
+    ssl_certificate_key /path/to/key.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers HIGH:!aNULL:!MD5;
+    ssl_prefer_server_ciphers on;
+
+    location / {
+        proxy_pass http://localhost:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+**Option 2: Embedded Tomcat SSL**
+Configure in application-prod.properties:
+
+```properties
+server.ssl.enabled=true
+server.ssl.key-store=classpath:keystore.p12
+server.ssl.key-store-password=${SSL_KEYSTORE_PASSWORD}
+server.ssl.key-store-type=PKCS12
+server.ssl.enabled-protocols=TLSv1.3,TLSv1.2
+```
+
+**Generate SSL Certificate**:
+```bash
+# Self-signed (development only)
+keytool -genkeypair -alias tomcat -keyalg RSA -keysize 2048 \
+  -storetype PKCS12 -keystore keystore.p12 -validity 365
+
+# Production: Use Let's Encrypt
+sudo certbot certonly --standalone -d yourdomain.com
+```
+
+### Authentication & Authorization
+
+**Admin Token Authentication**:
+- Token-based auth for `/api/admin/**` endpoints
+- Configurable via `PORTFOLIO_ADMIN_TOKEN` environment variable
+- Stateless authentication (no sessions)
+- Rate limiting: 30 requests/minute (production)
+
+**Security Configuration**:
+```properties
+# Enable admin security (default: true)
+portfolio.admin.security.enabled=true
+portfolio.admin.token=${PORTFOLIO_ADMIN_TOKEN}
+
+# Rate limiting
+portfolio.features.rate-limiting.enabled=true
+portfolio.features.rate-limiting.admin-endpoints-per-minute=30
+portfolio.features.rate-limiting.factory-reset-per-hour=1
+```
+
+**Test Authentication**:
+```bash
+# Without token (should fail)
+curl -X POST http://localhost:8080/api/admin/sync-config
+
+# With valid token
+curl -X POST http://localhost:8080/api/admin/sync-config \
+  -H "X-Admin-Token: your-secure-token"
+```
+
+### Rate Limiting & DDoS Protection
+
+**Implemented Protection**:
+- ✅ Bucket4j-based rate limiting
+- ✅ Per-endpoint rate limits
+- ✅ Factory reset: 1 attempt/hour
+- ✅ Admin endpoints: 30 req/min
+- ✅ Sync operations: 5 req/min
+- ✅ AI curation: 20 req/min
+
+**Additional DDoS Protection** (recommended):
+1. **Cloudflare**: Free tier includes DDoS protection
+2. **AWS WAF**: Web Application Firewall
+3. **Fail2ban**: Ban IPs after repeated failures
+
+```bash
+# Fail2ban example
+sudo fail2ban-client set portfolio banip 1.2.3.4
+```
+
+### Security Checklist for Production
+
+- [ ] HTTPS enabled with valid SSL certificate
+- [ ] All environment variables secured (not in code)
+- [ ] Admin token is strong (min 32 characters)
+- [ ] Database credentials rotated regularly
+- [ ] CORS origins restricted to production domains
+- [ ] Error messages don't expose sensitive info
+- [ ] Security headers validated
+- [ ] Rate limiting tested
+- [ ] Dependencies updated (no known vulnerabilities)
+- [ ] Logs don't contain sensitive data
+- [ ] Database backups encrypted
+- [ ] Firewall rules configured
+- [ ] Server hardened (disable unnecessary services)
+- [ ] Monitoring and alerting configured
+
+### Security Scanning
+
+**OWASP Dependency Check**:
+```bash
+./mvnw dependency-check:check
+```
+
+**Security Headers Test**:
+```bash
+# Using securityheaders.com
+curl -I https://yourdomain.com | grep -i "security\|x-"
+
+# Or online: https://securityheaders.com
+```
+
+**Vulnerability Scanning**:
+```bash
+# Snyk
+snyk test
+
+# OWASP ZAP
+docker run -t owasp/zap2docker-stable zap-baseline.py -t https://yourdomain.com
+```
+
+---
+
 ## 📊 Monitoring & Health Checks
 
 ### Health Endpoints

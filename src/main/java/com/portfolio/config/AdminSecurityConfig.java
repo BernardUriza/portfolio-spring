@@ -2,6 +2,7 @@ package com.portfolio.config;
 
 import com.portfolio.security.AdminTokenAuthenticationFilter;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -12,11 +13,17 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.header.HeaderWriter;
+
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
 @ConditionalOnProperty(name = "portfolio.admin.security.enabled", havingValue = "true", matchIfMissing = true)
 public class AdminSecurityConfig {
+
+    @Autowired(required = false)
+    private List<HeaderWriter> customHeaderWriters;
 
     @Bean
     @Order(2)  // Lower priority than public API security
@@ -48,6 +55,12 @@ public class AdminSecurityConfig {
                 res.setContentType("application/json");
                 res.getWriter().write("{\"error\":\"Unauthorized\",\"message\":\"Valid admin token required\"}");
             }))
+            .headers(headers -> {
+                headers.frameOptions(f -> f.deny());  // Prevent clickjacking
+                if (customHeaderWriters != null) {
+                    customHeaderWriters.forEach(headers::addHeaderWriter);
+                }
+            })
             .addFilterBefore(adminTokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
             .build();
     }
@@ -80,8 +93,13 @@ public class AdminSecurityConfig {
                 res.setContentType("application/json");
                 res.getWriter().write("{\"error\":\"Unauthorized\"}");
             }))
-            // H2 console: replace deprecated frameOptions() with new API
-            .headers(h -> h.frameOptions(f -> f.sameOrigin()))
+            .headers(headers -> {
+                // H2 console: allow same origin framing
+                headers.frameOptions(f -> f.sameOrigin());
+                if (customHeaderWriters != null) {
+                    customHeaderWriters.forEach(headers::addHeaderWriter);
+                }
+            })
             .build();
     }
 }
