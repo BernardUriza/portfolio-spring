@@ -113,7 +113,7 @@
 		<dependency>
 			<groupId>com.anthropic</groupId>
 			<artifactId>anthropic-java</artifactId>
-			<version>0.1.0</version>
+			<version>2.9.0</version>
 		</dependency>
 
 		<!-- HTTP client for Claude API -->
