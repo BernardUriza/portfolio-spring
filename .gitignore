@@ -38,3 +38,6 @@ build/
 ### Logs ###
 logs/
 *.log
+
+### Load Testing Results ###
+load-test-results/
