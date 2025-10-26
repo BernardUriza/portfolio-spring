@@ -78,7 +78,15 @@
       "Bash(do trello add-label $card_id \"black\" \"Sprint-5+\")",
       "Bash(npm install:*)",
       "Bash(npx playwright install)",
-      "Bash(git restore:*)"
+      "Bash(git restore:*)",
+      "Bash(git checkout:*)",
+      "Bash(gh run:*)",
+      "Bash(gh auth:*)",
+      "Bash(for:*)",
+      "Bash(do grep -n \"^public class\\|^@SpringBootTest\\|^@WebMvcTest\\|^class\" \"$file\")",
+      "Bash(brew install:*)",
+      "Bash(render:*)",
+      "Bash(git merge:*)"
     ],
     "deny": [],
     "ask": []
