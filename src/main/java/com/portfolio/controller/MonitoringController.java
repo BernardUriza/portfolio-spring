@@ -1,6 +1,7 @@
 package com.portfolio.controller;
 
 import com.github.benmanes.caffeine.cache.Cache;
+import com.portfolio.config.monitoring.QueryPerformanceInterceptor;
 import com.portfolio.service.KeepAliveService;
 import com.portfolio.service.StartupNotificationService;
 import com.zaxxer.hikari.HikariDataSource;
@@ -9,10 +10,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.caffeine.CaffeineCache;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.stream.Collectors;
 
 import javax.sql.DataSource;
 import java.lang.management.ManagementFactory;
@@ -45,6 +45,9 @@ public class MonitoringController {
 
     @Autowired(required = false)
     private DataSource dataSource;
+
+    @Autowired(required = false)
+    private QueryPerformanceInterceptor queryPerformanceInterceptor;
 
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 
@@ -468,6 +471,154 @@ public class MonitoringController {
         long max = memoryMXBean.getHeapMemoryUsage().getMax();
 
         return max > 0 ? (double) used / max : 0.0;
+    }
+
+    /**
+     * Get query performance statistics
+     * PERF-005: Query Logging & Slow Query Detection
+     */
+    @GetMapping("/query/statistics")
+    public ResponseEntity<Map<String, Object>> getQueryStatistics() {
+        Map<String, Object> response = new HashMap<>();
+
+        if (queryPerformanceInterceptor == null) {
+            response.put("available", false);
+            response.put("message", "Query performance monitoring not enabled");
+            return ResponseEntity.ok(response);
+        }
+
+        response.put("available", true);
+        response.put("timestamp", LocalDateTime.now().format(FORMATTER));
+
+        // Overall statistics
+        Map<String, Object> overall = new HashMap<>();
+        overall.put("totalQueries", queryPerformanceInterceptor.getTotalQueries());
+        overall.put("slowQueries", queryPerformanceInterceptor.getSlowQueries());
+        overall.put("slowQueryThresholdMs", queryPerformanceInterceptor.getSlowQueryThresholdMs());
+
+        long totalQueries = queryPerformanceInterceptor.getTotalQueries();
+        long slowQueries = queryPerformanceInterceptor.getSlowQueries();
+        overall.put("slowQueryRate", totalQueries > 0 ? (double) slowQueries / totalQueries : 0.0);
+
+        response.put("overall", overall);
+
+        // Per-query statistics
+        Map<String, Map<String, Object>> queryStats = new HashMap<>();
+        queryPerformanceInterceptor.getQueryStatistics().forEach((query, stats) -> {
+            Map<String, Object> stat = new HashMap<>();
+            stat.put("executionCount", stats.getExecutionCount());
+            stat.put("totalExecutionTimeMs", stats.getTotalExecutionTime());
+            stat.put("averageExecutionTimeMs", stats.getAverageExecutionTime());
+            stat.put("minExecutionTimeMs", stats.getMinExecutionTime());
+            stat.put("maxExecutionTimeMs", stats.getMaxExecutionTime());
+            stat.put("lastExecutionTime", LocalDateTime.ofInstant(
+                Instant.ofEpochMilli(stats.getLastExecutionTime()),
+                ZoneId.systemDefault()
+            ).format(FORMATTER));
+
+            queryStats.put(query, stat);
+        });
+
+        response.put("queries", queryStats);
+        response.put("totalUniqueQueries", queryStats.size());
+
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Get top N slowest queries
+     * PERF-005: Query Logging & Slow Query Detection
+     */
+    @GetMapping("/query/slow")
+    public ResponseEntity<Map<String, Object>> getSlowQueries(
+            @RequestParam(defaultValue = "10") int limit) {
+        Map<String, Object> response = new HashMap<>();
+
+        if (queryPerformanceInterceptor == null) {
+            response.put("available", false);
+            response.put("message", "Query performance monitoring not enabled");
+            return ResponseEntity.ok(response);
+        }
+
+        response.put("available", true);
+        response.put("timestamp", LocalDateTime.now().format(FORMATTER));
+        response.put("slowQueryThresholdMs", queryPerformanceInterceptor.getSlowQueryThresholdMs());
+        response.put("limit", limit);
+
+        // Get top slow queries
+        Map<String, Map<String, Object>> slowQueries = new HashMap<>();
+        queryPerformanceInterceptor.getTopSlowQueries(limit).forEach((query, stats) -> {
+            Map<String, Object> stat = new HashMap<>();
+            stat.put("executionCount", stats.getExecutionCount());
+            stat.put("averageExecutionTimeMs", stats.getAverageExecutionTime());
+            stat.put("maxExecutionTimeMs", stats.getMaxExecutionTime());
+
+            slowQueries.put(query, stat);
+        });
+
+        response.put("slowQueries", slowQueries);
+        response.put("count", slowQueries.size());
+
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Get queries exceeding slow threshold
+     * PERF-005: Query Logging & Slow Query Detection
+     */
+    @GetMapping("/query/above-threshold")
+    public ResponseEntity<Map<String, Object>> getQueriesAboveThreshold() {
+        Map<String, Object> response = new HashMap<>();
+
+        if (queryPerformanceInterceptor == null) {
+            response.put("available", false);
+            response.put("message", "Query performance monitoring not enabled");
+            return ResponseEntity.ok(response);
+        }
+
+        response.put("available", true);
+        response.put("timestamp", LocalDateTime.now().format(FORMATTER));
+        response.put("slowQueryThresholdMs", queryPerformanceInterceptor.getSlowQueryThresholdMs());
+
+        // Get queries above threshold
+        Map<String, Map<String, Object>> queriesAboveThreshold = new HashMap<>();
+        queryPerformanceInterceptor.getSlowQueriesAboveThreshold().forEach((query, stats) -> {
+            Map<String, Object> stat = new HashMap<>();
+            stat.put("executionCount", stats.getExecutionCount());
+            stat.put("averageExecutionTimeMs", stats.getAverageExecutionTime());
+            stat.put("maxExecutionTimeMs", stats.getMaxExecutionTime());
+            stat.put("exceedsThresholdBy", stats.getAverageExecutionTime() - queryPerformanceInterceptor.getSlowQueryThresholdMs());
+
+            queriesAboveThreshold.put(query, stat);
+        });
+
+        response.put("queriesAboveThreshold", queriesAboveThreshold);
+        response.put("count", queriesAboveThreshold.size());
+
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Reset query performance statistics
+     * PERF-005: Query Logging & Slow Query Detection
+     */
+    @PostMapping("/query/reset")
+    public ResponseEntity<Map<String, Object>> resetQueryStatistics() {
+        Map<String, Object> response = new HashMap<>();
+
+        if (queryPerformanceInterceptor == null) {
+            response.put("available", false);
+            response.put("message", "Query performance monitoring not enabled");
+            return ResponseEntity.ok(response);
+        }
+
+        queryPerformanceInterceptor.resetStatistics();
+
+        response.put("status", "success");
+        response.put("message", "Query performance statistics have been reset");
+        response.put("timestamp", LocalDateTime.now().format(FORMATTER));
+
+        return ResponseEntity.ok(response);
     }
 
     /**
