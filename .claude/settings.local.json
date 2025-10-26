@@ -69,7 +69,13 @@
       "mcp__ide__getDiagnostics",
       "Bash(for card_id in 68fd47e5d22f724008577792 68fd47f2f1fd29590d133c2a 68fd4831859a473dc668cc9c)",
       "Bash(do)",
-      "Bash(done)"
+      "Bash(done)",
+      "Bash(git pull:*)",
+      "Bash(for card_id in 68fcf35fa96caa4aa3cdd0e7 68fcf3616a38437a77219043 68fcf36ae6dbec40f5e7802e 68fcf36cae65bcc068008922)",
+      "Bash(do echo \"Archivando $card_id...\" trello archive-card $card_id)",
+      "Bash(trello:*)",
+      "Bash(for card_id in 68fcf2dd7c057bfde601e1e8 68fcf2d7a8e0c80bb1e6c181 68fcf2e2e2c9c6d3e1b05293 68fcf2dbebf5db71f7e4db03 68fcf2b4c11709c7da030c86 68fcf2b7120ea17bf6482b0c 68fcf2d9f08b0c9700a1db23 68fcf2c6091980b4ec7ef20d 68fcf2b91e8636ddfccd2077 68fcf2bb4f78ab7dc99d13d2 68fcf0814224677f00dd2d07 68fcf37bf3ff632457433417 68fcf2d01f99dcecfa49f99d)",
+      "Bash(do trello add-label $card_id \"black\" \"Sprint-5+\")"
     ],
     "deny": [],
     "ask": []
