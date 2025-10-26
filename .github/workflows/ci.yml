@@ -172,10 +172,38 @@ jobs:
       - name: Deploy to Render staging
         run: |
           echo "Deploying to staging environment..."
-          # Add actual Render deployment command
-          # Example: curl -X POST https://api.render.com/deploy/...
+          curl -X POST "${{ secrets.RENDER_STAGING_DEPLOY_HOOK }}"
         env:
           RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_STAGING_DEPLOY_HOOK }}
+
+      - name: Notify staging deployment to Slack
+        if: always()
+        run: |
+          if [ "${{ job.status }}" == "success" ]; then
+            STATUS_ICON="✅"
+            STATUS_TEXT="Successful"
+            COLOR="good"
+          else
+            STATUS_ICON="❌"
+            STATUS_TEXT="Failed"
+            COLOR="danger"
+          fi
+
+          curl -X POST ${{ secrets.SLACK_WEBHOOK_URL }} \
+          -H 'Content-Type: application/json' \
+          -d "{
+            \"text\": \"${STATUS_ICON} Backend Staging Deployment ${STATUS_TEXT}\",
+            \"attachments\": [{
+              \"color\": \"${COLOR}\",
+              \"fields\": [
+                {\"title\": \"Repository\", \"value\": \"portfolio-spring\", \"short\": true},
+                {\"title\": \"Environment\", \"value\": \"Staging\", \"short\": true},
+                {\"title\": \"Branch\", \"value\": \"${{ github.ref_name }}\", \"short\": true},
+                {\"title\": \"Author\", \"value\": \"${{ github.actor }}\", \"short\": true}
+              ]
+            }]
+          }"
+        continue-on-error: true
 
   # Deploy to Production (main/prod branch with approval)
   deploy-production:
@@ -200,12 +228,92 @@ jobs:
       - name: Deploy to Render production
         run: |
           echo "Deploying to production environment..."
-          # Add actual Render deployment command
-          # Example: curl -X POST https://api.render.com/deploy/...
+          curl -X POST "${{ secrets.RENDER_PROD_DEPLOY_HOOK }}"
         env:
           RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_PROD_DEPLOY_HOOK }}
 
-      - name: Notify deployment success
+      - name: Notify deployment success to Slack
+        if: success()
         run: |
-          echo "✅ Production deployment successful!"
-          # Add notification (Slack, email, etc.)
+          curl -X POST ${{ secrets.SLACK_WEBHOOK_URL }} \
+          -H 'Content-Type: application/json' \
+          -d '{
+            "text": "✅ Backend Production Deployment Successful!",
+            "blocks": [
+              {
+                "type": "header",
+                "text": {
+                  "type": "plain_text",
+                  "text": "🚀 Production Deployment Complete"
+                }
+              },
+              {
+                "type": "section",
+                "fields": [
+                  {
+                    "type": "mrkdwn",
+                    "text": "*Repository:*\nportfolio-spring"
+                  },
+                  {
+                    "type": "mrkdwn",
+                    "text": "*Branch:*\n${{ github.ref_name }}"
+                  },
+                  {
+                    "type": "mrkdwn",
+                    "text": "*Commit:*\n${{ github.sha }}"
+                  },
+                  {
+                    "type": "mrkdwn",
+                    "text": "*Author:*\n${{ github.actor }}"
+                  }
+                ]
+              },
+              {
+                "type": "section",
+                "text": {
+                  "type": "mrkdwn",
+                  "text": "<https://portfolio-spring.onrender.com|🔗 View Production Site>"
+                }
+              }
+            ]
+          }'
+        continue-on-error: true
+
+      - name: Notify deployment failure to Slack
+        if: failure()
+        run: |
+          curl -X POST ${{ secrets.SLACK_WEBHOOK_URL }} \
+          -H 'Content-Type: application/json' \
+          -d '{
+            "text": "❌ Backend Production Deployment Failed!",
+            "blocks": [
+              {
+                "type": "header",
+                "text": {
+                  "type": "plain_text",
+                  "text": "⚠️ Production Deployment Failed"
+                }
+              },
+              {
+                "type": "section",
+                "fields": [
+                  {
+                    "type": "mrkdwn",
+                    "text": "*Repository:*\nportfolio-spring"
+                  },
+                  {
+                    "type": "mrkdwn",
+                    "text": "*Branch:*\n${{ github.ref_name }}"
+                  }
+                ]
+              },
+              {
+                "type": "section",
+                "text": {
+                  "type": "mrkdwn",
+                  "text": "<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|🔍 View Logs>"
+                }
+              }
+            ]
+          }'
+        continue-on-error: true
