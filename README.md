@@ -2,10 +2,12 @@
 
 > Spring Boot backend for AI-powered portfolio management with GitHub integration and semantic analysis
 
+[![CI Pipeline](https://github.com/BernardUriza/portfolio-spring/actions/workflows/ci.yml/badge.svg)](https://github.com/BernardUriza/portfolio-spring/actions/workflows/ci.yml)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.0-brightgreen.svg)](https://spring.io/projects/spring-boot)
-[![Java](https://img.shields.io/badge/Java-25-orange.svg)](https://openjdk.org/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-14-blue.svg)](https://www.postgresql.org/)
+[![Java](https://img.shields.io/badge/Java-21-orange.svg)](https://openjdk.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue.svg)](https://www.postgresql.org/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Test Coverage](https://img.shields.io/badge/coverage-60%25-yellow.svg)](target/site/jacoco/index.html)
 
 ## ✨ Features
 
