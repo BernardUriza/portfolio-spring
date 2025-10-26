@@ -12,30 +12,35 @@ services:
       # No need to hardcode, let Render handle it
       - key: SPRING_PROFILES_ACTIVE
         value: render
-      # Database URL - Render provides DATABASE_URL automatically
-      # We need to convert it to JDBC format
+      # Database URL - External PostgreSQL (Neon/Supabase/etc)
+      # Set this manually in Render Dashboard → Environment
+      # Format: postgres://user:pass@host:5432/dbname?sslmode=require
       - key: DATABASE_URL
-        fromDatabase:
-          name: portfolio-db
-          property: connectionString
-      # These will use the DATABASE_URL via application-render.properties
-      # No need to set them explicitly since the app handles conversion
-      - key: SPRING_JPA_DATABASE_PLATFORM
-        value: org.hibernate.dialect.PostgreSQLDialect
-      - key: SPRING_JPA_HIBERNATE_DDL_AUTO
-        value: update
+        sync: false
+      # GitHub API Configuration (Required)
+      - key: GITHUB_USERNAME
+        sync: false
+      - key: GITHUB_TOKEN
+        sync: false
+      # Anthropic API Configuration (Required for AI features)
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      # Admin Security
+      - key: PORTFOLIO_ADMIN_TOKEN
+        sync: false
       - key: APP_CORS_ALLOWED_ORIGINS
         value: https://localhost:4200,https://*.netlify.app
       # Admin Security - Relaxed mode for testing
       # Security is disabled by default in render profile
       # To enable security, set APP_ADMIN_SECURITY_ENABLED=true and provide X_ADMIN_TOKEN
       - key: APP_ADMIN_SECURITY_ENABLED
-        value: false
+        value: "false"
     healthCheckPath: /actuator/health
 
-databases:
-  - name: portfolio-db
-    databaseName: portfolio_db
-    user: portfolio_user
-    plan: free
-    region: oregon  # Must match the web service region
+# No database managed by Render - using external provider (Neon/Supabase)
+# databases:
+#   - name: portfolio-db
+#     databaseName: portfolio_db
+#     user: portfolio_user
+#     plan: free
+#     region: oregon
