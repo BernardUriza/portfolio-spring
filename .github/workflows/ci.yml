@@ -57,7 +57,7 @@ jobs:
         run: ./mvnw jacoco:report
 
       - name: Upload coverage report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: jacoco-report
           path: target/site/jacoco/
@@ -86,7 +86,7 @@ jobs:
         run: ./mvnw clean package -DskipTests
 
       - name: Upload JAR artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: portfolio-spring-jar
           path: target/*.jar
@@ -164,7 +164,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Download JAR artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: portfolio-spring-jar
           path: target/
@@ -220,7 +220,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Download JAR artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: portfolio-spring-jar
           path: target/
