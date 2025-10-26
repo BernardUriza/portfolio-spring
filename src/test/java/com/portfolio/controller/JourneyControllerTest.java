@@ -29,7 +29,6 @@ import static org.mockito.Mockito.*;
 @org.springframework.test.context.TestPropertySource(properties = {
         "portfolio.admin.security.enabled=false"
 })
-@Disabled("TODO: Fix routing/endpoint mapping for CI/CD - see Trello card")
 public class JourneyControllerTest {
 
     @Autowired

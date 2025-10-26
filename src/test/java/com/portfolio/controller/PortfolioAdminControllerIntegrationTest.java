@@ -35,7 +35,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Testcontainers
 @ActiveProfiles("test")
 @Import({TestContainersConfiguration.class, MockClaudeService.class})
-@Disabled("TODO: Fix created_date null constraint for CI/CD - see Trello card")
 class PortfolioAdminControllerIntegrationTest {
 
     @Autowired

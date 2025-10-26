@@ -27,7 +27,6 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-@Disabled("TODO: Fix reflection test utils for CI/CD - see Trello card")
 class FactoryResetServiceTest {
 
     @Mock
@@ -50,6 +49,12 @@ class FactoryResetServiceTest {
     
     @Mock
     private SourceRepositoryJpaRepository sourceRepositoryRepository;
+
+    @Mock
+    private com.portfolio.repository.ContactMessageRepository contactMessageRepository;
+
+    @Mock
+    private com.portfolio.repository.VisitorInsightRepository visitorInsightRepository;
 
     @InjectMocks
     private FactoryResetService factoryResetService;
@@ -264,9 +269,11 @@ class FactoryResetServiceTest {
 
         // Inject the mocked repositories into the service
         ReflectionTestUtils.setField(factoryResetService, "sourceRepositoryRepository", sourceRepositoryRepository);
-        ReflectionTestUtils.setField(factoryResetService, "projectRepository", projectRepository);
+        ReflectionTestUtils.setField(factoryResetService, "portfolioProjectRepository", projectRepository);
         ReflectionTestUtils.setField(factoryResetService, "experienceRepository", experienceRepository);
         ReflectionTestUtils.setField(factoryResetService, "skillRepository", skillRepository);
+        ReflectionTestUtils.setField(factoryResetService, "contactMessageRepository", contactMessageRepository);
+        ReflectionTestUtils.setField(factoryResetService, "visitorInsightRepository", visitorInsightRepository);
 
         // Mock the native query for resetting auto increment
         Query mockQuery = mock(Query.class);
@@ -276,13 +283,15 @@ class FactoryResetServiceTest {
         int result = factoryResetService.performH2Reset(jobId);
 
         // Then
-        assertThat(result).isEqualTo(4);
+        assertThat(result).isEqualTo(6);  // 6 repositories: source, project, experience, skill, contact, visitor
 
         verify(sourceRepositoryRepository).deleteAllInBatch();
         verify(projectRepository).deleteAllInBatch();
         verify(experienceRepository).deleteAllInBatch();
         verify(skillRepository).deleteAllInBatch();
-        verify(entityManager, times(4)).createNativeQuery(anyString());
+        verify(contactMessageRepository).deleteAllInBatch();
+        verify(visitorInsightRepository).deleteAllInBatch();
+        verify(entityManager, times(6)).createNativeQuery(anyString());
     }
 
     @Test
@@ -297,8 +306,8 @@ class FactoryResetServiceTest {
         Query tableQuery = mock(Query.class);
         Query truncateQuery = mock(Query.class);
         
-        List<String> tableNames = List.of("projects", "skills", "experiences", "starred_projects");
-        
+        List<String> tableNames = List.of("projects", "skills", "experiences", "starred_projects", "contact_messages", "visitor_insights");
+
         when(entityManager.createNativeQuery(contains("pg_tables"))).thenReturn(tableQuery);
         when(tableQuery.getResultList()).thenReturn(tableNames);
         when(entityManager.createNativeQuery(contains("TRUNCATE"))).thenReturn(truncateQuery);
@@ -307,7 +316,7 @@ class FactoryResetServiceTest {
         int result = factoryResetService.performPostgresReset(jobId);
 
         // Then
-        assertThat(result).isEqualTo(4);
+        assertThat(result).isEqualTo(6);
         
         verify(entityManager).createNativeQuery(contains("pg_tables"));
         verify(entityManager).createNativeQuery(contains("TRUNCATE"));
