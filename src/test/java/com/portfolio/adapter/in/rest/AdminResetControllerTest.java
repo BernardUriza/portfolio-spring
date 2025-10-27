@@ -4,7 +4,6 @@ import com.portfolio.adapter.in.rest.mapper.ResetAuditRestMapper;
 import com.portfolio.core.domain.admin.ResetAudit;
 import com.portfolio.core.domain.admin.ResetStatus;
 import com.portfolio.service.FactoryResetService;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -29,9 +28,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         "app.admin.factory-reset.enabled=true",
         "app.admin.factory-reset.token=test-token",
         "portfolio.admin.token=admin-test-token",
-        "portfolio.admin.security.enabled=true"
+        "portfolio.admin.security.enabled=false"  // Disable security for @WebMvcTest
 })
-@Disabled("TODO: Fix authentication configuration for CI/CD - see Trello card")
 class AdminResetControllerTest {
 
     @Autowired
@@ -258,9 +256,8 @@ class AdminResetControllerTest {
 @TestPropertySource(properties = {
         "app.admin.factory-reset.enabled=false",
         "portfolio.admin.token=admin-test-token",
-        "portfolio.admin.security.enabled=true"
+        "portfolio.admin.security.enabled=false"  // Disable security for @WebMvcTest
 })
-@Disabled("TODO: Fix authentication configuration for CI/CD - see Trello card")
 class AdminResetControllerDisabledTest {
 
     @Autowired

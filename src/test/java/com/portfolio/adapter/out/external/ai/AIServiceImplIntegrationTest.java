@@ -30,7 +30,6 @@ import static org.assertj.core.api.Assertions.*;
 @Testcontainers
 @ActiveProfiles("test")
 @Import({TestContainersConfiguration.class, MockClaudeService.class})
-@Disabled("TODO: Fix AI mock assertions for CI/CD - see Trello card")
 class AIServiceImplIntegrationTest {
 
     @Autowired

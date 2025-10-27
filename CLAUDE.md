@@ -81,6 +81,78 @@ trello add-label <card_id> "color" "name"  # Add label
 - Keep only ONE card in "In Progress" at a time
 - Move cards to "Done" only after verification
 
+### CRITICAL: Claude Code Work Tracking
+
+**MANDATORY BEHAVIOR**: Claude Code MUST track ALL work in Trello:
+
+1. **At Session Start:**
+   ```bash
+   # Check what's in progress
+   trello cards 68fcff465168c13a1c3edf87
+
+   # If nothing in progress, pick from Ready or To Do
+   trello cards 68fcff45adca2da863178ce6
+   trello cards 68fcff46fa7dbc9cc069eaef
+   ```
+
+2. **Before Starting Any Task:**
+   - Move relevant card to "In Progress" list
+   - Add initial comment with plan/approach
+   - Use TodoWrite tool to create internal task breakdown
+
+3. **During Work:**
+   - Add comments for significant milestones (not every single file change)
+   - Update comments if approach changes
+   - Add comments when blocked or discovering issues
+
+4. **After Completing Work:**
+   - Add final comment with summary of changes
+   - Move card to appropriate next list (Testing/Done)
+   - NEVER leave work undocumented in Trello
+
+5. **Creating New Tasks:**
+   - If user requests work not in Trello, ask if they want a card created
+   - For large epics, break into smaller cards
+   - Always link related cards in comments
+
+**Example Comment Patterns:**
+
+```bash
+# Starting work
+trello add-comment <card_id> "🚀 Starting implementation
+- Approach: [brief description]
+- Files to modify: [list]
+- Estimated time: [time]"
+
+# Milestone reached
+trello add-comment <card_id> "✅ Milestone: [description]
+- Completed: [what was done]
+- Next: [what's next]"
+
+# Blocked/Issue
+trello add-comment <card_id> "⚠️ Blocker: [description]
+- Issue: [what's wrong]
+- Attempted: [what you tried]
+- Need: [what's needed to unblock]"
+
+# Completed
+trello add-comment <card_id> "✅ COMPLETED
+- Changes: [summary]
+- Files modified: [count]
+- Tests: [status]
+- Ready for: [next phase]"
+```
+
+### Why This Matters
+
+Bernard uses Trello to track progress across sessions. Without tracking:
+- Work gets lost between Claude Code sessions
+- Cannot resume interrupted work
+- No visibility into what was done/why
+- Cannot coordinate work across multiple cards
+
+**This is NOT optional** - it's part of the development workflow.
+
 ## Development Commands
 
 - `./mvnw spring-boot:run` - Start Spring Boot application (port 8080)
@@ -255,3 +327,98 @@ The implementation includes:
 - Comprehensive unit tests for domain and service layers
 
 When making changes, follow Spring Boot conventions for package structure, use Lombok annotations for boilerplate reduction, and implement proper error handling with try-catch blocks and logging.
+
+## Deployment Configuration
+
+### Production Environment
+
+**Backend (Render.com):**
+- URL: `https://portfolio-spring-gmat.onrender.com`
+- Service: `portfolio-backend`
+- Region: Oregon (free tier)
+- Runtime: Docker (multi-stage build)
+- Profile: `render` (auto-activated)
+
+**Frontend (Netlify):**
+- Primary: `https://bernarduriza.com`
+- Netlify: `https://cosmic-llama-a50a87.netlify.app`
+- CDN: Netlify Edge Network
+- Framework: Angular 19
+
+**Database (Neon PostgreSQL):**
+- Provider: Neon (free tier)
+- Connection: SSL required
+- Migrations: Flyway (V1, V2)
+
+### CORS Configuration
+
+Backend is configured to accept requests from:
+- `https://bernarduriza.com`
+- `https://www.bernarduriza.com`
+- `https://cosmic-llama-a50a87.netlify.app`
+
+If adding new domains, update `CORS_ALLOWED_ORIGINS` in Render environment variables.
+
+### Deployment Files
+
+- `Dockerfile` - Multi-stage Docker build (build + run)
+- `render.yaml` - Render.com service configuration
+- `render-entrypoint.sh` - Startup script with DATABASE_URL parsing
+- `.dockerignore` - Build optimization (excludes tests, docs, IDE files)
+- `DEPLOYMENT.md` - Complete step-by-step deployment guide
+
+### Testing Deployment Locally
+
+```bash
+# Build Docker image
+docker build -t portfolio-spring-test .
+
+# Run locally (requires .env with DATABASE_URL)
+docker run -p 8080:8080 --env-file .env portfolio-spring-test
+
+# Test health check
+curl http://localhost:8080/actuator/health
+```
+
+### Deployment Workflow
+
+1. **Make changes** in feature branch
+2. **Test locally** with Docker build
+3. **Commit to main** branch
+4. **Render auto-deploys** from GitHub webhook
+5. **Verify** via health check endpoint
+6. **Update Trello** card with deployment status
+
+### Required Environment Variables (Render)
+
+See `DEPLOYMENT.md` for complete list. Critical ones:
+
+- `DATABASE_URL` - PostgreSQL connection string from Neon
+- `GITHUB_TOKEN` - GitHub Personal Access Token
+- `ANTHROPIC_API_KEY` - Claude API key
+- `PORTFOLIO_ADMIN_TOKEN` - Secure random token
+- `CORS_ALLOWED_ORIGINS` - Comma-separated frontend URLs
+
+### Troubleshooting Deployments
+
+**Build fails:**
+- Check Render build logs
+- Verify Dockerfile syntax
+- Test locally: `docker build -t test .`
+
+**App won't start:**
+- Check `DATABASE_URL` format
+- Verify Flyway migrations succeeded
+- Check logs: Render Dashboard → Logs
+
+**CORS errors:**
+- Verify `CORS_ALLOWED_ORIGINS` includes frontend URL
+- Check for trailing slashes (should NOT have them)
+- Redeploy after env var changes
+
+**Health check fails:**
+- Verify app binds to `$PORT` (injected by Render)
+- Check `/actuator/health` returns 200
+- Verify database connectivity
+
+For detailed troubleshooting, see `DEPLOYMENT.md`.

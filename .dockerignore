@@ -1,0 +1,58 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+.project
+.classpath
+.settings/
+
+# Build outputs
+target/
+build/
+out/
+bin/
+
+# Local environment
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Documentation (not needed in container)
+docs/
+*.md
+!README.md
+
+# Test files (tests run during build, not needed in final image)
+src/test/
+
+# Maven wrapper jar (already included via COPY)
+!.mvn/wrapper/maven-wrapper.jar
+
+# Node modules (if any frontend build artifacts)
+node_modules/
+npm-debug.log
+
+# Coverage reports
+coverage/
+*.coveragerc
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*~
