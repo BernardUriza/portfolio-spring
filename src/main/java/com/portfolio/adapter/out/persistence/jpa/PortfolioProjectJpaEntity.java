@@ -22,6 +22,7 @@ import java.util.Set;
            @Index(name = "idx_portfolio_type", columnList = "type"),
            @Index(name = "idx_portfolio_status_updated", columnList = "status, updated_at")
        })
+@EntityListeners(PortfolioProjectHistoryListener.class)
 public class PortfolioProjectJpaEntity {
     
     @Id
