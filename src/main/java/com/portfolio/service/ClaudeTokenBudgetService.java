@@ -25,9 +25,11 @@ public class ClaudeTokenBudgetService {
     private static final Logger log = LoggerFactory.getLogger(ClaudeTokenBudgetService.class);
 
     private final MeterRegistry meterRegistry;
+    private final AlertService alertService;
 
-    public ClaudeTokenBudgetService(MeterRegistry meterRegistry) {
+    public ClaudeTokenBudgetService(MeterRegistry meterRegistry, AlertService alertService) {
         this.meterRegistry = meterRegistry;
+        this.alertService = alertService;
     }
     
     @Value("${portfolio.ai.claude.daily-token-budget:100000}")
@@ -147,11 +149,25 @@ public class ClaudeTokenBudgetService {
         if (remainingTokens < lowBudgetThreshold && remainingTokens + tokens >= lowBudgetThreshold) {
             // First time crossing the low budget threshold
             if (lowBudgetAlertSent.compareAndSet(false, true)) {
-                log.error("⚠️  CRITICAL: Claude token budget running low! Remaining: {} tokens (threshold: {})",
-                        remainingTokens, lowBudgetThreshold);
-                log.error("⚠️  Daily budget: {}, Current usage: {}%, Consider optimizing AI calls or increasing budget",
-                        dailyTokenBudget, String.format("%.2f", usagePercentage * 100));
+                String alertMessage = String.format(
+                        "Claude token budget critically low! Remaining: %d tokens (threshold: %d). " +
+                        "Daily budget: %d, Current usage: %.2f%%. Consider optimizing AI calls or increasing budget.",
+                        remainingTokens, lowBudgetThreshold, dailyTokenBudget, usagePercentage * 100
+                );
+
+                alertService.sendCriticalAlert("Token Budget Critical", alertMessage);
                 lowBudgetAlertCounter.increment();
+            }
+        }
+
+        // Check budget exceeded warning
+        if (remainingTokens < lowBudgetThreshold / 2 && remainingTokens > 0) {
+            // Very low budget - send additional warning
+            if (remainingTokens < 5000 && lowBudgetAlertSent.get()) {
+                alertService.sendWarningAlert(
+                        "Token Budget Extremely Low",
+                        String.format("Only %d tokens remaining! Budget exhaustion imminent.", remainingTokens)
+                );
             }
         }
 
