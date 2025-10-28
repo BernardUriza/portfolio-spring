@@ -38,13 +38,18 @@ public class ClaudeTokenBudgetService {
     
     @Value("${portfolio.ai.claude.budget-reset-hour:0}")
     private int budgetResetHour;
-    
+
+    @Value("${portfolio.ai.claude.low-budget-threshold:10000}")
+    private int lowBudgetThreshold;
+
     private final AtomicInteger currentTokenUsage = new AtomicInteger(0);
     private final AtomicReference<LocalDate> lastResetDate = new AtomicReference<>(LocalDate.now());
-    
+    private final AtomicReference<Boolean> lowBudgetAlertSent = new AtomicReference<>(false);
+
     private Counter tokenUsageCounter;
     private Counter warnThresholdCounter;
     private Counter budgetExceededCounter;
+    private Counter lowBudgetAlertCounter;
     @SuppressWarnings("unused")
     private Gauge remainingTokensGauge;
     @SuppressWarnings("unused")
@@ -56,17 +61,18 @@ public class ClaudeTokenBudgetService {
         tokenUsageCounter = meterRegistry.counter("claude.tokens.used");
         warnThresholdCounter = meterRegistry.counter("claude.budget.warn_threshold_exceeded");
         budgetExceededCounter = meterRegistry.counter("claude.budget.exceeded");
-        
+        lowBudgetAlertCounter = meterRegistry.counter("claude.budget.low_budget_alert");
+
         remainingTokensGauge = Gauge.builder("claude.tokens.remaining", this, service -> service.getRemainingTokens())
                 .description("Remaining Claude tokens for today")
                 .register(meterRegistry);
-        
+
         usagePercentageGauge = Gauge.builder("claude.budget.usage_percentage", this, service -> service.getUsagePercentage())
                 .description("Percentage of daily Claude budget used")
                 .register(meterRegistry);
-        
-        log.info("Claude token budget service initialized: budget={}, warn_threshold={}", 
-                dailyTokenBudget, warnThreshold);
+
+        log.info("Claude token budget service initialized: budget={}, warn_threshold={}, low_budget_threshold={}",
+                dailyTokenBudget, warnThreshold, lowBudgetThreshold);
     }
     
     /**
@@ -107,18 +113,32 @@ public class ClaudeTokenBudgetService {
         // Update usage atomically
         currentTokenUsage.set(newUsage);
         tokenUsageCounter.increment(tokens);
-        
+
+        int remainingTokens = dailyTokenBudget - newUsage;
+
         // Check warn threshold
         double usagePercentage = (double) newUsage / dailyTokenBudget;
         if (usagePercentage >= warnThreshold && (double) currentUsage / dailyTokenBudget < warnThreshold) {
-            log.warn("Claude token budget warning threshold exceeded: usage={}%, threshold={}%", 
+            log.warn("Claude token budget warning threshold exceeded: usage={}%, threshold={}%",
                     usagePercentage * 100, warnThreshold * 100);
             warnThresholdCounter.increment();
         }
-        
-        log.debug("Claude tokens used for '{}': tokens={}, total_usage={}, remaining={}", 
-                operation, tokens, newUsage, dailyTokenBudget - newUsage);
-        
+
+        // Check low budget alert (< 10k tokens remaining)
+        if (remainingTokens < lowBudgetThreshold && remainingTokens + tokens >= lowBudgetThreshold) {
+            // First time crossing the low budget threshold
+            if (lowBudgetAlertSent.compareAndSet(false, true)) {
+                log.error("⚠️  CRITICAL: Claude token budget running low! Remaining: {} tokens (threshold: {})",
+                        remainingTokens, lowBudgetThreshold);
+                log.error("⚠️  Daily budget: {}, Current usage: {}%, Consider optimizing AI calls or increasing budget",
+                        dailyTokenBudget, String.format("%.2f", usagePercentage * 100));
+                lowBudgetAlertCounter.increment();
+            }
+        }
+
+        log.debug("Claude tokens used for '{}': tokens={}, total_usage={}, remaining={}",
+                operation, tokens, newUsage, remainingTokens);
+
         return BudgetResult.success(newUsage, dailyTokenBudget, usagePercentage >= warnThreshold);
     }
     
@@ -173,7 +193,8 @@ public class ClaudeTokenBudgetService {
     public void resetBudget() {
         currentTokenUsage.set(0);
         lastResetDate.set(LocalDate.now());
-        
+        lowBudgetAlertSent.set(false);
+
         log.info("Claude token budget manually reset: budget={}", dailyTokenBudget);
         meterRegistry.counter("claude.budget.manual_reset").increment();
     }
@@ -193,13 +214,14 @@ public class ClaudeTokenBudgetService {
     private void checkAndResetIfNewDay() {
         LocalDate today = LocalDate.now();
         LocalDate lastReset = lastResetDate.get();
-        
+
         if (!today.equals(lastReset)) {
             // Reset for new day
             int previousUsage = currentTokenUsage.getAndSet(0);
             lastResetDate.set(today);
-            
-            log.info("Claude token budget reset for new day: previous_usage={}, budget={}", 
+            lowBudgetAlertSent.set(false);
+
+            log.info("Claude token budget reset for new day: previous_usage={}, budget={}",
                     previousUsage, dailyTokenBudget);
             meterRegistry.counter("claude.budget.daily_reset").increment();
         }

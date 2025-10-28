@@ -2,27 +2,34 @@ package com.portfolio.controller;
 
 import com.portfolio.aspect.RateLimit;
 import com.portfolio.aspect.RequiresFeature;
+import com.portfolio.core.port.out.AIServicePort;
 import com.portfolio.service.ClaudeTokenBudgetService;
 import com.portfolio.service.RateLimitingService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
- * Admin controller for managing Claude AI token budget
+ * Admin controller for managing Claude AI token budget and batch operations
  */
 @RestController
 @RequestMapping("/api/admin/ai")
 public class AdminAIBudgetController {
     private static final Logger log = LoggerFactory.getLogger(AdminAIBudgetController.class);
     private final ClaudeTokenBudgetService tokenBudgetService;
+    private final AIServicePort aiService;
 
-    public AdminAIBudgetController(ClaudeTokenBudgetService tokenBudgetService) {
+    public AdminAIBudgetController(ClaudeTokenBudgetService tokenBudgetService, AIServicePort aiService) {
         this.tokenBudgetService = tokenBudgetService;
+        this.aiService = aiService;
     }
     
     /**
@@ -182,5 +189,145 @@ public class AdminAIBudgetController {
         }
         
         return suggestions;
+    }
+
+    /**
+     * Batch analyze multiple repositories
+     * Optimizes token usage by processing multiple repositories in a single operation
+     */
+    @PostMapping("/analyze-batch")
+    @RequiresFeature("admin_endpoints")
+    @RateLimit(type = RateLimitingService.RateLimitType.ADMIN_ENDPOINTS)
+    public ResponseEntity<Map<String, Object>> analyzeBatch(@RequestBody BatchAnalysisRequest request) {
+
+        log.info("Batch analysis requested for {} repositories", request.repositories.size());
+
+        // Validate budget before starting
+        int estimatedTokens = request.repositories.size() * 3000; // Conservative estimate
+        ClaudeTokenBudgetService.BudgetStatus status = tokenBudgetService.getBudgetStatus();
+
+        if (estimatedTokens > status.getRemainingTokens()) {
+            log.warn("Insufficient budget for batch analysis: need {}, have {}",
+                    estimatedTokens, status.getRemainingTokens());
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(Map.of(
+                    "status", "error",
+                    "message", "Insufficient token budget for this operation",
+                    "required", estimatedTokens,
+                    "available", status.getRemainingTokens(),
+                    "maxRepositoriesWithCurrentBudget", status.getRemainingTokens() / 3000
+            ));
+        }
+
+        // Process repositories
+        List<Map<String, Object>> results = new ArrayList<>();
+        List<Map<String, Object>> errors = new ArrayList<>();
+        int successCount = 0;
+        int errorCount = 0;
+        long startTime = System.currentTimeMillis();
+
+        for (RepositoryAnalysisRequest repo : request.repositories) {
+            try {
+                log.debug("Analyzing repository: {}", repo.name);
+
+                AIServicePort.ClaudeAnalysisResult analysis = aiService.analyzeRepository(
+                        repo.name,
+                        repo.description,
+                        repo.readmeContent,
+                        repo.topics != null ? repo.topics : List.of(),
+                        repo.language
+                );
+
+                results.add(Map.of(
+                        "repository", repo.name,
+                        "status", "success",
+                        "project", Map.of(
+                                "name", analysis.project.name,
+                                "description", analysis.project.description,
+                                "estimatedDurationWeeks", analysis.project.estimatedDurationWeeks != null ?
+                                        analysis.project.estimatedDurationWeeks : 0,
+                                "technologies", analysis.project.technologies,
+                                "url", analysis.project.url != null ? analysis.project.url : ""
+                        ),
+                        "skills", analysis.skills,
+                        "experiences", analysis.experiences
+                ));
+                successCount++;
+
+            } catch (Exception e) {
+                log.error("Failed to analyze repository {}: {}", repo.name, e.getMessage());
+                errors.add(Map.of(
+                        "repository", repo.name,
+                        "error", e.getMessage()
+                ));
+                errorCount++;
+            }
+        }
+
+        long endTime = System.currentTimeMillis();
+        long duration = endTime - startTime;
+
+        ClaudeTokenBudgetService.BudgetStatus afterStatus = tokenBudgetService.getBudgetStatus();
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("status", "completed");
+        response.put("summary", Map.of(
+                "total", request.repositories.size(),
+                "successful", successCount,
+                "failed", errorCount,
+                "durationMs", duration
+        ));
+        response.put("results", results);
+
+        if (!errors.isEmpty()) {
+            response.put("errors", errors);
+        }
+
+        response.put("budget", Map.of(
+                "tokensUsedApprox", status.getRemainingTokens() - afterStatus.getRemainingTokens(),
+                "remainingTokens", afterStatus.getRemainingTokens(),
+                "usagePercentage", String.format("%.1f%%", afterStatus.getUsagePercentage() * 100)
+        ));
+
+        response.put("timestamp", LocalDateTime.now().toString());
+
+        log.info("Batch analysis completed: {} successful, {} failed, duration: {}ms",
+                successCount, errorCount, duration);
+
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Request DTO for batch analysis
+     */
+    public static class BatchAnalysisRequest {
+        public List<RepositoryAnalysisRequest> repositories;
+
+        public BatchAnalysisRequest() {}
+
+        public BatchAnalysisRequest(List<RepositoryAnalysisRequest> repositories) {
+            this.repositories = repositories;
+        }
+    }
+
+    /**
+     * Request DTO for single repository analysis
+     */
+    public static class RepositoryAnalysisRequest {
+        public String name;
+        public String description;
+        public String readmeContent;
+        public List<String> topics;
+        public String language;
+
+        public RepositoryAnalysisRequest() {}
+
+        public RepositoryAnalysisRequest(String name, String description, String readmeContent,
+                                        List<String> topics, String language) {
+            this.name = name;
+            this.description = description;
+            this.readmeContent = readmeContent;
+            this.topics = topics;
+            this.language = language;
+        }
     }
 }

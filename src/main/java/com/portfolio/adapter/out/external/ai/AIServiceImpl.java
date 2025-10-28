@@ -2,6 +2,10 @@ package com.portfolio.adapter.out.external.ai;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.portfolio.adapter.out.persistence.jpa.ExperienceJpaEntity;
+import com.portfolio.adapter.out.persistence.jpa.ExperienceJpaRepository;
+import com.portfolio.adapter.out.persistence.jpa.SkillJpaEntity;
+import com.portfolio.adapter.out.persistence.jpa.SkillJpaRepository;
 import com.portfolio.core.port.out.AIServicePort;
 import com.portfolio.service.ClaudeTokenBudgetService;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
@@ -19,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class AIServiceImpl {
@@ -27,27 +32,37 @@ public class AIServiceImpl {
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
     private final ClaudeTokenBudgetService tokenBudgetService;
+    private final SkillJpaRepository skillRepository;
+    private final ExperienceJpaRepository experienceRepository;
     private final String anthropicApiKey;
     private final String anthropicApiUrl;
     private String portfolioToneContext = null;
-    
+    private String portfolioSkillsContext = null;
+    private String portfolioExperiencesContext = null;
+
     public AIServiceImpl(RestTemplate restTemplate, ObjectMapper objectMapper,
                         ClaudeTokenBudgetService tokenBudgetService,
+                        SkillJpaRepository skillRepository,
+                        ExperienceJpaRepository experienceRepository,
                         @Value("${anthropic.api.key:}") String anthropicApiKey,
                         @Value("${anthropic.api.url:https://api.anthropic.com/v1/messages}") String anthropicApiUrl) {
         this.restTemplate = restTemplate;
         this.objectMapper = objectMapper;
         this.tokenBudgetService = tokenBudgetService;
+        this.skillRepository = skillRepository;
+        this.experienceRepository = experienceRepository;
         this.anthropicApiKey = anthropicApiKey;
         this.anthropicApiUrl = anthropicApiUrl;
-        
+
         if (anthropicApiKey != null && !anthropicApiKey.trim().isEmpty()) {
             log.info("Anthropic API key configured successfully");
         } else {
             log.warn("Anthropic API key not configured - will use mock data");
         }
-        
+
         loadPortfolioToneContext();
+        loadPortfolioSkillsContext();
+        loadPortfolioExperiencesContext();
     }
     
     private void loadPortfolioToneContext() {
@@ -152,10 +167,112 @@ public class AIServiceImpl {
                "- Title: \"Catalytic Architect & Full-Stack Engineer\"\n" +
                "- Hero: \"Your team doesn't need more developers. It needs a phase catalyst.\"\n" +
                "- Sub: \"I break systems that have outgrown their chaos but are not yet ready for stability.\"\n" +
-               "- About: \"Technical catalyst and architecture strategist. I expose what is broken and engineer coherence where chaos once reigned. I do not adapt, I transform. I do not decorate, I reconfigure.\"\n" +
+               "- About: \"Technical catalyst and architecture strategist. I expose what is broken and engineer coherence where chaos once reigned. I do not adapt, I transform. I do not deconfigure, I reconfigure.\"\n" +
                "- Key phrases: \"Dissonance sparks transformation\", \"Refactoring cultures drives true development\", \"Code is the output, not the objective\"\n";
     }
-    
+
+    /**
+     * Load portfolio skills context from database
+     * Provides AI with Bernard's technical skill set for better context matching
+     */
+    private void loadPortfolioSkillsContext() {
+        try {
+            List<SkillJpaEntity> skills = skillRepository.findAll();
+
+            if (skills.isEmpty()) {
+                log.warn("No skills found in database for AI context");
+                portfolioSkillsContext = "Skills Context: No skills data available yet\n";
+                return;
+            }
+
+            StringBuilder skillsBuilder = new StringBuilder();
+            skillsBuilder.append("\n=== BERNARD'S TECHNICAL SKILLS ===\n");
+            skillsBuilder.append("Use these to understand Bernard's expertise and suggest relevant skill connections:\n\n");
+
+            // Group by category for better context
+            Map<String, List<SkillJpaEntity>> skillsByCategory = skills.stream()
+                    .collect(Collectors.groupingBy(skill ->
+                            skill.getCategory() != null ? skill.getCategory().toString() : "UNCATEGORIZED"));
+
+            skillsByCategory.forEach((category, categorySkills) -> {
+                skillsBuilder.append(String.format("**%s:**\n", category));
+                categorySkills.forEach(skill -> {
+                    skillsBuilder.append(String.format("  - %s", skill.getName()));
+                    if (skill.getLevel() != null) {
+                        skillsBuilder.append(String.format(" [Level: %s]", skill.getLevel()));
+                    }
+                    if (skill.getDescription() != null && !skill.getDescription().isEmpty()) {
+                        skillsBuilder.append(String.format(" - %s", skill.getDescription()));
+                    }
+                    skillsBuilder.append("\n");
+                });
+                skillsBuilder.append("\n");
+            });
+
+            portfolioSkillsContext = skillsBuilder.toString();
+            log.info("Portfolio skills context loaded: {} skills across {} categories",
+                     skills.size(), skillsByCategory.size());
+
+        } catch (Exception e) {
+            log.error("Error loading portfolio skills context: {}", e.getMessage());
+            portfolioSkillsContext = "Skills Context: Error loading skills data\n";
+        }
+    }
+
+    /**
+     * Load portfolio experiences context from database
+     * Provides AI with Bernard's professional history for better matching
+     */
+    private void loadPortfolioExperiencesContext() {
+        try {
+            List<ExperienceJpaEntity> experiences = experienceRepository.findAll();
+
+            if (experiences.isEmpty()) {
+                log.warn("No experiences found in database for AI context");
+                portfolioExperiencesContext = "Experiences Context: No experience data available yet\n";
+                return;
+            }
+
+            StringBuilder expBuilder = new StringBuilder();
+            expBuilder.append("\n=== BERNARD'S PROFESSIONAL EXPERIENCES ===\n");
+            expBuilder.append("Use these to suggest relevant experience connections and career narrative:\n\n");
+
+            // Sort by current position first, then by start date
+            experiences.stream()
+                    .sorted((e1, e2) -> {
+                        if (Boolean.TRUE.equals(e1.getIsCurrentPosition())) return -1;
+                        if (Boolean.TRUE.equals(e2.getIsCurrentPosition())) return 1;
+                        return 0;
+                    })
+                    .forEach(exp -> {
+                        expBuilder.append(String.format("**%s** at %s",
+                                exp.getJobTitle(), exp.getCompanyName()));
+                        if (Boolean.TRUE.equals(exp.getIsCurrentPosition())) {
+                            expBuilder.append(" [CURRENT]");
+                        }
+                        expBuilder.append("\n");
+
+                        if (exp.getType() != null) {
+                            expBuilder.append(String.format("  Type: %s\n", exp.getType()));
+                        }
+                        if (exp.getDescription() != null && !exp.getDescription().isEmpty()) {
+                            String truncatedDesc = exp.getDescription().length() > 200 ?
+                                    exp.getDescription().substring(0, 197) + "..." :
+                                    exp.getDescription();
+                            expBuilder.append(String.format("  Description: %s\n", truncatedDesc));
+                        }
+                        expBuilder.append("\n");
+                    });
+
+            portfolioExperiencesContext = expBuilder.toString();
+            log.info("Portfolio experiences context loaded: {} experiences", experiences.size());
+
+        } catch (Exception e) {
+            log.error("Error loading portfolio experiences context: {}", e.getMessage());
+            portfolioExperiencesContext = "Experiences Context: Error loading experience data\n";
+        }
+    }
+
     public String generateProjectSummary(String title, String description, String technologies) {
         if (title == null || title.trim().isEmpty()) {
             log.warn("Invalid title provided for project summary generation");
@@ -249,7 +366,17 @@ public class AIServiceImpl {
         prompt.append("You are creating content for Bernard Uriza's portfolio website.\n\n");
         prompt.append(portfolioToneContext != null ? portfolioToneContext : getDefaultPortfolioTone());
         prompt.append("\n");
-        
+
+        // Inject Bernard's skills and experiences context for better analysis
+        if (portfolioSkillsContext != null) {
+            prompt.append(portfolioSkillsContext);
+        }
+        if (portfolioExperiencesContext != null) {
+            prompt.append(portfolioExperiencesContext);
+        }
+        prompt.append("\nUse Bernard's skills and experiences to suggest relevant connections and validate technical alignment.\n");
+        prompt.append("When suggesting skills or experiences, reference existing ones from the context above.\n\n");
+
         prompt.append("Analyze this GitHub repository and create content that matches the portfolio's bold, transformative tone:\n\n");
         prompt.append("Repository Name: ").append(repoName.trim()).append("\n");
         prompt.append("Original GitHub Description: ").append(description != null && !description.trim().isEmpty() ? 
@@ -428,11 +555,20 @@ public class AIServiceImpl {
     
     private String buildProjectSummaryPrompt(String title, String description, String technologies) {
         StringBuilder prompt = new StringBuilder();
-        
+
         prompt.append("You are creating content for Bernard Uriza's portfolio website.\n\n");
         prompt.append(portfolioToneContext != null ? portfolioToneContext : getDefaultPortfolioTone());
         prompt.append("\n");
-        
+
+        // Inject Bernard's skills and experiences context
+        if (portfolioSkillsContext != null) {
+            prompt.append(portfolioSkillsContext);
+        }
+        if (portfolioExperiencesContext != null) {
+            prompt.append(portfolioExperiencesContext);
+        }
+        prompt.append("\nUse Bernard's background to create a summary that reflects his expertise and experience.\n\n");
+
         prompt.append("Create a powerful, catalytic summary for this project that matches the portfolio's transformative tone:\n\n");
         prompt.append("Project Title: ").append(title).append("\n");
         prompt.append("Description: ").append(description != null ? description : "No description provided").append("\n");
@@ -450,11 +586,20 @@ public class AIServiceImpl {
     
     private String buildDynamicMessagePrompt(String technologies) {
         StringBuilder prompt = new StringBuilder();
-        
+
         prompt.append("You are creating content for Bernard Uriza's portfolio website.\n\n");
         prompt.append(portfolioToneContext != null ? portfolioToneContext : getDefaultPortfolioTone());
         prompt.append("\n");
-        
+
+        // Inject Bernard's skills and experiences context
+        if (portfolioSkillsContext != null) {
+            prompt.append(portfolioSkillsContext);
+        }
+        if (portfolioExperiencesContext != null) {
+            prompt.append(portfolioExperiencesContext);
+        }
+        prompt.append("\nReference Bernard's expertise when crafting the message about these technologies.\n\n");
+
         prompt.append("Create an engaging, catalytic message about these technologies that matches the portfolio's tone:\n\n");
         prompt.append("Technologies: ").append(technologies != null ? technologies : "Modern technology stack").append("\n\n");
         
