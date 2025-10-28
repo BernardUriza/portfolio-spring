@@ -30,11 +30,12 @@ import java.util.concurrent.ConcurrentHashMap;
 public class FactoryResetService implements FactoryResetUseCase {
 
     private static final Logger log = LoggerFactory.getLogger(FactoryResetService.class);
-    
+
     private final ResetAuditJpaRepository resetAuditRepository;
     private final ResetAuditJpaMapper resetAuditMapper;
     private final EntityManager entityManager;
-    
+    private final AlertService alertService;
+
     // All the repositories that need to be cleared
     private final PortfolioProjectJpaRepository portfolioProjectRepository;
     private final SkillJpaRepository skillRepository;
@@ -43,16 +44,16 @@ public class FactoryResetService implements FactoryResetUseCase {
     // Contact/Visitor features repositories
     private final ContactMessageRepository contactMessageRepository;
     private final VisitorInsightRepository visitorInsightRepository;
-    
+
     @Value("${spring.jpa.database-platform:}")
     private String databasePlatform;
-    
+
     @Value("${spring.datasource.url:}")
     private String datasourceUrl;
-    
+
     // SSE emitters for streaming progress
     private final Map<String, SseEmitter> sseEmitters = new ConcurrentHashMap<>();
-    
+
     private boolean isPostgres;
     private boolean isH2;
 
@@ -60,6 +61,7 @@ public class FactoryResetService implements FactoryResetUseCase {
     public FactoryResetService(ResetAuditJpaRepository resetAuditRepository,
                                ResetAuditJpaMapper resetAuditMapper,
                                EntityManager entityManager,
+                               AlertService alertService,
                                PortfolioProjectJpaRepository portfolioProjectRepository,
                                SkillJpaRepository skillRepository,
                                ExperienceJpaRepository experienceRepository,
@@ -69,6 +71,7 @@ public class FactoryResetService implements FactoryResetUseCase {
         this.resetAuditRepository = resetAuditRepository;
         this.resetAuditMapper = resetAuditMapper;
         this.entityManager = entityManager;
+        this.alertService = alertService;
         this.portfolioProjectRepository = portfolioProjectRepository;
         this.skillRepository = skillRepository;
         this.experienceRepository = experienceRepository;
@@ -153,24 +156,39 @@ public class FactoryResetService implements FactoryResetUseCase {
         try {
             log.info("Starting factory reset process for job: {}", jobId);
             sendSseMessage(jobId, "STARTED", "Factory reset process started");
-            
+
             int tablesCleared = performDatabaseReset(jobId);
-            
+
             // Update audit record as completed
             updateAuditRecord(jobId, audit -> audit.complete(tablesCleared));
-            
-            sendSseMessage(jobId, "COMPLETED", 
+
+            sendSseMessage(jobId, "COMPLETED",
                 String.format("Factory reset completed successfully. %d tables cleared.", tablesCleared));
-            
+
             log.info("Factory reset completed successfully for job: {}", jobId);
-            
+
         } catch (Exception e) {
             log.error("Factory reset failed for job: {}", jobId, e);
-            
+
             // Update audit record as failed
             updateAuditRecord(jobId, audit -> audit.fail(e.getMessage()));
-            
+
             sendSseMessage(jobId, "ERROR", "Factory reset failed: " + e.getMessage());
+
+            // Send critical alert for async failure
+            try {
+                String alertMessage = String.format(
+                    "Factory reset failed for job %s: %s",
+                    jobId,
+                    e.getMessage()
+                );
+                alertService.sendCriticalAlert("FACTORY_RESET_FAILED", alertMessage);
+                log.info("Critical alert sent for factory reset failure: {}", jobId);
+            } catch (Exception alertException) {
+                // Don't let alert failures cascade - just log
+                log.error("Failed to send alert for factory reset failure", alertException);
+            }
+
         } finally {
             // Clean up SSE emitter
             SseEmitter emitter = sseEmitters.remove(jobId);

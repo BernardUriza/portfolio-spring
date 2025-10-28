@@ -127,20 +127,38 @@ public class AdminResetController {
         return factoryResetService.streamResetProgress(jobId);
     }
     
-    @GetMapping("/factory-reset/audit")
-    public ResponseEntity<List<ResetAuditDto>> getFactoryResetAudit(
-            @RequestParam(defaultValue = "20") int limit) {
-        
+    @GetMapping("/factory-reset/{jobId}/status")
+    public ResponseEntity<ResetAuditDto> getJobStatus(@PathVariable String jobId) {
         // Check if factory reset is enabled
         if (!factoryResetEnabled) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Factory reset is disabled");
         }
-        
+
+        // Retrieve job status
+        ResetAudit resetAudit = factoryResetService.getResetAuditByJobId(jobId);
+        if (resetAudit == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Reset job not found: " + jobId);
+        }
+
+        log.debug("Job status requested for jobId: {} - Status: {}", jobId, resetAudit.getStatus());
+
+        return ResponseEntity.ok(resetAuditMapper.toRestDto(resetAudit));
+    }
+
+    @GetMapping("/factory-reset/audit")
+    public ResponseEntity<List<ResetAuditDto>> getFactoryResetAudit(
+            @RequestParam(defaultValue = "20") int limit) {
+
+        // Check if factory reset is enabled
+        if (!factoryResetEnabled) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Factory reset is disabled");
+        }
+
         List<ResetAuditDto> auditHistory = factoryResetService.getResetHistory(limit)
             .stream()
             .map(resetAuditMapper::toRestDto)
             .toList();
-            
+
         return ResponseEntity.ok(auditHistory);
     }
     
