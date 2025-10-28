@@ -86,7 +86,12 @@
       "Bash(do grep -n \"^public class\\|^@SpringBootTest\\|^@WebMvcTest\\|^class\" \"$file\")",
       "Bash(brew install:*)",
       "Bash(render:*)",
-      "Bash(git merge:*)"
+      "Bash(git merge:*)",
+      "Bash(npx ng update:*)",
+      "Bash(npx ng build:*)",
+      "Bash(git log:*)",
+      "WebFetch(domain:owasp.org)",
+      "Bash(bash:*)"
     ],
     "deny": [],
     "ask": []

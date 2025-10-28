@@ -10,17 +10,64 @@ This file provides guidance to Claude Code when working with this Spring Boot ba
 - **Project**: `/Users/bernardurizaorozco/Documents/trello-cli-python/`
 - **Documentation**: `~/Documents/trello-cli-python/CLAUDE_INTEGRATION.md`
 - **Backward Compatibility**: `trello-cli.py` alias works
+- **Help**: `trello help` - Full command reference
 
 **Quick Reference:**
 
 ```bash
-trello boards                          # List all boards
-trello lists <board_id>                # Show lists
-trello cards <list_id>                 # Show cards
-trello show-card <card_id>             # Card details
-trello move-card <card_id> <list_id>   # Move card
-trello add-comment <card_id> "text"    # Add comment
-trello add-label <card_id> "color" "name"  # Add label
+# Discovery Commands (NEW - very useful for Claude Code!)
+trello help-json                           # Get all commands in JSON format
+trello board-overview <board_id>           # Complete board overview with lists and counts
+trello board-ids <board_id>                # Quick reference of all IDs in a board
+trello search-cards <board_id> "query"     # Search cards across board
+
+# Board Commands
+trello boards                              # List all boards
+trello create-board "name"                 # Create a new board
+
+# List Commands
+trello lists <board_id>                    # Show lists
+trello create-list <board_id> "name"       # Create a new list
+trello archive-list <list_id>              # Archive (close) a list
+
+# Card Commands
+trello cards <list_id>                     # Show cards
+trello add-card <list_id> "title" ["desc"] # Add new card
+trello show-card <card_id>                 # Card details
+trello update-card <card_id> "desc"        # Update card description
+trello move-card <card_id> <list_id>       # Move card
+
+# Card Enhancement Commands
+trello add-comment <card_id> "text"        # Add comment
+trello add-label <card_id> "color" "name"  # Add label (yellow, purple, blue, red, green, orange, black, sky, pink, lime)
+trello add-checklist <card_id> "name"      # Add checklist to card
+trello add-checkitem <card_id> "checklist" "item"  # Add item to checklist
+trello set-due <card_id> "YYYY-MM-DD"      # Set due date
+```
+
+**Pro Tips for Claude Code:**
+
+1. **Use `board-overview` at session start** to get complete context of board state
+2. **Use `board-ids` for quick ID reference** instead of multiple list/card lookups
+3. **Use `search-cards` to find relevant cards** by keyword instead of browsing all lists
+4. **Use `help-json` for programmatic access** to all available commands
+
+**Example Workflow:**
+
+```bash
+# At session start - get complete board context
+trello board-overview 68fcf05e481843db13204397
+
+# Find specific cards quickly
+trello search-cards 68fcf05e481843db13204397 "deployment"
+
+# Get all IDs for reference
+trello board-ids 68fcf05e481843db13204397
+
+# Create structured cards with checklists
+trello add-card <list_id> "PF-FEAT-001: Feature Name" "Detailed description"
+trello add-checklist <card_id> "Implementation Steps"
+trello add-checkitem <card_id> "Implementation Steps" "Step 1: Setup"
 ```
 
 ### Daily Workflow
