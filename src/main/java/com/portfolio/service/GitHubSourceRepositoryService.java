@@ -93,8 +93,9 @@ public class GitHubSourceRepositoryService {
             ));
             
             // Step 2: Update SourceRepository entities
-            List<SourceRepositoryJpaEntity> existingRepositories = sourceRepositoryRepository.findAll();
-            syncMonitorService.appendLog("INFO", "Found " + existingRepositories.size() + " source repositories in database");
+            // PERF-006: Use findAllWithTopics() to avoid N+1 query problem (1 query instead of N+1)
+            List<SourceRepositoryJpaEntity> existingRepositories = sourceRepositoryRepository.findAllWithTopics();
+            syncMonitorService.appendLog("INFO", "Found " + existingRepositories.size() + " source repositories in database (loaded with topics)");
             
             Map<Long, SourceRepositoryJpaEntity> existingRepoMap = existingRepositories.stream()
                 .collect(Collectors.toMap(SourceRepositoryJpaEntity::getGithubId, r -> r));
@@ -104,6 +105,11 @@ public class GitHubSourceRepositoryService {
             int skippedCount = 0;
             int totalRepos = starredRepos.size();
 
+            // PERF-006: Batch save optimization - collect all entities to save at once
+            List<SourceRepositoryJpaEntity> entitiesToSave = new ArrayList<>();
+            List<SourceRepositoryJpaEntity> readmeFetchQueue = new ArrayList<>();
+            Map<SourceRepositoryJpaEntity, GitHubRepo> readmeFetchMap = new HashMap<>();
+
             for (int i = 0; i < starredRepos.size(); i++) {
                 GitHubRepo repo = starredRepos.get(i);
 
@@ -112,22 +118,19 @@ public class GitHubSourceRepositoryService {
 
                     if (existingRepoMap.containsKey(repo.id)) {
                         sourceRepository = existingRepoMap.get(repo.id);
-                        updateExistingSourceRepository(sourceRepository, repo);
+                        updateExistingSourceRepositoryInMemory(sourceRepository, repo);
                         syncMonitorService.appendLog("DEBUG", "Updated source repository: " + repo.name);
                     } else {
-                        sourceRepository = createNewSourceRepository(repo);
+                        sourceRepository = createNewSourceRepositoryInMemory(repo);
                         syncMonitorService.appendLog("INFO", "Created new source repository: " + repo.name);
                     }
 
-                    // Fetch README if not already fetched or if repository updated significantly
+                    entitiesToSave.add(sourceRepository);
+
+                    // Queue README fetch for later (after batch save)
                     if (shouldFetchReadme(sourceRepository, repo)) {
-                        progressService.broadcastProgress(syncId, new GitHubSyncProgressService.SyncProgressEvent(
-                            syncId, GitHubSyncProgressService.SyncPhase.FETCHING_README,
-                            30 + (int) ((i * 60.0) / totalRepos),
-                            i + 1, syncedCount, skippedCount,
-                            "Fetching README for: " + repo.name, null
-                        ));
-                        fetchAndStoreReadme(sourceRepository, repo);
+                        readmeFetchQueue.add(sourceRepository);
+                        readmeFetchMap.put(sourceRepository, repo);
                     }
 
                     syncedCount++;
@@ -151,6 +154,27 @@ public class GitHubSourceRepositoryService {
                     ));
                     skippedCount++;
                 }
+            }
+
+            // PERF-006: Batch save all entities at once (replaces N individual saves)
+            if (!entitiesToSave.isEmpty()) {
+                syncMonitorService.appendLog("INFO", "Batch saving " + entitiesToSave.size() + " repositories...");
+                sourceRepositoryRepository.saveAll(entitiesToSave);
+                syncMonitorService.appendLog("INFO", "Batch save completed");
+            }
+
+            // Fetch READMEs after batch save (now that entities have IDs)
+            for (int i = 0; i < readmeFetchQueue.size(); i++) {
+                SourceRepositoryJpaEntity sourceRepository = readmeFetchQueue.get(i);
+                GitHubRepo repo = readmeFetchMap.get(sourceRepository);
+
+                progressService.broadcastProgress(syncId, new GitHubSyncProgressService.SyncProgressEvent(
+                    syncId, GitHubSyncProgressService.SyncPhase.FETCHING_README,
+                    30 + (int) ((i * 60.0) / totalRepos),
+                    i + 1, syncedCount, skippedCount,
+                    "Fetching README for: " + repo.name, null
+                ));
+                fetchAndStoreReadme(sourceRepository, repo);
             }
 
             syncMonitorService.appendLog("INFO",
@@ -342,7 +366,11 @@ public class GitHubSourceRepositoryService {
         return null;
     }
     
-    private void updateExistingSourceRepository(SourceRepositoryJpaEntity existing, GitHubRepo repo) {
+    /**
+     * PERF-006: Update existing source repository in memory (no immediate save)
+     * Used by batch save optimization - saves happen via saveAll()
+     */
+    private void updateExistingSourceRepositoryInMemory(SourceRepositoryJpaEntity existing, GitHubRepo repo) {
         existing.setName(repo.name);
         existing.setFullName(repo.full_name);
         existing.setDescription(repo.description);
@@ -354,12 +382,15 @@ public class GitHubSourceRepositoryService {
         existing.setTopics(repo.topics != null ? new ArrayList<>(repo.topics) : new ArrayList<>());
         existing.setGithubUpdatedAt(repo.updated_at);
         existing.setUpdatedAt(LocalDateTime.now());
-        
-        sourceRepositoryRepository.save(existing);
+        // No save() here - will be saved in batch
     }
-    
-    private SourceRepositoryJpaEntity createNewSourceRepository(GitHubRepo repo) {
-        SourceRepositoryJpaEntity sourceRepository = SourceRepositoryJpaEntity.builder()
+
+    /**
+     * PERF-006: Create new source repository in memory (no immediate save)
+     * Used by batch save optimization - saves happen via saveAll()
+     */
+    private SourceRepositoryJpaEntity createNewSourceRepositoryInMemory(GitHubRepo repo) {
+        return SourceRepositoryJpaEntity.builder()
             .githubId(repo.id)
             .name(repo.name)
             .fullName(repo.full_name)
@@ -376,7 +407,22 @@ public class GitHubSourceRepositoryService {
             .createdAt(LocalDateTime.now())
             .updatedAt(LocalDateTime.now())
             .build();
-        
+        // No save() here - will be saved in batch
+    }
+
+    /**
+     * Legacy method for single repository updates (kept for refreshSingleRepository)
+     */
+    private void updateExistingSourceRepository(SourceRepositoryJpaEntity existing, GitHubRepo repo) {
+        updateExistingSourceRepositoryInMemory(existing, repo);
+        sourceRepositoryRepository.save(existing);
+    }
+
+    /**
+     * Legacy method for single repository creation (kept for refreshSingleRepository)
+     */
+    private SourceRepositoryJpaEntity createNewSourceRepository(GitHubRepo repo) {
+        SourceRepositoryJpaEntity sourceRepository = createNewSourceRepositoryInMemory(repo);
         return sourceRepositoryRepository.save(sourceRepository);
     }
     

@@ -41,4 +41,16 @@ public interface SourceRepositoryJpaRepository extends JpaRepository<SourceRepos
     
     @Query("SELECT COUNT(p) FROM PortfolioProjectJpaEntity p WHERE p.sourceRepositoryId = :sourceId")
     long countLinkedPortfolioProjects(@Param("sourceId") Long sourceId);
+
+    /**
+     * Fetch all source repositories with topics eagerly loaded to avoid N+1 queries
+     * PERF-006: This replaces findAll() in sync operations
+     *
+     * Before: 1 SELECT + N queries for topics (N = number of repos)
+     * After: 1 SELECT with JOIN FETCH (total 1 query)
+     *
+     * @return List of all source repositories with topics eagerly fetched
+     */
+    @Query("SELECT DISTINCT s FROM SourceRepositoryJpaEntity s LEFT JOIN FETCH s.topics")
+    List<SourceRepositoryJpaEntity> findAllWithTopics();
 }
