@@ -1,6 +1,7 @@
 package com.portfolio.controller;
 
 import com.portfolio.aspect.RateLimit;
+import com.portfolio.aspect.RequiresAdminToken;
 import com.portfolio.aspect.RequiresFeature;
 import com.portfolio.service.AlertService;
 import com.portfolio.service.RateLimitingService;
@@ -33,6 +34,7 @@ public class AdminAlertController {
      * Get all recent alerts
      */
     @GetMapping
+    @RequiresAdminToken
     @RequiresFeature("admin_endpoints")
     @RateLimit(type = RateLimitingService.RateLimitType.ADMIN_ENDPOINTS)
     public ResponseEntity<Map<String, Object>> getAllAlerts() {
@@ -49,6 +51,7 @@ public class AdminAlertController {
      * Get recent N alerts
      */
     @GetMapping("/recent/{limit}")
+    @RequiresAdminToken
     @RequiresFeature("admin_endpoints")
     @RateLimit(type = RateLimitingService.RateLimitType.ADMIN_ENDPOINTS)
     public ResponseEntity<Map<String, Object>> getRecentAlerts(@PathVariable int limit) {
@@ -73,6 +76,7 @@ public class AdminAlertController {
      * Get alerts by severity
      */
     @GetMapping("/severity/{severity}")
+    @RequiresAdminToken
     @RequiresFeature("admin_endpoints")
     @RateLimit(type = RateLimitingService.RateLimitType.ADMIN_ENDPOINTS)
     public ResponseEntity<Map<String, Object>> getAlertsBySeverity(@PathVariable String severity) {
@@ -102,6 +106,7 @@ public class AdminAlertController {
      * Clear alert history
      */
     @DeleteMapping
+    @RequiresAdminToken
     @RequiresFeature("admin_endpoints")
     @RateLimit(type = RateLimitingService.RateLimitType.ADMIN_ENDPOINTS)
     public ResponseEntity<Map<String, Object>> clearAlerts() {

@@ -1,6 +1,7 @@
 package com.portfolio.controller;
 
 import com.portfolio.aspect.RateLimit;
+import com.portfolio.aspect.RequiresAdminToken;
 import com.portfolio.aspect.RequiresFeature;
 import com.portfolio.service.RateLimitingService;
 import com.portfolio.service.SyncConfigService;
@@ -36,6 +37,7 @@ public class SyncConfigAdminController {
     }
     
     @PostMapping("/run-now")
+    @RequiresAdminToken
     @RequiresFeature("manual_sync")
     @RateLimit(type = RateLimitingService.RateLimitType.SYNC_OPERATIONS)
     public ResponseEntity<Map<String, String>> runSyncNow() {
@@ -94,6 +96,7 @@ public class SyncConfigAdminController {
     }
 
     @PutMapping({"", "/"})
+    @RequiresAdminToken
     @RequiresFeature("scheduled_sync")
     @RateLimit(type = RateLimitingService.RateLimitType.SYNC_OPERATIONS)
     public ResponseEntity<Map<String, Object>> updateSyncConfig(@Valid @RequestBody SyncConfigUpdateDto update) {

@@ -1,6 +1,7 @@
 package com.portfolio.controller;
 
 import com.portfolio.aspect.RateLimit;
+import com.portfolio.aspect.RequiresAdminToken;
 import com.portfolio.aspect.RequiresFeature;
 import com.portfolio.core.port.out.AIServicePort;
 import com.portfolio.service.ClaudeTokenBudgetService;
@@ -41,6 +42,7 @@ public class AdminAIBudgetController {
      * Get current token budget status
      */
     @GetMapping("/budget")
+    @RequiresAdminToken
     @RequiresFeature("admin_endpoints")
     @RateLimit(type = RateLimitingService.RateLimitType.ADMIN_ENDPOINTS)
     public ResponseEntity<Map<String, Object>> getBudgetStatus() {
@@ -73,6 +75,7 @@ public class AdminAIBudgetController {
      * Reset token budget (admin override)
      */
     @PostMapping("/budget/reset")
+    @RequiresAdminToken
     @RequiresFeature("admin_endpoints")
     @RateLimit(type = RateLimitingService.RateLimitType.ADMIN_ENDPOINTS)
     public ResponseEntity<Map<String, Object>> resetBudget() {
@@ -104,6 +107,7 @@ public class AdminAIBudgetController {
      * Get token usage recommendations
      */
     @GetMapping("/budget/recommendations")
+    @RequiresAdminToken
     @RequiresFeature("admin_endpoints")
     @RateLimit(type = RateLimitingService.RateLimitType.ADMIN_ENDPOINTS)
     public ResponseEntity<Map<String, Object>> getBudgetRecommendations() {
@@ -125,6 +129,7 @@ public class AdminAIBudgetController {
      * Simulate token usage for planning
      */
     @PostMapping("/budget/simulate")
+    @RequiresAdminToken
     @RequiresFeature("admin_endpoints")
     @RateLimit(type = RateLimitingService.RateLimitType.ADMIN_ENDPOINTS)
     public ResponseEntity<Map<String, Object>> simulateTokenUsage(
@@ -201,6 +206,7 @@ public class AdminAIBudgetController {
      * Optimizes token usage by processing multiple repositories in a single operation
      */
     @PostMapping("/analyze-batch")
+    @RequiresAdminToken
     @RequiresFeature("admin_endpoints")
     @RateLimit(type = RateLimitingService.RateLimitType.ADMIN_ENDPOINTS)
     public ResponseEntity<Map<String, Object>> analyzeBatch(@Valid @RequestBody BatchAnalysisRequest request) {
