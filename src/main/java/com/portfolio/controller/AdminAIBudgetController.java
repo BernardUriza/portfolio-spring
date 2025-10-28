@@ -5,10 +5,15 @@ import com.portfolio.aspect.RequiresFeature;
 import com.portfolio.core.port.out.AIServicePort;
 import com.portfolio.service.ClaudeTokenBudgetService;
 import com.portfolio.service.RateLimitingService;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -198,7 +203,7 @@ public class AdminAIBudgetController {
     @PostMapping("/analyze-batch")
     @RequiresFeature("admin_endpoints")
     @RateLimit(type = RateLimitingService.RateLimitType.ADMIN_ENDPOINTS)
-    public ResponseEntity<Map<String, Object>> analyzeBatch(@RequestBody BatchAnalysisRequest request) {
+    public ResponseEntity<Map<String, Object>> analyzeBatch(@Valid @RequestBody BatchAnalysisRequest request) {
 
         log.info("Batch analysis requested for {} repositories", request.repositories.size());
 
@@ -300,6 +305,9 @@ public class AdminAIBudgetController {
      * Request DTO for batch analysis
      */
     public static class BatchAnalysisRequest {
+        @NotNull(message = "Repositories list cannot be null")
+        @Size(min = 1, max = 100, message = "Batch size must be between 1 and 100 repositories")
+        @Valid
         public List<RepositoryAnalysisRequest> repositories;
 
         public BatchAnalysisRequest() {}
@@ -313,10 +321,20 @@ public class AdminAIBudgetController {
      * Request DTO for single repository analysis
      */
     public static class RepositoryAnalysisRequest {
+        @NotBlank(message = "Repository name is required")
+        @Size(max = 255, message = "Repository name cannot exceed 255 characters")
         public String name;
+
+        @Size(max = 1000, message = "Description cannot exceed 1000 characters")
         public String description;
+
+        @Size(max = 50000, message = "README content cannot exceed 50KB")
         public String readmeContent;
+
+        @Size(max = 20, message = "Maximum 20 topics allowed")
         public List<String> topics;
+
+        @Size(max = 50, message = "Language name cannot exceed 50 characters")
         public String language;
 
         public RepositoryAnalysisRequest() {}

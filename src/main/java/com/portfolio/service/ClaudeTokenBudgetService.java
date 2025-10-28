@@ -96,24 +96,43 @@ public class ClaudeTokenBudgetService {
     
     /**
      * Record token usage and return if budget allows
+     * Uses atomic operations to prevent race conditions in concurrent scenarios
      */
     public BudgetResult useTokens(int tokens, String operation) {
         checkAndResetIfNewDay();
-        
-        int currentUsage = currentTokenUsage.get();
-        int newUsage = currentUsage + tokens;
-        
-        if (newUsage > dailyTokenBudget) {
-            log.warn("Claude token budget exceeded for operation '{}': requested={}, current={}, budget={}", 
+
+        // Atomic check-and-update to prevent race conditions
+        // This ensures that multiple concurrent calls don't both succeed when budget is insufficient
+        final int[] previousUsageHolder = new int[1];
+        final boolean[] budgetExceeded = new boolean[1];
+
+        int newUsage = currentTokenUsage.updateAndGet(currentUsage -> {
+            previousUsageHolder[0] = currentUsage;
+            int potentialUsage = currentUsage + tokens;
+
+            if (potentialUsage > dailyTokenBudget) {
+                // Budget would be exceeded - don't update
+                budgetExceeded[0] = true;
+                return currentUsage;  // Return unchanged value
+            }
+
+            // Budget allows - update atomically
+            return potentialUsage;
+        });
+
+        // Check if budget was exceeded during atomic update
+        if (budgetExceeded[0]) {
+            int currentUsage = previousUsageHolder[0];
+            log.warn("Claude token budget exceeded for operation '{}': requested={}, current={}, budget={}",
                     operation, tokens, currentUsage, dailyTokenBudget);
             budgetExceededCounter.increment();
             return BudgetResult.budgetExceeded(currentUsage, dailyTokenBudget);
         }
-        
-        // Update usage atomically
-        currentTokenUsage.set(newUsage);
+
+        // Budget allowed - record metrics
         tokenUsageCounter.increment(tokens);
 
+        int currentUsage = previousUsageHolder[0];
         int remainingTokens = dailyTokenBudget - newUsage;
 
         // Check warn threshold

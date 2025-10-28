@@ -19,6 +19,7 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import jakarta.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -36,16 +37,18 @@ public class AIServiceImpl {
     private final ExperienceJpaRepository experienceRepository;
     private final String anthropicApiKey;
     private final String anthropicApiUrl;
-    private String portfolioToneContext = null;
-    private String portfolioSkillsContext = null;
-    private String portfolioExperiencesContext = null;
+    private final String portfolioToneContextConfig;
+    private volatile String portfolioToneContext = null;
+    private volatile String portfolioSkillsContext = null;
+    private volatile String portfolioExperiencesContext = null;
 
     public AIServiceImpl(RestTemplate restTemplate, ObjectMapper objectMapper,
                         ClaudeTokenBudgetService tokenBudgetService,
                         SkillJpaRepository skillRepository,
                         ExperienceJpaRepository experienceRepository,
                         @Value("${anthropic.api.key:}") String anthropicApiKey,
-                        @Value("${anthropic.api.url:https://api.anthropic.com/v1/messages}") String anthropicApiUrl) {
+                        @Value("${anthropic.api.url:https://api.anthropic.com/v1/messages}") String anthropicApiUrl,
+                        @Value("${portfolio.ai.context.tone:}") String portfolioToneContextConfig) {
         this.restTemplate = restTemplate;
         this.objectMapper = objectMapper;
         this.tokenBudgetService = tokenBudgetService;
@@ -53,111 +56,60 @@ public class AIServiceImpl {
         this.experienceRepository = experienceRepository;
         this.anthropicApiKey = anthropicApiKey;
         this.anthropicApiUrl = anthropicApiUrl;
+        this.portfolioToneContextConfig = portfolioToneContextConfig;
 
         if (anthropicApiKey != null && !anthropicApiKey.trim().isEmpty()) {
             log.info("Anthropic API key configured successfully");
         } else {
             log.warn("Anthropic API key not configured - will use mock data");
         }
+    }
 
-        loadPortfolioToneContext();
-        loadPortfolioSkillsContext();
-        loadPortfolioExperiencesContext();
+    /**
+     * Initialize AI context after all dependencies are injected
+     * This method runs after Spring has fully initialized the bean
+     */
+    @PostConstruct
+    public void initializeContext() {
+        log.info("Initializing AI portfolio context...");
+        try {
+            loadPortfolioToneContext();
+            loadPortfolioSkillsContext();
+            loadPortfolioExperiencesContext();
+            log.info("AI portfolio context initialized successfully");
+        } catch (Exception e) {
+            log.error("Failed to initialize AI context, will use defaults: {}", e.getMessage(), e);
+            // Set defaults to ensure the service can still operate
+            if (portfolioToneContext == null) {
+                portfolioToneContext = getDefaultPortfolioTone();
+            }
+            if (portfolioSkillsContext == null) {
+                portfolioSkillsContext = "Skills Context: No skills data available yet\n";
+            }
+            if (portfolioExperiencesContext == null) {
+                portfolioExperiencesContext = "Experiences Context: No experience data available yet\n";
+            }
+        }
     }
     
+    /**
+     * Load portfolio tone context from application configuration
+     * This replaces the previous file system access approach which had security issues
+     */
     private void loadPortfolioToneContext() {
         try {
-            // Try to load the portfolio landing page content
-            String frontendPath = System.getProperty("user.dir");
-            if (frontendPath.contains("portfolio-backend")) {
-                frontendPath = frontendPath.replace("portfolio-backend", "portfolio-frontend");
+            if (portfolioToneContextConfig != null && !portfolioToneContextConfig.trim().isEmpty()) {
+                // Use configured tone context from application.properties
+                portfolioToneContext = portfolioToneContextConfig;
+                log.info("Portfolio tone context loaded from configuration ({} characters)",
+                        portfolioToneContext.length());
+            } else {
+                // Fall back to default if not configured
+                portfolioToneContext = getDefaultPortfolioTone();
+                log.warn("No portfolio tone context configured, using default");
             }
-            
-            StringBuilder toneBuilder = new StringBuilder();
-            toneBuilder.append("Bernard Uriza's Portfolio Tone & Style Context:\n\n");
-            
-            // Load index.html meta information
-            java.nio.file.Path indexPath = java.nio.file.Paths.get(frontendPath, "src", "index.html");
-            if (java.nio.file.Files.exists(indexPath)) {
-                String indexContent = new String(java.nio.file.Files.readAllBytes(indexPath), java.nio.charset.StandardCharsets.UTF_8);
-                if (indexContent.contains("Catalytic Architect")) {
-                    toneBuilder.append("Professional Identity: Catalytic Architect & Full-Stack Engineer\n");
-                }
-                if (indexContent.contains("technical transformation")) {
-                    toneBuilder.append("Mission Statement: Architect of technical transformation. Design and execute software systems that catalyze change.\n\n");
-                }
-            }
-            
-            // Load comprehensive i18n content
-            java.nio.file.Path i18nPath = java.nio.file.Paths.get(frontendPath, "src", "app", "core", "i18n.service.ts");
-            if (java.nio.file.Files.exists(i18nPath)) {
-                String i18nContent = new String(java.nio.file.Files.readAllBytes(i18nPath), java.nio.charset.StandardCharsets.UTF_8);
-                
-                // Hero message and philosophy
-                toneBuilder.append("CORE MESSAGING:\n");
-                if (i18nContent.contains("Your team doesn't need more developers")) {
-                    toneBuilder.append("- Hero Statement: \"Your team doesn't need more developers. It needs a phase catalyst.\"\n");
-                }
-                if (i18nContent.contains("I break systems that have outgrown their chaos")) {
-                    toneBuilder.append("- Core Philosophy: \"I break systems that have outgrown their chaos but are not yet ready for stability.\"\n");
-                }
-                
-                // About section identity
-                if (i18nContent.contains("Technical catalyst and architecture strategist")) {
-                    toneBuilder.append("- Professional Identity: \"Technical catalyst and architecture strategist. I expose what is broken and engineer coherence where chaos once reigned. I do not adapt, I transform. I do not decorate, I reconfigure.\"\n\n");
-                }
-                
-                // Key phrases/mantras
-                toneBuilder.append("KEY MANTRAS:\n");
-                if (i18nContent.contains("Dissonance sparks transformation")) {
-                    toneBuilder.append("- \"Dissonance sparks transformation\"\n");
-                }
-                if (i18nContent.contains("Refactoring cultures drives true development")) {
-                    toneBuilder.append("- \"Refactoring cultures drives true development\"\n");
-                }
-                if (i18nContent.contains("Code is the output, not the objective")) {
-                    toneBuilder.append("- \"Code is the output, not the objective\"\n");
-                }
-                if (i18nContent.contains("Architecting beyond the codebase")) {
-                    toneBuilder.append("- \"Architecting beyond the codebase\"\n");
-                }
-                if (i18nContent.contains("Cyber-resilience through catalytic design")) {
-                    toneBuilder.append("- \"Cyber-resilience through catalytic design\"\n\n");
-                }
-                
-                // Service approach
-                toneBuilder.append("APPROACH & METHODOLOGY:\n");
-                if (i18nContent.contains("I engineer safe collapse")) {
-                    toneBuilder.append("- \"I engineer safe collapse. I break the parts that are silently holding you back.\"\n");
-                }
-                if (i18nContent.contains("I leave when I'm no longer needed")) {
-                    toneBuilder.append("- \"I leave when I'm no longer needed. I don't grow with your org. I evolve it.\"\n");
-                }
-                if (i18nContent.contains("I won't make you feel comfortable")) {
-                    toneBuilder.append("- \"I won't make you feel comfortable. I'll make you feel clear.\"\n\n");
-                }
-                
-                // Transformation process
-                if (i18nContent.contains("Crisis becomes opportunity")) {
-                    toneBuilder.append("TRANSFORMATION PHILOSOPHY:\n");
-                    toneBuilder.append("- \"Crisis becomes opportunity when you embrace necessary dissonance\"\n");
-                    toneBuilder.append("- \"Only a catalytic shock can realign your organizational story\"\n\n");
-                }
-            }
-            
-            // Final style guidance
-            toneBuilder.append("TONE REQUIREMENTS:\n");
-            toneBuilder.append("- Bold, transformative, confident language\n");
-            toneBuilder.append("- Focus on systemic change and catalytic intervention\n");
-            toneBuilder.append("- Emphasize breaking through chaos to achieve coherence\n");
-            toneBuilder.append("- Use technical precision with philosophical depth\n");
-            toneBuilder.append("- Avoid generic development descriptions - focus on transformation\n\n");
-            
-            portfolioToneContext = toneBuilder.toString();
-            log.info("Portfolio tone context loaded successfully with {} characters", portfolioToneContext.length());
-            
         } catch (Exception e) {
-            log.warn("Error loading portfolio tone context, using defaults: " + e.getMessage());
+            log.error("Error loading portfolio tone context: {}", e.getMessage(), e);
             portfolioToneContext = getDefaultPortfolioTone();
         }
     }

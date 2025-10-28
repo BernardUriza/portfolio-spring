@@ -2,16 +2,22 @@ package com.portfolio.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.portfolio.adapter.out.persistence.jpa.PortfolioProjectChangeEvent;
 import com.portfolio.adapter.out.persistence.jpa.PortfolioProjectJpaEntity;
 import com.portfolio.adapter.out.persistence.jpa.ProjectHistoryJpaEntity;
 import com.portfolio.adapter.out.persistence.jpa.ProjectHistoryJpaRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -33,6 +39,64 @@ public class ProjectHistoryService {
     public ProjectHistoryService(ProjectHistoryJpaRepository historyRepository, ObjectMapper objectMapper) {
         this.historyRepository = historyRepository;
         this.objectMapper = objectMapper;
+    }
+
+    /**
+     * Event listener for portfolio project changes
+     * Listens for PortfolioProjectChangeEvent and creates history entries
+     *
+     * Uses REQUIRES_NEW propagation to ensure history is saved in a separate transaction
+     * This prevents history failures from rolling back the main project transaction
+     */
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void onProjectChanged(PortfolioProjectChangeEvent event) {
+        try {
+            PortfolioProjectJpaEntity project = event.getProject();
+            ProjectHistoryJpaEntity.ChangeType changeType = event.getChangeType();
+
+            // Calculate changed fields by comparing with previous version
+            List<String> changedFields = new ArrayList<>();
+            if (changeType != ProjectHistoryJpaEntity.ChangeType.CREATE) {
+                changedFields = calculateChangedFieldsForEvent(project);
+            }
+
+            createHistoryEntry(
+                    project,
+                    changeType,
+                    changedFields,
+                    event.getChangedBy()
+            );
+
+            log.debug("Processed project change event for project {} with change type {}",
+                     project.getId(), changeType);
+
+        } catch (Exception e) {
+            log.error("CRITICAL: Failed to record project history for project {}: {}",
+                     event.getProject().getId(), e.getMessage(), e);
+            // Note: We don't rethrow because we're in AFTER_COMMIT phase
+            // The project save has already succeeded
+        }
+    }
+
+    /**
+     * Calculate changed fields for event handling
+     * Retrieves the latest history version and compares with current state
+     */
+    private List<String> calculateChangedFieldsForEvent(PortfolioProjectJpaEntity project) {
+        try {
+            Optional<ProjectHistoryJpaEntity> latestHistory = getLatestVersion(project.getId());
+            if (latestHistory.isPresent()) {
+                PortfolioProjectJpaEntity oldVersion = deserializeSnapshot(
+                        latestHistory.get().getSnapshotData()
+                );
+                return calculateChangedFields(oldVersion, project);
+            }
+        } catch (Exception e) {
+            log.warn("Failed to calculate changed fields for project {}: {}",
+                    project.getId(), e.getMessage());
+        }
+        return new ArrayList<>();
     }
 
     /**
